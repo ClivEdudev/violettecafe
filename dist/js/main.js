@@ -1,6 +1,7 @@
 import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT } from './data.js';
 import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } from './art.js';
 import { initPointer } from './ui.js';
+import { initScroll } from './scroll.js';
 document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import { $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, on, emit, cart, saveCart, setCart, addLine, unitPrice, lineName, lineSub, linePrep, isCoffeeLine, subtotal, count, toast, openOverlay, closeOverlay, tashkentNow, hhmm, ddmmyyyy, pad, isLang, itemPic, lineVisual, } from './shared.js';
 import { initLab } from './lab.js';
@@ -274,7 +275,7 @@ function renderChips() {
 const tagHTML = (tags = []) => tags.map(g => `<span class="tag tag-${g}">${t('tag.' + g)}</span>`).join('');
 function cardHTML(i, k) {
     const hot = i.art.k === 'drink' && ['cup', 'small', 'pot'].includes(i.art.d.v);
-    return `<article class="card${hot ? ' hot' : ''}" data-id="${i.id}" style="--k:${k}">
+    return `<article class="card${hot ? ' hot' : ''}" data-id="${i.id}" data-sr="card" style="--k:${k}">
     <button class="card-hit" data-open="${i.id}" aria-label="${esc(i.name[state.lang])} — ${t('card.open')}"></button>
     <div class="card-art">${itemPic(i, 520, i.name[state.lang])}</div>
     <div class="card-tags">${tagHTML(i.tags)}</div>
@@ -945,7 +946,7 @@ function onScroll() {
         const hr = hero.getBoundingClientRect();
         if (hr.bottom > 0)
             updateHero(heroProgress());
-        $('#tape').style.transform = `translate3d(${-(scrollY * .35) % ($('#tape').scrollWidth / 3 || 1)}px,0,0)`;
+        $('#tape').style.transform = `translate3d(${-(scrollY * .35) % ($('#tape').scrollWidth / 3 || 1)}px,0,0) skewX(var(--skew, 0deg))`;
     });
 }
 addEventListener('scroll', onScroll, { passive: true });
@@ -967,6 +968,7 @@ initLab();
 initBudget();
 initPointer(t);
 initReveal();
+initScroll();
 if (reduced)
     root.classList.add('reduced');
 updateHero(heroProgress());

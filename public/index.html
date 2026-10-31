@@ -92,14 +92,14 @@
 
   <section class="menu-sec" id="menuSec">
     <div class="sec-head">
-      <h2 data-i18n="menu.title" data-split>Menyu</h2>
-      <div class="world" role="radiogroup" data-i18n-aria="menu.world" aria-label="Menyu boʻlimi">
+      <h2 data-i18n="menu.title" data-split data-sr="slide">Menyu</h2>
+      <div class="world" data-sr="right" role="radiogroup" data-i18n-aria="menu.world" aria-label="Menyu boʻlimi">
         <button role="radio" data-world="coffee" aria-checked="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6z M17 11h1.5a2.5 2.5 0 0 1 0 5H16 M8 3c-1 2 1 3 0 5 M12 3c-1 2 1 3 0 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="world.coffee">Kofe va shirinlik</span></button>
         <button role="radio" data-world="food" aria-checked="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11a9 7 0 0 1 18 0z M3 15h18 M4 18.5h16a0 0 0 0 1 0 0 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span data-i18n="world.food">Fast-food</span></button>
         <i class="world-knob" aria-hidden="true"></i>
       </div>
     </div>
-    <div class="menu-tools">
+    <div class="menu-tools" data-sr="up">
       <div class="chips" id="chips" role="tablist"></div>
       <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <input type="search" id="q" data-i18n-ph="menu.search" placeholder="Qidirish" autocomplete="off"><button type="button" class="search-clear" id="qClear" data-i18n-aria="menu.clear" aria-label="Tozalash" hidden>×</button></label>
@@ -110,20 +110,20 @@
 
   <section class="lab" id="lab">
     <div class="sec-head">
-      <div><h2 data-i18n="lab.title" data-split>Oʻzingiz yigʻing</h2><p class="sec-sub" data-i18n="lab.sub"></p></div>
-      <div class="tabs" role="tablist">
+      <div data-sr="slide"><h2 data-i18n="lab.title" data-split>Oʻzingiz yigʻing</h2><p class="sec-sub" data-i18n="lab.sub"></p></div>
+      <div class="tabs" data-sr="right" role="tablist">
         <button role="tab" id="tabBurger" aria-controls="burgerLab" aria-selected="true" data-i18n="lab.tabBurger">Burger</button>
         <button role="tab" id="tabCoffee" aria-controls="coffeeLab" aria-selected="false" data-i18n="lab.tabCoffee">Kofe</button>
       </div>
     </div>
 
     <div class="lab-panel" id="burgerLab" role="tabpanel" aria-labelledby="tabBurger">
-      <div class="lab-stage burger-stage">
+      <div class="lab-stage burger-stage" data-sr="clip">
         <svg id="burgerSvg" viewBox="0 0 400 540" role="img" data-i18n-aria="lab.tabBurger" aria-label="Burger"></svg>
         <div class="ruler" aria-hidden="true"><i></i><span id="bHeight">0 sm</span></div>
         <div class="lab-name"><span id="bName"></span><small id="bStats"></small></div>
       </div>
-      <div class="lab-controls">
+      <div class="lab-controls" data-sr="up">
         <h3 data-i18n="lab.bun">Bulochka</h3>
         <div class="seg" id="bunSeg" role="radiogroup" data-i18n-aria="lab.bun" aria-label="Bulochka"></div>
         <h3><span data-i18n="lab.fillings">Ichiga nima?</span> <small id="bCount"></small></h3>
@@ -138,7 +138,7 @@
     </div>
 
     <div class="lab-panel" id="coffeeLab" role="tabpanel" aria-labelledby="tabCoffee" hidden>
-      <div class="lab-stage cup-stage">
+      <div class="lab-stage cup-stage" data-sr="clip">
         <svg id="cupSvg" viewBox="0 0 400 540" role="img" data-i18n-aria="lab.tabCoffee" aria-label="Kofe"></svg>
         <div class="meters">
           <div><span data-i18n="lab.strength">Kuchi</span><i><b id="mStrength"></b></i></div>
@@ -146,7 +146,7 @@
         </div>
         <div class="lab-name"><span id="cName"></span><small id="cStats"></small></div>
       </div>
-      <div class="lab-controls">
+      <div class="lab-controls" data-sr="up">
         <div class="two">
           <div><h3 data-i18n="lab.temp">Harorat</h3><div class="seg" id="cTemp" role="radiogroup"></div></div>
           <div><h3 data-i18n="lab.size">Hajmi</h3><div class="seg" id="cSize" role="radiogroup"></div></div>
@@ -169,10 +169,10 @@
 
   <section class="budget" id="budget">
     <div class="sec-head">
-      <div><h2 data-i18n="budget.title" data-split>Pul yetadimi?</h2><p class="sec-sub" data-i18n="budget.sub"></p></div>
+      <div data-sr="slide"><h2 data-i18n="budget.title" data-split>Pul yetadimi?</h2><p class="sec-sub" data-i18n="budget.sub"></p></div>
     </div>
     <div class="budget-wrap">
-      <form class="budget-form" id="budgetForm">
+      <form class="budget-form" id="budgetForm" data-sr="tilt">
         <label class="field"><span data-i18n="budget.amount">Qancha pulingiz bor?</span>
           <div class="money-in"><input id="bgAmount" inputmode="numeric" autocomplete="off" value="100 000"><em data-i18n="cur">soʻm</em></div>
           <input type="range" id="bgRange" min="20000" max="600000" step="5000" value="100000" data-i18n-aria="budget.amount" aria-label="Qancha pulingiz bor?">
@@ -186,7 +186,7 @@
         <button class="btn btn-acc btn-big" id="bgSpin" type="submit"><span data-i18n="budget.spin">Aylantirish</span></button>
       </form>
       <div class="slot-side">
-        <div class="slot" id="slot" aria-hidden="true">
+        <div class="slot" id="slot" aria-hidden="true" data-sr="swing">
           <div class="slot-top"><span>V</span><i></i><i></i><i></i></div>
           <div class="reels"><div class="reel"><div class="strip"></div></div><div class="reel"><div class="strip"></div></div><div class="reel"><div class="strip"></div></div></div>
           <div class="slot-lever"><i></i></div>
@@ -197,7 +197,7 @@
   </section>
 
   <section class="book" id="book">
-    <div class="book-card">
+    <div class="book-card" data-sr="tilt">
       <div class="book-copy">
         <h2 data-i18n="book.title" data-split>Stol band qilish</h2>
         <p class="sec-sub" data-i18n="book.sub"></p>
@@ -222,7 +222,7 @@
   </section>
 
   <section class="visit" id="visit">
-    <div class="visit-info">
+    <div class="visit-info" data-sr="left">
       <h2 data-i18n="visit.title" data-split>Bizni toping</h2>
       <dl>
         <div><dt data-i18n="visit.addr">Manzil</dt><dd><span data-i18n="visit.addrV"></span><br><a id="plusLink" href="https://plus.codes/8JGJP8WQ+PW" target="_blank" rel="noopener">P8WQ+PW, Andijon</a></dd></div>
@@ -235,12 +235,12 @@
         <a class="btn btn-ink" id="routeLink" target="_blank" rel="noopener" data-i18n="visit.route">Yoʻl topish</a>
       </div>
     </div>
-    <div class="map"><iframe title="Violette — map" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=40.74681,72.33981&z=16&output=embed"></iframe></div>
+    <div class="map" data-sr="clip"><iframe title="Violette — map" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=40.74681,72.33981&z=16&output=embed"></iframe></div>
   </section>
 </main>
 
 <footer class="foot">
-  <div class="foot-word" aria-hidden="true">Violette</div>
+  <div class="foot-word" aria-hidden="true" data-sr="spread">Violette</div>
   <p><span data-i18n="foot.note"></span></p>
   <p class="foot-small">© <span id="year"></span> Violette cafe, Andijon</p>
 </footer>

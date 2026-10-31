@@ -1,6 +1,7 @@
 import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT, type World, type CatId, type Item, type ExtraId, type Lang } from './data.js';
 import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } from './art.js';
 import { initPointer } from './ui.js';
+import { initScroll } from './scroll.js';
 document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import {
   $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, on, emit, cart, saveCart, setCart, addLine,
@@ -250,7 +251,7 @@ function renderChips() {
 const tagHTML = (tags: Item['tags'] = []) => tags.map(g => `<span class="tag tag-${g}">${t('tag.' + g)}</span>`).join('');
 function cardHTML(i: Item, k: number) {
   const hot = i.art.k === 'drink' && ['cup', 'small', 'pot'].includes(i.art.d.v);
-  return `<article class="card${hot ? ' hot' : ''}" data-id="${i.id}" style="--k:${k}">
+  return `<article class="card${hot ? ' hot' : ''}" data-id="${i.id}" data-sr="card" style="--k:${k}">
     <button class="card-hit" data-open="${i.id}" aria-label="${esc(i.name[state.lang])} — ${t('card.open')}"></button>
     <div class="card-art">${itemPic(i, 520, i.name[state.lang])}</div>
     <div class="card-tags">${tagHTML(i.tags)}</div>
@@ -704,7 +705,7 @@ function onScroll() {
     root.classList.toggle('scrolled', scrollY > 20);
     const hr = hero.getBoundingClientRect();
     if (hr.bottom > 0) updateHero(heroProgress());
-    $('#tape').style.transform = `translate3d(${-(scrollY * .35) % ($('#tape').scrollWidth / 3 || 1)}px,0,0)`;
+    $('#tape').style.transform = `translate3d(${-(scrollY * .35) % ($('#tape').scrollWidth / 3 || 1)}px,0,0) skewX(var(--skew, 0deg))`;
   });
 }
 addEventListener('scroll', onScroll, { passive: true });
@@ -715,7 +716,7 @@ on('lang', () => { renderStatus(); renderReceipt(); renderChips(); renderGrid();
 buildScene(); fitScene(); renderTape(); renderVisit(); setWorldUI();
 applyLang();
 initLab(); initBudget();
-initPointer(t); initReveal();
+initPointer(t); initReveal(); initScroll();
 if (reduced) root.classList.add('reduced');
 updateHero(heroProgress()); onScroll();
 const hideLoader = () => { const l = document.getElementById('loader'); if (!l || l.classList.contains('gone')) return; l.classList.add('gone'); setTimeout(() => l.remove(), 700); root.classList.add('ready'); };
