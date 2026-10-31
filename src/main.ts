@@ -1,12 +1,12 @@
-import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT, SET_DRINKS, SET_BURGERS, SET_DISCOUNTS, setFull, setPrice, type World, type CatId, type Item, type ExtraId, type Lang } from './data.js';
+import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT, SET_DRINKS, SET_BURGERS, SET_DISCOUNTS, setFull, setPrice, isVeg, isSpicy, allergens, type World, type CatId, type Item, type ExtraId, type Lang } from './data.js';
 import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } from './art.js';
 import { initPointer } from './ui.js';
 import { initScroll } from './scroll.js';
 document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import {
-  $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, on, emit, cart, saveCart, setCart, addLine,
+  $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, plural, on, emit, cart, saveCart, setCart, addLine,
   unitPrice, lineName, lineSub, lineArt, linePrep, isCoffeeLine, subtotal, count, toast, openOverlay, closeOverlay, tashkentNow, hhmm, ddmmyyyy, pad,
-  isLang, itemPic, lineVisual, type Line, type Size,
+  isLang, itemPic, lineVisual, addSavedLines, type Line, type Size,
 } from './shared.js';
 import { initLab } from './lab.js';
 import { initBudget } from './budget.js';
@@ -289,20 +289,45 @@ function renderTape() {
 
 /* =============== menu =============== */
 let world: World = tashkentNow().getHours() < 12 ? 'coffee' : 'food';
-const view = { cat: 'all' as 'all' | CatId, q: '' };
+const view = { cat: 'all' as 'all' | CatId | 'fav', q: '' };
+type Diet = 'veg' | 'noNuts' | 'noGluten' | 'noLactose' | 'spicy';
+const DIETS: Diet[] = ['veg', 'noNuts', 'noGluten', 'noLactose', 'spicy'];
+const diet = new Set<Diet>();
+const favs = new Set<string>(((store.get('vc-favs') as unknown[]) ?? []).filter((x): x is string => typeof x === 'string' && !!ITEM(x)));
+const saveFavs = () => store.set('vc-favs', [...favs]);
+const dietOK = (i: Item) => {
+  const a = allergens(i);
+  return (!diet.has('veg') || isVeg(i)) && (!diet.has('spicy') || isSpicy(i)) && (!diet.has('noNuts') || !a.includes('nuts')) && (!diet.has('noGluten') || !a.includes('gluten')) && (!diet.has('noLactose') || !a.includes('lactose'));
+};
 const norm = (s: string) => s.toLowerCase().replace(/[ʻʼ'`’]/g, '').replace(/ё/g, 'е');
 function visibleItems(): Item[] {
   const q = norm(view.q.trim());
-  let list = ITEMS.filter(i => (q ? true : CATS.find(c => c.id === i.cat)!.world === world));
-  if (!q && view.cat !== 'all') list = list.filter(i => i.cat === view.cat);
+  let list = ITEMS.filter(i => (q || view.cat === 'fav' ? true : CATS.find(c => c.id === i.cat)!.world === world));
+  if (!q && view.cat === 'fav') list = list.filter(i => favs.has(i.id));
+  else if (!q && view.cat !== 'all') list = list.filter(i => i.cat === view.cat);
+  list = list.filter(dietOK);
   if (q) list = list.filter(i => (['uz', 'ru', 'en'] as Lang[]).some(l => norm(i.name[l] + ' ' + i.desc[l]).includes(q)));
   return list.sort((a, b) => b.pop - a.pop);
 }
 function renderChips() {
   const cats = CATS.filter(c => c.world === world);
-  $('#chips').innerHTML = [`<button role="tab" data-cat="all" aria-selected="${view.cat === 'all'}">${t('menu.all')}</button>`, ...cats.map(c => `<button role="tab" data-cat="${c.id}" aria-selected="${view.cat === c.id}">${esc(c.name[state.lang])}</button>`)].join('');
+  if (view.cat === 'fav' && !favs.size) view.cat = 'all';
+  $('#chips').innerHTML = [`<button role="tab" data-cat="all" aria-selected="${view.cat === 'all'}">${t('menu.all')}</button>`,
+    ...(favs.size ? [`<button role="tab" data-cat="fav" class="chip-fav" aria-selected="${view.cat === 'fav'}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg>${t('fav.chip')} <small>${favs.size}</small></button>`] : []),
+    ...cats.map(c => `<button role="tab" data-cat="${c.id}" aria-selected="${view.cat === c.id}">${esc(c.name[state.lang])}</button>`)].join('');
+  renderDiet(); renderLast();
   $('#chips').classList.toggle('dim', !!view.q.trim());
 }
+function renderDiet() {
+  $('#diets').innerHTML = DIETS.map(d => `<button type="button" data-diet="${d}" aria-pressed="${diet.has(d)}"><i class="dot dot-${d}"></i>${t('diet.' + d)}</button>`).join('');
+}
+function renderLast() {
+  const last = store.get('vc-last') as { at?: number; n?: number; total?: number } | null;
+  const btn = $('#repeatLast');
+  btn.hidden = !last || !last.n;
+  if (last && last.n) btn.innerHTML = `<svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 12a8 8 0 1 0 2.4-5.7M4 4v4h4" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round"/></svg>${t('last.chip')} <small>${last.at ? ddmmyyyy(new Date(last.at)) : ''} · ${money(last.total ?? 0)}</small>`;
+}
+const allergenHTML = (i: Item) => { const a = allergens(i); return (isVeg(i) ? `<i class="dt dt-veg" title="${t('diet.veg')}">V</i>` : '') + a.map(x => `<i class="dt dt-${x}" title="${t('diet.' + x)}">${{ nuts: 'N', gluten: 'G', lactose: 'L' }[x]}</i>`).join(''); };
 const tagHTML = (tags: Item['tags'] = []) => tags.map(g => `<span class="tag tag-${g}">${t('tag.' + g)}</span>`).join('');
 function cardHTML(i: Item, k: number) {
   const hot = i.art.k === 'drink' && ['cup', 'small', 'pot'].includes(i.art.d.v);
@@ -310,10 +335,11 @@ function cardHTML(i: Item, k: number) {
     <button class="card-hit" data-open="${i.id}" aria-label="${esc(i.name[state.lang])} — ${t('card.open')}"></button>
     <div class="card-art">${itemPic(i, 520, i.name[state.lang])}</div>
     <div class="card-tags">${tagHTML(i.tags)}</div>
+    <button class="fav" data-fav="${i.id}" aria-pressed="${favs.has(i.id)}" aria-label="${t(favs.has(i.id) ? 'fav.remove' : 'fav.add')}: ${esc(i.name[state.lang])}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 20s-7-4.4-7-10a4 4 0 0 1 7-2.6A4 4 0 0 1 19 10c0 5.6-7 10-7 10z"/></svg></button>
     <h3>${esc(i.name[state.lang])}</h3>
     <p class="card-desc">${esc(i.desc[state.lang])}</p>
     <div class="card-foot">
-      <span class="card-meta">${i.kcal} ${t('card.kcal')} · ${i.prep} ${t('card.min')}</span>
+      <span class="card-meta">${i.kcal} ${t('card.kcal')} · ${i.prep} ${t('card.min')} <span class="dts">${allergenHTML(i)}</span></span>
       <b class="price">${money(i.price)}</b>
       <button class="add" data-add="${i.id}" aria-label="${t('card.add')}: ${esc(i.name[state.lang])}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M12 5v14M5 12h14" stroke="currentColor" stroke-width="2.6" stroke-linecap="round"/></svg></button>
     </div>
@@ -324,7 +350,7 @@ function renderGrid() {
   $('#grid').innerHTML = list.map(cardHTML).join('');
   const empty = $('#empty');
   empty.hidden = list.length > 0;
-  if (!list.length) empty.textContent = tf('menu.empty', { q: view.q.trim() });
+  if (!list.length) empty.textContent = view.q.trim() ? tf('menu.empty', { q: view.q.trim() }) : view.cat === 'fav' && !diet.size ? t('fav.empty') : t('menu.emptyFilter');
   if (finePointer && !reduced) $$('.card', $('#grid')).forEach(attachTilt);
 }
 function attachTilt(el: HTMLElement) {
@@ -377,7 +403,7 @@ $('.world').addEventListener('keydown', e => {
 });
 $('#chips').addEventListener('click', e => {
   const b = (e.target as Element).closest<HTMLElement>('[data-cat]'); if (!b) return;
-  view.cat = b.dataset.cat as CatId | 'all';
+  view.cat = b.dataset.cat as CatId | 'all' | 'fav';
   if (view.q) { view.q = ''; $<HTMLInputElement>('#q').value = ''; $('#qClear').hidden = true; }
   renderChips(); renderGrid();
 });
@@ -387,6 +413,18 @@ qIn.addEventListener('input', () => { $('#qClear').hidden = !qIn.value; clearTim
 $('#qClear').addEventListener('click', () => { qIn.value = ''; view.q = ''; $('#qClear').hidden = true; renderChips(); renderGrid(); qIn.focus(); });
 $('#grid').addEventListener('click', e => {
   const target = e.target as Element;
+  const fv = target.closest<HTMLElement>('[data-fav]');
+  if (fv) {
+    const id = fv.dataset.fav!, on = !favs.has(id);
+    on ? favs.add(id) : favs.delete(id); saveFavs();
+    fv.setAttribute('aria-pressed', String(on));
+    fv.setAttribute('aria-label', `${t(on ? 'fav.remove' : 'fav.add')}: ${ITEM(id)!.name[state.lang]}`);
+    fv.classList.remove('pop'); void fv.offsetWidth; fv.classList.add('pop');
+    if (on) toast(t('fav.added'));
+    renderChips();
+    if (view.cat === 'fav' && !on) renderGrid();
+    return;
+  }
   const add = target.closest<HTMLElement>('[data-add]');
   if (add) {
     const it = ITEM(add.dataset.add!)!;
@@ -412,6 +450,8 @@ function renderItem() {
   $('#imName').textContent = it.name[state.lang];
   $('#imDesc').textContent = it.desc[state.lang];
   $('#imMeta').textContent = `${tf('im.kcal', { k: it.kcal })} · ${tf('im.prep', { m: it.prep })}`;
+  const al = allergens(it);
+  $('#imDiet').innerHTML = `<span class="dts">${allergenHTML(it)}</span>${isVeg(it) ? `<b>${t('diet.veg')}</b>` : ''}${al.length ? `<span>${tf('diet.has', { list: al.map(a => t('diet.' + a)).join(', ') })}</span>` : `<span>${t('diet.free')}</span>`}<small>${t('diet.note')}</small>`;
   $('#imSizes').innerHTML = it.sized ? `<h4>${t('im.size')}</h4><div class="seg" role="radiogroup">${SIZES.map(s => `<button type="button" role="radio" data-size="${s.id}" aria-checked="${im.size === s.id}"><b>${s.id}</b><small>${s.ml} ml${s.add ? ` · +${money(s.add)}` : ''}</small></button>`).join('')}</div>` : '';
   $('#imExtras').innerHTML = it.extras?.length ? `<h4>${t('im.extras')}</h4><div class="extras">${it.extras.map(x => `<label class="check"><input type="checkbox" data-extra="${x}" ${im.extras.has(x) ? 'checked' : ''}><i></i><span>${esc(EXTRAS[x].name[state.lang])}</span><small>+${money(EXTRAS[x].price)}</small></label>`).join('')}</div>` : '';
   $('output', $('#imQty')).textContent = String(im.qty);
@@ -467,6 +507,13 @@ function renderCart() {
       <button type="button" class="rm" data-rm aria-label="${t('aria.remove')}">×</button>
     </li>`).join('');
   $('#cartSub').textContent = money(subtotal());
+  const near = ZONES[0], sub = subtotal(), toFree = Math.max(0, near.freeFrom - sub);
+  $('#cartDeliv').innerHTML = `<div class="dv-row"><span>${t('cart.delivery')}</span><b>${toFree ? tf('cart.delivFrom', { s: money(Math.min(...ZONES.map(z => z.fee))) }) : t('rv.free')}</b></div>
+    <div class="dv-bar"><i style="width:${Math.min(100, (sub / near.freeFrom) * 100)}%"></i></div>
+    <small>${toFree ? tf('cart.toFree', { s: money(toFree) }) : t('cart.freeOk')} · ${t('cart.pickupFree')}</small>`;
+  const last = store.get('vc-last') as { n?: number; total?: number; at?: number } | null;
+  $('#cartLast').hidden = !last || !last.n;
+  if (last && last.n) $('#cartLast').innerHTML = `<div><b>${t('last.title')}</b><small>${last.at ? ddmmyyyy(new Date(last.at)) + ' · ' : ''}${last.n} ${plural(last.n, 'items')} · ${money(last.total ?? 0)}</small></div><button type="button" class="btn btn-mini" data-repeat>${t('last.repeat')}</button>`;
   $('#cartEta').textContent = tf('cart.eta', { t: hhmm(eta()) });
   renderSplit(); renderStamps();
 }
@@ -494,6 +541,7 @@ $('#cartBtn').addEventListener('click', () => { renderCart(); openOverlay($('#ca
 $('#cart').addEventListener('click', e => {
   const tg = e.target as Element;
   if (tg.closest('[data-close]')) { closeOverlay($('#cart')); return; }
+  if (tg.closest('[data-repeat]')) { repeatLast(); return; }
   const li = tg.closest<HTMLElement>('.line');
   if (li) {
     const i = Number(li.dataset.i), l = cart[i];
@@ -507,6 +555,20 @@ $('#cart').addEventListener('click', e => {
   }
   const sn = tg.closest<HTMLElement>('#splitN [data-d]');
   if (sn) { split.n = clamp(split.n + Number(sn.dataset.d), 2, 8); renderCart(); }
+});
+function repeatLast() {
+  const last = store.get('vc-last') as { lines?: unknown } | null;
+  const n = addSavedLines(last?.lines);
+  toast(n ? t('last.added') : t('last.none'));
+}
+$('#repeatLast').addEventListener('click', e => { repeatLast(); const b = e.currentTarget as HTMLElement; b.classList.remove('pop'); void b.offsetWidth; b.classList.add('pop'); });
+$('#diets').addEventListener('click', e => {
+  const b = (e.target as Element).closest<HTMLElement>('[data-diet]'); if (!b) return;
+  const d = b.dataset.diet as Diet; diet.has(d) ? diet.delete(d) : diet.add(d);
+  if (d === 'veg' && diet.has('veg')) diet.delete('spicy');
+  if (d === 'spicy' && diet.has('spicy')) diet.delete('veg');
+  renderDiet(); renderGrid();
+  $<HTMLElement>(`[data-diet="${d}"]`).focus();
 });
 $('#splitOn').addEventListener('change', e => { split.on = (e.target as HTMLInputElement).checked; renderCart(); });
 $('#toCheckout').addEventListener('click', () => { closeOverlay($('#cart')); openCheckout(); });
@@ -660,6 +722,7 @@ async function sendOrder() {
     if (!res.ok) throw new Error(String(res.status));
     const prev = Number(store.get('vc-stamps')) || 0;
     store.set('vc-stamps', prev + coffees);
+    store.set('vc-last', { at: Date.now(), n: count(), total: subtotal(), lines: cart.map(({ sig: _s, who: _w, ...l }) => l) });
     setCart([]);
     $('#coForm').hidden = true; $('#coSteps').hidden = true;
     const done = $('#coDone');

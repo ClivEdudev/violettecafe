@@ -161,3 +161,21 @@ export const SET_DRINKS = ['violette-latte', 'latte', 'cappuccino', 'mocha', 'ra
 export const SET_BURGERS = ['violette-burger', 'classic-burger', 'cheeseburger', 'double-beef', 'chicken-burger'];
 export function setFull(d: string, b: string) { const di = ITEM(d)!, bi = ITEM(b)!; return di.price + (di.sized ? SIZES[1].add : 0) + bi.price; }
 export function setPrice(d: string, b: string, pct: number) { return Math.round((setFull(d, b) * (100 - pct)) / 100 / 500) * 500; }
+
+/* ---------- dietary labels (sample data — the cafe must confirm every dish before launch) ---------- */
+export type Allergen = 'nuts' | 'gluten' | 'lactose';
+const VEG_EXTRA = ['fries', 'cheese-fries'];
+const NUTS = ['almond-croissant'];
+const GLUTEN_CATS: CatId[] = ['sweet', 'burger', 'lavash', 'hotdog'];
+const GLUTEN = ['pizza-slice', 'nuggets', 'combo-lunch', 'combo-friends', 'combo-morning'];
+const LACTOSE = ['violette-latte', 'cappuccino', 'latte', 'flat-white', 'raf', 'mocha', 'iced-violette', 'iced-latte', 'frappe', 'matcha', 'cocoa',
+  'croissant', 'almond-croissant', 'cheesecake', 'tiramisu', 'medovik', 'violette-burger', 'cheeseburger', 'double-beef', 'lavash-cheese', 'club', 'pizza-slice', 'cheese-fries', 'combo-lunch', 'combo-morning'];
+export const isVeg = (i: Item) => ['coffee', 'cold', 'tea', 'sweet'].includes(i.cat) || VEG_EXTRA.includes(i.id);
+export const isSpicy = (i: Item) => (i.tags ?? []).includes('spicy');
+export function allergens(i: Item): Allergen[] {
+  const out: Allergen[] = [];
+  if (NUTS.includes(i.id)) out.push('nuts');
+  if (GLUTEN_CATS.includes(i.cat) || GLUTEN.includes(i.id)) out.push('gluten');
+  if (LACTOSE.includes(i.id)) out.push('lactose');
+  return out;
+}

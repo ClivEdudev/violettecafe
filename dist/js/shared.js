@@ -173,6 +173,16 @@ export function addLine(base, qty = 1, from) {
     return true;
 }
 export function setCart(next) { cart = next; saveCart(); }
+/** Adds previously saved lines (e.g. the last order) after checking them like a stored cart. Returns how many items were added. */
+export function addSavedLines(raw) {
+    let n = 0;
+    for (const l of sanitize(raw)) {
+        const { sig: _s, qty, who: _w, ...base } = l;
+        if (addLine(base, qty))
+            n += qty;
+    }
+    return n;
+}
 /* ---------- photos (with the drawn illustration as fallback) ---------- */
 export function itemPic(it, w, alt = '', eager = false) {
     if (!it.photo)

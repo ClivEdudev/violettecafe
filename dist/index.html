@@ -104,6 +104,10 @@
       <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
         <input type="search" id="q" data-i18n-ph="menu.search" placeholder="Qidirish" autocomplete="off"><button type="button" class="search-clear" id="qClear" data-i18n-aria="menu.clear" aria-label="Tozalash" hidden>×</button></label>
     </div>
+    <div class="menu-extra">
+      <div class="diets" id="diets" role="group" data-i18n-aria="diet.label" aria-label="Parhez va allergenlar"></div>
+      <button type="button" class="repeat-last" id="repeatLast" hidden></button>
+    </div>
     <div class="grid" id="grid" aria-live="polite"></div>
     <p class="empty" id="empty" hidden></p>
   </section>
@@ -266,6 +270,7 @@
       <h3 id="imName"></h3>
       <p id="imDesc"></p>
       <p class="im-meta" id="imMeta"></p>
+      <div class="im-diet" id="imDiet"></div>
       <div id="imSizes"></div>
       <div id="imExtras"></div>
       <div class="im-buy">
@@ -282,6 +287,7 @@
   <div class="drawer-panel">
     <header class="dr-head"><h3 id="cartTitle" data-i18n="cart.title">Savat</h3><button class="x" data-close data-i18n-aria="aria.close" aria-label="Yopish">×</button></header>
     <div class="dr-body">
+      <div class="cart-last" id="cartLast" hidden></div>
       <ul class="lines" id="lines"></ul>
       <div class="cart-empty" id="cartEmpty"><svg viewBox="0 0 120 100" aria-hidden="true"><path d="M20 30h80l-8 60H28z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M40 30l10-18M80 30L70 12" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg><p data-i18n="cart.empty"></p><a href="#menuSec" class="btn btn-ink" data-close data-i18n="cart.browse"></a></div>
       <div class="split" id="split" hidden>
@@ -296,6 +302,7 @@
     </div>
     <footer class="dr-foot" id="cartFoot">
       <div class="sum"><span data-i18n="cart.subtotal">Jami</span><b id="cartSub"></b></div>
+      <div class="deliv" id="cartDeliv"></div>
       <p class="eta" id="cartEta"></p>
       <button class="btn btn-acc btn-big" id="toCheckout" data-i18n="cart.checkout">Rasmiylashtirish</button>
     </footer>

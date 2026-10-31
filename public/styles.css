@@ -744,3 +744,51 @@ main, .foot { overflow-x: clip; }
   .meter-actions { margin: 10px 0; }
   .meter .btn-big { min-height: 44px; font-size: .92rem; }
 }
+
+/* ============ comforts: favourites, repeat order, diet labels, delivery in cart ============ */
+.menu-extra { display: flex; gap: 12px; align-items: center; justify-content: space-between; flex-wrap: wrap; margin: -10px 0 22px; }
+.diets { display: flex; gap: 6px; flex-wrap: wrap; }
+.diets button { display: inline-flex; align-items: center; gap: 7px; padding: 6px 12px; border-radius: 999px; border: 2px dashed var(--line); font-weight: 700; font-size: .84rem; transition: background-color .2s, border-color .2s, color .2s; }
+.diets button:hover { border-color: var(--ink); }
+.diets button[aria-pressed="true"] { border-style: solid; border-color: var(--ink); background: var(--ink); color: var(--bg); }
+.dot { width: 10px; height: 10px; border-radius: 50%; }
+.dot-veg { background: #3E8E6A; } .dot-noNuts { background: #A0652A; } .dot-noGluten { background: #E3A04C; } .dot-noLactose { background: #6FA8DC; } .dot-spicy { background: var(--ketchup); }
+.repeat-last { display: inline-flex; align-items: center; gap: 8px; padding: 8px 14px; border-radius: 999px; background: var(--paper); border: 2px solid var(--ink); font-weight: 800; font-size: .88rem; box-shadow: 3px 3px 0 var(--acc); transition: transform .15s; }
+.repeat-last svg { width: 18px; height: 18px; }
+.repeat-last small { font-weight: 600; color: var(--ink2); }
+.repeat-last:active { transform: translate(2px, 2px); }
+.repeat-last.pop svg { animation: spinBack .6s cubic-bezier(.3, 1.4, .5, 1); }
+@keyframes spinBack { to { transform: rotate(-360deg); } }
+.chip-fav { display: inline-flex; align-items: center; gap: 6px; }
+.chip-fav svg { width: 15px; height: 15px; fill: var(--ketchup); }
+.chip-fav small { font-weight: 800; opacity: .7; }
+.fav { position: absolute; top: 20px; right: 20px; z-index: 2; width: 40px; height: 40px; border-radius: 50%; display: grid; place-items: center; background: color-mix(in srgb, var(--paper) 88%, transparent); border: 2px solid var(--ink); transition: transform .15s; }
+.fav svg { width: 20px; height: 20px; fill: none; stroke: var(--ink); stroke-width: 2.2; stroke-linejoin: round; transition: fill .2s, stroke .2s; }
+.fav[aria-pressed="true"] svg { fill: var(--ketchup); stroke: var(--ketchup); }
+.fav.pop { animation: favPop .5s cubic-bezier(.3, 1.8, .5, 1); }
+@keyframes favPop { 35% { transform: scale(1.35); } }
+.dts { display: inline-flex; gap: 3px; vertical-align: middle; margin-left: 4px; }
+.dt { width: 17px; height: 17px; border-radius: 50%; display: inline-grid; place-items: center; font: 800 .62rem/1 var(--body); font-style: normal; color: #fff; }
+.dt-veg { background: #3E8E6A; } .dt-nuts { background: #A0652A; } .dt-gluten { background: #C98A2E; } .dt-lactose { background: #4F86C6; }
+.im-diet { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; margin-top: 12px; padding: 10px 12px; border-radius: 14px; background: var(--bg2); font-size: .86rem; font-weight: 700; }
+.im-diet .dts { margin: 0; }
+.im-diet b { color: #3E8E6A; }
+.im-diet small { flex-basis: 100%; font-weight: 600; color: var(--ink2); }
+.deliv { margin: 8px 0 2px; padding: 10px 12px; border-radius: 14px; background: var(--bg2); }
+.dv-row { display: flex; justify-content: space-between; font-weight: 700; font-size: .9rem; }
+.dv-bar { height: 7px; margin: 8px 0 6px; border-radius: 4px; background: color-mix(in srgb, var(--ink) 12%, transparent); overflow: hidden; }
+.dv-bar i { display: block; height: 100%; border-radius: inherit; background: linear-gradient(90deg, var(--mustard), #3E8E6A); transition: width .5s cubic-bezier(.3, 1.2, .5, 1); }
+.deliv small { color: var(--ink2); font-weight: 600; font-size: .8rem; }
+.cart-last { display: flex; align-items: center; justify-content: space-between; gap: 12px; margin-bottom: 12px; padding: 12px 14px; border-radius: 18px; border: 2px dashed var(--acc); }
+.cart-last div { display: flex; flex-direction: column; }
+.cart-last small { color: var(--ink2); font-weight: 600; font-size: .8rem; }
+@media (max-width: 640px) {
+  .menu-extra { margin-top: -12px; }
+  .diets { flex-wrap: nowrap; overflow-x: auto; margin: 0 -20px; padding: 2px 20px 6px; scrollbar-width: none; width: calc(100% + 40px); }
+  .diets::-webkit-scrollbar { display: none; }
+  .diets button { flex: none; }
+  .fav { top: 12px; right: 12px; width: 34px; height: 34px; }
+  .fav svg { width: 17px; height: 17px; }
+  .card-meta .dts { display: none; }
+}
+@media (max-width: 640px) { .repeat-last small { display: none; } .repeat-last { padding: 7px 12px; font-size: .84rem; } .card-tags { right: 52px; flex-wrap: wrap; } }
