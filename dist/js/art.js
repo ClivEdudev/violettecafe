@@ -188,6 +188,16 @@ export const REAL_DEFS = `<svg class="real-defs" width="0" height="0" aria-hidde
   <linearGradient id="g-shade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".32"/><stop offset=".22" stop-color="#000" stop-opacity="0"/><stop offset=".6" stop-color="#fff" stop-opacity=".1"/><stop offset=".85" stop-color="#000" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></linearGradient>
   <linearGradient id="g-foam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF8EE"/><stop offset=".7" stop-color="#F1DFC6"/><stop offset="1" stop-color="#D9B98F"/></linearGradient>
   <linearGradient id="g-straw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C98A10"/><stop offset=".4" stop-color="#FFD866"/><stop offset="1" stop-color="#B57A08"/></linearGradient>
+  <linearGradient id="g-saus-beef" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E07A5A"/><stop offset=".3" stop-color="#B5482E"/><stop offset=".8" stop-color="#7E2A18"/><stop offset="1" stop-color="#5A1C10"/></linearGradient>
+  <linearGradient id="g-saus-chicken" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6C9A2"/><stop offset=".3" stop-color="#E0A074"/><stop offset=".8" stop-color="#B8714A"/><stop offset="1" stop-color="#8E5034"/></linearGradient>
+  <linearGradient id="g-saus-smoked" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#A2583A"/><stop offset=".3" stop-color="#7A3418"/><stop offset=".8" stop-color="#4E1E0C"/><stop offset="1" stop-color="#341206"/></linearGradient>
+  <linearGradient id="g-saus-spicy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0704C"/><stop offset=".3" stop-color="#CC3A1C"/><stop offset=".8" stop-color="#8A1E0C"/><stop offset="1" stop-color="#5E1206"/></linearGradient>
+  <radialGradient id="g-lav-lavash" cx=".45" cy=".4" r=".75"><stop offset="0" stop-color="#FBEBC8"/><stop offset=".7" stop-color="#F1D39A"/><stop offset="1" stop-color="#D9AE6A"/></radialGradient>
+  <radialGradient id="g-lav-red" cx=".45" cy=".4" r=".75"><stop offset="0" stop-color="#F6C7A6"/><stop offset=".7" stop-color="#E9A27A"/><stop offset="1" stop-color="#C9744A"/></radialGradient>
+  <radialGradient id="g-lav-pita" cx=".42" cy=".36" r=".8"><stop offset="0" stop-color="#FFF1D2"/><stop offset=".6" stop-color="#F4DDAE"/><stop offset=".9" stop-color="#DDB474"/><stop offset="1" stop-color="#B9894A"/></radialGradient>
+  <linearGradient id="g-roll" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF0CF"/><stop offset=".35" stop-color="#F1D39A"/><stop offset=".8" stop-color="#C9954F"/><stop offset="1" stop-color="#9E6E34"/></linearGradient>
+  <linearGradient id="g-roll-red" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FAD2B4"/><stop offset=".35" stop-color="#E9A27A"/><stop offset=".8" stop-color="#B9673E"/><stop offset="1" stop-color="#8E4A26"/></linearGradient>
+  <linearGradient id="g-paper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#9D6BD8"/><stop offset=".5" stop-color="#7A4FB0"/><stop offset="1" stop-color="#4E2D7A"/></linearGradient>
   <radialGradient id="g-cream" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".7" stop-color="#FBF3E8"/><stop offset="1" stop-color="#E7D6BF"/></radialGradient>
 </defs></svg>`;
 const sesame = (cx, y, w) => {
@@ -364,6 +374,134 @@ function slice(top, layers, deco) {
 function soda() {
     return iced({ v: 'iced', liquid: '#5A2A1A', straw: '#E2452F' });
 }
+/* ---------------- custom shawarma & hot dog (realistic, shared by the builders, the cart and the kitchen show) ---------------- */
+const rnd = (i, k) => { const x = Math.sin(i * 12.9898 + k * 78.233) * 43758.5453; return x - Math.floor(x); };
+const SAUCE_C = { garlic: ['#FBF4E4', '#E6D6B8'], spicy: ['#E2522C', '#A82A12'], ketchup: ['#D3271F', '#8E120C'], cheese: ['#FFC94A', '#D99415'], mustard: ['#F2C230', '#B58410'], bbq: ['#6E2814', '#3E1408'] };
+const MEAT_G = { chicken: 'url(#g-chicken)', beef: 'url(#g-patty)' };
+/** One topping piece seen from above. */
+function piece(kind, x, y, r, i) {
+    const tr = `transform="translate(${x.toFixed(1)} ${y.toFixed(1)}) rotate(${r.toFixed(0)})"`;
+    switch (kind) {
+        case 'chicken':
+        case 'beef': return `<g ${tr}><rect x="-15" y="-5" width="30" height="10" rx="5" fill="${MEAT_G[kind]}"/><path d="M-10 -2 h14" stroke="${kind === 'beef' ? '#A9643E' : '#FCE2B0'}" stroke-width="1.6" opacity=".7"/><circle cx="${-6 + (i % 3) * 5}" cy="2" r="1.4" fill="${kind === 'beef' ? '#2A1006' : '#8A4A1A'}" opacity=".6"/></g>`;
+        case 'fries': return `<g ${tr}><rect x="-3.5" y="-17" width="7" height="34" rx="2.6" fill="#F6CA4C"/><rect x="-3.5" y="-17" width="2.4" height="34" rx="1.2" fill="#FFE59A"/><rect x="-3.5" y="12" width="7" height="5" rx="2" fill="#D99A28"/></g>`;
+        case 'tomato': return `<g ${tr}><rect x="-6" y="-6" width="12" height="12" rx="3" fill="url(#g-tomato)"/><ellipse cx="1" cy="1" rx="2.6" ry="1.4" fill="#FFE2A8" opacity=".85"/></g>`;
+        case 'cucumber': return `<g ${tr}><circle r="9" fill="#4E8A2C"/><circle r="7" fill="#D7EDA6"/><circle r="3.4" fill="#BFDE86"/>${[0, 1, 2, 3].map(j => `<ellipse cx="${(Math.cos(j * 1.57) * 3.6).toFixed(1)}" cy="${(Math.sin(j * 1.57) * 3.6).toFixed(1)}" rx="1.3" ry=".8" fill="#F4FAD8"/>`).join('')}</g>`;
+        case 'pickles': return `<g ${tr}><ellipse rx="11" ry="7" fill="url(#g-pickle)"/><ellipse rx="7" ry="4.2" fill="#D8E9A0" opacity=".7"/>${[0, 1, 2].map(j => `<circle cx="${-4 + j * 4}" cy="${j % 2}" r="1" fill="#F2F7D2"/>`).join('')}</g>`;
+        case 'cabbage': return `<g ${tr}><path d="M-14 0 q7 -6 14 0 t14 0" stroke="#E8F5CC" stroke-width="3" fill="none" stroke-linecap="round"/><path d="M-12 5 q6 -5 12 0 t12 0" stroke="#C4E28E" stroke-width="2.4" fill="none" stroke-linecap="round"/></g>`;
+        case 'carrot': return `<g ${tr}><path d="M-14 -2 q8 -5 16 2 t12 -2" stroke="#F08A24" stroke-width="2.4" fill="none" stroke-linecap="round"/><path d="M-12 4 q8 3 14 -1 t10 2" stroke="#F7A548" stroke-width="2" fill="none" stroke-linecap="round"/></g>`;
+        case 'onion': return `<g ${tr}><ellipse rx="10" ry="6" fill="none" stroke="#B98CD6" stroke-width="3"/><ellipse rx="10" ry="6" fill="none" stroke="#F6ECFB" stroke-width="1.2"/></g>`;
+        case 'crispy': return `<g ${tr}><path d="M-8 2 q3 -8 9 -4 q5 4 -1 6 q-5 2 -8 -2z" fill="#B9782E"/><path d="M-4 -1 q3 -3 6 -1" stroke="#E4B064" stroke-width="1.2" fill="none"/></g>`;
+        case 'cheese': return `<g ${tr}><rect x="-8" y="-2" width="16" height="4" rx="2" fill="url(#g-cheese)"/></g>`;
+        case 'jalapeno': return `<g ${tr}><circle r="7" fill="#3E8A33"/><circle r="4.4" fill="#D9EBA8"/><circle cx="-1" cy="-1" r="1.1" fill="#FFF8D8"/><circle cx="1.5" cy="1.2" r="1" fill="#FFF8D8"/></g>`;
+        case 'bacon': return `<g ${tr}><path d="M-16 0 q4 -6 8 0 t8 0 t8 0 t8 0" stroke="#7A2418" stroke-width="8" fill="none" stroke-linecap="round"/><path d="M-16 0 q4 -6 8 0 t8 0 t8 0 t8 0" stroke="#C0503A" stroke-width="5.5" fill="none" stroke-linecap="round"/><path d="M-16 -1 q4 -6 8 0 t8 0" stroke="#F3B6A1" stroke-width="1.4" fill="none"/></g>`;
+    }
+    return '';
+}
+const zig = (x0, x1, y, amp, n) => { let d = `M${x0.toFixed(1)} ${y.toFixed(1)}`; const st = (x1 - x0) / n; for (let i = 0; i < n; i++)
+    d += ` l${(st / 2).toFixed(1)} ${(i % 2 ? amp : -amp).toFixed(1)} l${(st / 2).toFixed(1)} ${(i % 2 ? -amp : amp).toFixed(1)}`; return d; };
+const sauceLine = (id, d, w = 5) => { const [c, dark] = SAUCE_C[id] ?? SAUCE_C.garlic; return `<path d="${d}" stroke="${dark}" stroke-width="${w + 1.6}" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".55" transform="translate(0 1.4)"/><path d="${d}" stroke="${c}" stroke-width="${w}" fill="none" stroke-linecap="round" stroke-linejoin="round"/><path d="${d}" stroke="#fff" stroke-width="1.2" fill="none" stroke-linecap="round" stroke-linejoin="round" opacity=".55" transform="translate(-.6 -1.2)"/>`; };
+const ADD_N = { fries: 9, tomato: 9, cucumber: 6, pickles: 6, cabbage: 9, carrot: 9, onion: 6, cheese: 14, jalapeno: 6, chicken: 11, beef: 11 };
+/** The open lavash or pita seen from above, everything laid on a band across the middle. Groups carry data-part for the builder's animations. */
+export function wrapTopSVG(w, cx = 200, cy = 290) {
+    const pita = w.base === 'pita';
+    let s = `<ellipse cx="${cx}" cy="${cy + 176}" rx="170" ry="16" fill="#2A1440" opacity=".12"/>`;
+    s += `<g data-part="base"><g filter="url(#fx-bread)">${pita
+        ? `<circle cx="${cx}" cy="${cy}" r="152" fill="url(#g-lav-pita)"/><circle cx="${cx}" cy="${cy}" r="132" fill="none" stroke="#E9C890" stroke-width="10" opacity=".5"/>`
+        : `<path d="M${cx - 150} ${cy - 150} q-4 -16 14 -18 h272 q18 2 14 20 v296 q2 16 -16 18 h-270 q-18 -2 -16 -18z" fill="url(#g-lav-${w.base === 'red' ? 'red' : 'lavash'})"/>`}</g>
+    ${Array.from({ length: 22 }, (_, i) => { const a = rnd(i, 1) * Math.PI * 2, rr = (pita ? 130 : 150) * Math.sqrt(rnd(i, 2)); return `<ellipse cx="${(cx + Math.cos(a) * rr * (pita ? 1 : 1)).toFixed(1)}" cy="${(cy + Math.sin(a) * rr * (pita ? 1 : 1.05)).toFixed(1)}" rx="${(3 + rnd(i, 3) * 7).toFixed(1)}" ry="${(2 + rnd(i, 4) * 4).toFixed(1)}" fill="${w.base === 'red' ? '#B5552C' : '#B07A3A'}" opacity="${(.18 + rnd(i, 5) * .25).toFixed(2)}"/>`; }).join('')}</g>`;
+    const bx0 = cx - 104, bw = 208, by0 = cy - 50, bh = 100;
+    // a base smear of the first sauce
+    if (w.sauces[0])
+        s += `<g data-part="smear"><ellipse cx="${cx}" cy="${cy}" rx="${bw / 2 + 8}" ry="${bh / 2 + 4}" fill="${(SAUCE_C[w.sauces[0]] ?? SAUCE_C.garlic)[0]}" opacity=".55"/></g>`;
+    const meats = w.meat === 'mix' ? ['chicken', 'beef'] : [w.meat];
+    const nMeat = Math.round(ADD_N.chicken * (w.double ? 1.7 : 1) / meats.length);
+    let k = 0;
+    s += `<g data-part="meat" filter="url(#fx-soft)">${meats.map((m, mi) => Array.from({ length: nMeat }, (_, i) => piece(m, bx0 + 12 + rnd(i + mi * 50, 7) * (bw - 24), by0 + 12 + rnd(i + mi * 50, 8) * (bh - 24), rnd(i + mi * 50, 9) * 360, i)).join('')).join('')}</g>`;
+    for (const a of w.add) {
+        k++;
+        const n = ADD_N[a] ?? 6;
+        s += `<g data-part="add:${a}">${Array.from({ length: n }, (_, i) => piece(a, bx0 + 10 + rnd(i + k * 31, 11) * (bw - 20), by0 + 8 + rnd(i + k * 31, 12) * (bh - 16), rnd(i + k * 31, 13) * 360, i)).join('')}</g>`;
+    }
+    w.sauces.forEach((sc, i) => { s += `<g data-part="sauce:${sc}">${sauceLine(sc, zig(bx0 + 6, bx0 + bw - 6, by0 + 26 + i * 22, 12, 9 + i * 2), sc === 'cheese' ? 6 : 4.6)}</g>`; });
+    return s;
+}
+/** The rolled shawarma from the side, half in Violette paper, the open end showing what's inside. */
+export function wrapRolledSVG(w, cx = 200, cy = 170, len = 280) {
+    if (w.base === 'pita')
+        return pitaPocketSVG(w, cx, cy + 40, len * .82);
+    const r = 44, x0 = cx - len / 2, x1 = cx + len / 2, g = w.base === 'red' ? 'url(#g-roll-red)' : 'url(#g-roll)';
+    const meatC = w.meat === 'beef' ? '#6A3620' : w.meat === 'mix' ? '#8A4A28' : '#D99A4A';
+    const inside = [meatC, ...w.add.map(a => ({ fries: '#F4C542', tomato: '#E5432C', cucumber: '#7DBA3E', pickles: '#8DAF44', cabbage: '#D6EDB0', carrot: '#F08A24', onion: '#C9A0DC', cheese: '#F7B92E', jalapeno: '#3E8A33' }[a])).filter(Boolean)];
+    let s = `<ellipse cx="${cx}" cy="${cy + r + 14}" rx="${len / 2 + 20}" ry="12" fill="#2A1440" opacity=".14"/>`;
+    s += `<g filter="url(#fx-bread)"><rect x="${x0}" y="${cy - r}" width="${len}" height="${r * 2}" rx="${r}" fill="${g}"/></g>`;
+    // grill marks
+    for (let i = 0; i < 6; i++) {
+        const x = x0 + 70 + i * (len - 120) / 6;
+        s += `<path d="M${x.toFixed(1)} ${cy - r + 6} l18 ${r * 2 - 12}" stroke="#8A5424" stroke-width="5" stroke-linecap="round" opacity=".38"/>`;
+    }
+    s += `<path d="M${x0 + 40} ${cy - r + 12} H${x1 - 50}" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".28"/>`;
+    // the open end
+    s += `<ellipse cx="${x1 - 6}" cy="${cy}" rx="22" ry="${r}" fill="${w.base === 'red' ? '#F2B48E' : '#F7E2B4'}"/><ellipse cx="${x1 - 6}" cy="${cy}" rx="16" ry="${r - 8}" fill="${meatC}"/>`;
+    s += inside.slice(1).map((c, i) => `<circle cx="${(x1 - 10 + Math.cos(i * 2.1) * 8).toFixed(1)}" cy="${(cy + Math.sin(i * 2.1) * (r - 18)).toFixed(1)}" r="${(5 + (i % 2) * 2)}" fill="${c}"/>`).join('');
+    w.sauces.forEach((sc, i) => { s += `<path d="M${x1 - 18} ${cy - r + 14 + i * 14} q10 6 18 0" stroke="${(SAUCE_C[sc] ?? SAUCE_C.garlic)[0]}" stroke-width="4" fill="none" stroke-linecap="round"/>`; });
+    s += `<path d="M${x1 - 6} ${cy - r} a22 ${r} 0 0 1 0 ${r * 2}" fill="none" stroke="${w.base === 'red' ? '#C9744A' : '#D9AE6A'}" stroke-width="5"/>`;
+    // paper sleeve
+    s += `<g filter="url(#fx-soft)"><path d="M${x0 - 4} ${cy - r - 4} H${cx - 10} l-14 ${r * 2 + 8} H${x0 - 4} q-12 0 -12 -${r} q0 -${r + 4} 12 -${r + 4}z" fill="url(#g-paper)"/></g>`;
+    s += `<path d="M${x0 + 6} ${cy - r + 6} H${cx - 26}" stroke="#fff" stroke-width="4" opacity=".25" stroke-linecap="round"/><text x="${x0 + (cx - x0) / 2 - 8}" y="${cy + 12}" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="34" fill="#FBF8FD" opacity=".9">V</text>`;
+    if (w.double)
+        s += `<g transform="translate(${x0 + 30} ${cy - r - 18})"><rect x="-18" y="-12" width="36" height="22" rx="11" fill="#2A1440"/><text x="0" y="4" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="12" fill="#fff">×2</text></g>`;
+    return s;
+}
+function pitaPocketSVG(w, cx, base, wd) {
+    const h = wd * .55;
+    let s = `<ellipse cx="${cx}" cy="${base + 12}" rx="${wd / 2 + 16}" ry="12" fill="#2A1440" opacity=".14"/>`;
+    s += `<g filter="url(#fx-bread)"><path d="M${cx - wd / 2} ${base} q0 -${h * 1.25} ${wd / 2} -${h * 1.25} q${wd / 2} 0 ${wd / 2} ${h * 1.25}z" fill="url(#g-lav-pita)"/></g>`;
+    // what's inside, peeking out of the top
+    const meats = w.meat === 'mix' ? ['chicken', 'beef'] : [w.meat];
+    let fill = Array.from({ length: w.double ? 12 : 8 }, (_, i) => piece(meats[i % meats.length], cx - wd * .32 + rnd(i, 21) * wd * .64, base - h * .95 + rnd(i, 22) * 26, rnd(i, 23) * 60 - 30, i)).join('');
+    w.add.forEach((a, k) => { fill += Array.from({ length: 4 }, (_, i) => piece(a, cx - wd * .3 + rnd(i + k * 9, 24) * wd * .6, base - h * 1.02 + rnd(i + k * 9, 25) * 22, rnd(i + k * 9, 26) * 360, i)).join(''); });
+    s += `<g filter="url(#fx-soft)">${fill}</g>`;
+    w.sauces.forEach((sc, i) => { s += sauceLine(sc, zig(cx - wd * .3, cx + wd * .3, base - h * .98 + i * 10, 6, 8), 4); });
+    s += `<g filter="url(#fx-bread)"><path d="M${cx - wd / 2 + 4} ${base} q0 -${h * .8} ${wd / 2 - 4} -${h * .82} q${wd / 2 - 4} 0 ${wd / 2 - 4} ${h * .82}z" fill="url(#g-lav-pita)"/></g>`;
+    s += `<path d="M${cx - wd / 2 + 6} ${base - 4} h${wd - 12} v-${h * .42} h-${wd - 12}z" fill="url(#g-paper)" opacity=".95"/><text x="${cx}" y="${base - h * .12}" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="28" fill="#FBF8FD" opacity=".9">V</text>`;
+    return s;
+}
+/** A hot dog from the side: back of the bun, sausage, toppings, sauces, front of the bun. */
+export function hotdogSVG(h, cx = 200, base = 250, L = 290) {
+    const g = `url(#g-bun-${['classic', 'brioche', 'violet', 'black'].includes(h.bun) ? h.bun : 'classic'})`;
+    const S = L * (h.xl ? 1.24 : 1.03), sy = base - 46, R = 17;
+    let s = `<ellipse cx="${cx}" cy="${base + 8}" rx="${Math.max(L, S) / 2 + 16}" ry="12" fill="#2A1440" opacity=".14"/>`;
+    s += `<g data-part="bunback"><g filter="url(#fx-bread)"><path d="M${cx - L / 2 + 8} ${base - 36} Q${cx - L / 2} ${base - 82} ${cx - L / 2 + 34} ${base - 84} H${cx + L / 2 - 34} Q${cx + L / 2} ${base - 82} ${cx + L / 2 - 8} ${base - 36}z" fill="${g}"/></g>
+    <path d="M${cx - L / 2 + 16} ${base - 44} Q${cx} ${base - 62} ${cx + L / 2 - 16} ${base - 44}" stroke="url(#g-crumb)" stroke-width="16" fill="none" stroke-linecap="round"/>
+    <path d="M${cx - L / 2 + 40} ${base - 76} H${cx + L / 2 - 60}" stroke="#fff" stroke-width="5" opacity=".3" stroke-linecap="round"/></g>`;
+    s += `<g data-part="sausage"><g filter="url(#fx-meat)"><rect x="${cx - S / 2}" y="${sy - R}" width="${S}" height="${R * 2}" rx="${R}" fill="url(#g-saus-${h.sausage})"/></g>
+    <path d="M${cx - S / 2 + 14} ${sy - R + 7} H${cx + S / 2 - 18}" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".35"/>
+    ${h.sausage === 'smoked' || h.sausage === 'beef' ? Array.from({ length: 7 }, (_, i) => `<path d="M${(cx - S * .36 + i * S * .12).toFixed(1)} ${sy - R + 4} l10 ${R * 2 - 10}" stroke="#2A0E06" stroke-width="3.4" opacity=".45" stroke-linecap="round"/>`).join('') : ''}
+    ${h.sausage === 'spicy' ? Array.from({ length: 14 }, (_, i) => `<circle cx="${(cx - S * .42 + rnd(i, 31) * S * .84).toFixed(1)}" cy="${(sy - R + 6 + rnd(i, 32) * (R * 2 - 12)).toFixed(1)}" r="1.5" fill="#FFB27A" opacity=".8"/>`).join('') : ''}</g>`;
+    // toppings, each a thin layer above the last
+    const top = sy - R + 4, span = Math.min(S, L) * .84;
+    h.tops.forEach((tp, k) => {
+        const y = top - k * 7;
+        let p = '';
+        if (tp === 'cheese')
+            p = `<path d="M${cx - span / 2} ${y - 2} H${cx + span / 2} ${Array.from({ length: 8 }, (_, i) => `l-${(span / 8 * .4).toFixed(1)} ${(6 + (i % 3) * 5).toFixed(0)} l-${(span / 8 * .2).toFixed(1)} -${(6 + (i % 3) * 5).toFixed(0)} l-${(span / 8 * .4).toFixed(1)} 0`).join(' ')}z" fill="url(#g-cheese)" filter="url(#fx-soft)"/>`;
+        else if (tp === 'bacon')
+            p = `<g filter="url(#fx-soft)">${sauceLine('bbq', zig(cx - span / 2, cx + span / 2, y - 2, 4, 10), 8).replace(/#6E2814/g, '#C0503A').replace(/#3E1408/g, '#7A2418')}</g>`;
+        else {
+            const kind = tp === 'onion' ? 'crispy' : tp;
+            const n = Math.round(span / 22);
+            p = `<g filter="url(#fx-soft)">${Array.from({ length: n }, (_, i) => piece(kind, cx - span / 2 + (i + .5) * span / n + (rnd(i + k * 7, 41) - .5) * 8, y - 3 + rnd(i + k * 7, 42) * 4, kind === 'pickles' || kind === 'jalapeno' ? 0 : rnd(i + k * 7, 43) * 360, i).replace(/<ellipse rx="11" ry="7"/, '<ellipse rx="11" ry="5"')).join('')}</g>`;
+        }
+        s += `<g data-part="top:${tp}">${p}</g>`;
+    });
+    const sTop = top - h.tops.length * 7 - 4;
+    h.sauces.forEach((sc, i) => { s += `<g data-part="sauce:${sc}">${sauceLine(sc, zig(cx - span / 2 + 6, cx + span / 2 - 6, sTop - i * 3, 6, 12 + i * 2), sc === 'cheese' ? 6 : 4.4)}</g>`; });
+    s += `<g data-part="bunfront"><g filter="url(#fx-bread)"><path d="M${cx - L / 2} ${base - 42} Q${cx - L / 2} ${base} ${cx - L / 2 + 30} ${base} H${cx + L / 2 - 30} Q${cx + L / 2} ${base} ${cx + L / 2} ${base - 42} Q${cx} ${base - 30} ${cx - L / 2} ${base - 42}z" fill="${g}"/></g>
+    <path d="M${cx - L / 2 + 22} ${base - 30} Q${cx} ${base - 20} ${cx + L / 2 - 22} ${base - 30}" stroke="#fff" stroke-width="4" opacity=".22" fill="none" stroke-linecap="round"/>
+    ${h.bun === 'classic' || h.bun === 'violet' || h.bun === 'black' ? Array.from({ length: 10 }, (_, i) => `<ellipse cx="${(cx - L * .4 + rnd(i, 51) * L * .8).toFixed(1)}" cy="${(base - 30 + rnd(i, 52) * 18).toFixed(1)}" rx="3.6" ry="1.8" fill="#FFF3D9" transform="rotate(${(rnd(i, 53) * 60 - 30).toFixed(0)} ${(cx - L * .4 + rnd(i, 51) * L * .8).toFixed(1)} ${(base - 30 + rnd(i, 52) * 18).toFixed(1)})"/>`).join('') : ''}</g>`;
+    return s;
+}
 /* ---------------- dispatcher ---------------- */
 export function inner(a) {
     switch (a.k) {
@@ -381,6 +519,8 @@ export function inner(a) {
         case 'tiramisu': return slice('#6B4226', ['#F6E7CF', '#8A5A3B', '#F6E7CF', '#8A5A3B'], [0, 1, 2, 3, 4, 5, 6, 7, 8].map(i => `<circle cx="${140 + i * 18}" cy="${96 + (i % 3) * 5}" r="2.4" fill="#3A1F14"/>`).join(''));
         case 'medovik': return slice('#E9B44C', ['#C98A3C', '#F7E6C4', '#C98A3C', '#F7E6C4', '#C98A3C', '#F7E6C4'], [0, 1, 2, 3, 4, 5].map(i => `<circle cx="${150 + i * 26}" cy="${96 + (i % 2) * 6}" r="3" fill="#A0652A"/>`).join(''));
         case 'soda': return soda();
+        case 'cwrap': return wrapRolledSVG(a.w, 200, 160, 290);
+        case 'chotdog': return hotdogSVG(a.h, 200, 250, 300);
         case 'combo': {
             const n = a.parts.length;
             const pos = n === 2 ? [[-80, 10, .72], [86, 0, .72]] : [[-104, 16, .58], [0, -10, .6], [104, 16, .58]];

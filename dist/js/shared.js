@@ -1,7 +1,7 @@
 // Small shared core: DOM helpers, storage, language, cart, overlays, toasts.
 import { DICT } from './i18n.js';
-import { ITEM, EXTRAS, SIZES, photoURL, SET_DISCOUNTS, SET_DRINKS, SET_BURGERS, setPrice } from './data.js';
-import { burgerPrice, burgerName, burgerArt, burgerPrep, coffeePrice, coffeeName, coffeeArt, coffeePrep, sanitizeBurger, sanitizeCoffee } from './recipes.js';
+import { ITEM, EXTRAS, SIZES, photoURL, SET_DISCOUNTS, SET_DRINKS, SET_BURGERS, setPrice, BUNS, WRAP_ADDS, WRAP_SAUCES, HD_TOPS, HD_SAUCES } from './data.js';
+import { burgerPrice, burgerName, burgerArt, burgerPrep, coffeePrice, coffeeName, coffeeArt, coffeePrep, sanitizeBurger, sanitizeCoffee, wrapPrice, wrapName, wrapArt, wrapPrep, sanitizeWrap, hotdogPrice, hotdogName, hotdogArt, hotdogPrep, sanitizeHotdog } from './recipes.js';
 import { svg } from './art.js';
 export const $ = (s, root = document) => root.querySelector(s);
 export const $$ = (s, root = document) => Array.from(root.querySelectorAll(s));
@@ -60,6 +60,14 @@ const sigOf = (l) => {
         return `b:${l.burger.bun}:${l.burger.fill.join(',')}`;
     if (l.kind === 'set')
         return `s:${l.set.drink}:${l.set.burger}:${l.set.pct}`;
+    if (l.kind === 'wrap') {
+        const w = l.wrap;
+        return `w:${w.base}:${w.meat}:${w.double ? 2 : 1}:${w.add.slice().sort().join(',')}:${w.sauces.slice().sort().join(',')}`;
+    }
+    if (l.kind === 'hotdog') {
+        const h = l.hotdog;
+        return `h:${h.bun}:${h.sausage}:${h.xl ? 'xl' : ''}:${h.tops.slice().sort().join(',')}:${h.sauces.slice().sort().join(',')}`;
+    }
     const c = l.coffee;
     return `c:${[c.temp, c.size, c.shots, c.milk, c.milkAmt, c.foam, c.syrup, c.topping].join(',')}`;
 };
@@ -90,6 +98,16 @@ function sanitize(raw) {
             if (c)
                 base = { kind: 'coffee', coffee: c };
         }
+        else if (o.kind === 'wrap') {
+            const w = sanitizeWrap(o.wrap);
+            if (w)
+                base = { kind: 'wrap', wrap: w };
+        }
+        else if (o.kind === 'hotdog') {
+            const h = sanitizeHotdog(o.hotdog);
+            if (h)
+                base = { kind: 'hotdog', hotdog: h };
+        }
         else if (o.kind === 'set' && o.set && typeof o.set === 'object') {
             const st = o.set;
             if (SET_DRINKS.includes(st.drink) && SET_BURGERS.includes(st.burger) && SET_DISCOUNTS.includes(Number(st.pct)))
@@ -109,6 +127,10 @@ export function unitPrice(l) {
         return burgerPrice(l.burger);
     if (l.kind === 'coffee')
         return coffeePrice(l.coffee);
+    if (l.kind === 'wrap')
+        return wrapPrice(l.wrap);
+    if (l.kind === 'hotdog')
+        return hotdogPrice(l.hotdog);
     const it = ITEM(l.item);
     return it.price + (it.sized ? SIZES.find(s => s.id === l.size)?.add ?? 0 : 0) + (l.extras ?? []).reduce((a, e) => a + EXTRAS[e].price, 0);
 }
@@ -119,6 +141,10 @@ export function lineName(l) {
         return burgerName(l.burger, state.lang);
     if (l.kind === 'coffee')
         return coffeeName(l.coffee, state.lang);
+    if (l.kind === 'wrap')
+        return wrapName(l.wrap, state.lang);
+    if (l.kind === 'hotdog')
+        return hotdogName(l.hotdog, state.lang);
     return ITEM(l.item).name[state.lang];
 }
 export function lineSub(l) {
@@ -128,6 +154,14 @@ export function lineSub(l) {
         return `${t('lab.custom')} · ${l.burger.fill.length} ${t('lab.layersShort')}`;
     if (l.kind === 'coffee')
         return `${t('lab.custom')} · ${l.coffee.size} · ${t('lab.temp.' + l.coffee.temp)}`;
+    if (l.kind === 'wrap') {
+        const w = l.wrap;
+        return [t('lab.custom'), ...w.add.map(a => WRAP_ADDS.find(p => p.id === a).name[state.lang]), ...w.sauces.map(a => WRAP_SAUCES.find(p => p.id === a).name[state.lang])].join(' · ');
+    }
+    if (l.kind === 'hotdog') {
+        const h = l.hotdog;
+        return [t('lab.custom'), BUNS.find(b => b.id === h.bun)?.name[state.lang] ?? '', ...h.tops.map(a => HD_TOPS.find(p => p.id === a).name[state.lang]), ...h.sauces.map(a => HD_SAUCES.find(p => p.id === a).name[state.lang])].join(' · ');
+    }
     const parts = [];
     if (l.size)
         parts.push(l.size);
@@ -141,6 +175,10 @@ export function lineArt(l) {
         return burgerArt(l.burger);
     if (l.kind === 'coffee')
         return coffeeArt(l.coffee);
+    if (l.kind === 'wrap')
+        return wrapArt(l.wrap);
+    if (l.kind === 'hotdog')
+        return hotdogArt(l.hotdog);
     return ITEM(l.item).art;
 }
 export function linePrep(l) {
@@ -150,6 +188,10 @@ export function linePrep(l) {
         return burgerPrep(l.burger);
     if (l.kind === 'coffee')
         return coffeePrep(l.coffee);
+    if (l.kind === 'wrap')
+        return wrapPrep(l.wrap);
+    if (l.kind === 'hotdog')
+        return hotdogPrep(l.hotdog);
     return ITEM(l.item).prep;
 }
 export const isCoffeeLine = (l) => l.kind === 'coffee' || (l.kind === 'set' && l.set.drink !== 'matcha') || (l.kind === 'item' && ['coffee', 'cold'].includes(ITEM(l.item).cat) && ITEM(l.item).id !== 'soda' && !ITEM(l.item).id.includes('lemonade'));

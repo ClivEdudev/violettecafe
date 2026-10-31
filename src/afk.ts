@@ -6,7 +6,7 @@
 import { $, clamp, reduced, finePointer, state, t, tf, money, addLine, toast, on, type Line } from './shared.js';
 import { ITEM, FILLINGS, LAB, EXTRAS, SIZES, type ExtraId } from './data.js';
 import { latteArt, LAYERS, bunTop, bunBottom, inner, type Layer, type ArtSpec } from './art.js';
-import { coffeeName, burgerName, type CoffeeSpec } from './recipes.js';
+import { coffeeName, burgerName, wrapName, hotdogName, type CoffeeSpec } from './recipes.js';
 
 const START_AT = Number(new URLSearchParams(location.search).get('afkt')) || 0; // jump into the loop (seconds), for previews
 const IDLE_MS = (() => { const v = Number(new URLSearchParams(location.search).get('afk')); return v > 0 ? v * 1000 : 15000; })();
@@ -653,12 +653,14 @@ function fryerAct(id: string, qty = 1, order?: Act['order']): Act {
 /* ---------- plated: hot dogs, sandwich, pizza, pastries, cakes ---------- */
 type Garnish = 'ketchupMustard' | 'frenchSauce' | 'picks' | 'herbs' | 'sugar' | 'berries' | 'cocoa' | 'honey';
 const GARNISH: Record<string, Garnish> = { hotdog: 'ketchupMustard', 'french-hotdog': 'frenchSauce', club: 'picks', 'pizza-slice': 'herbs', croissant: 'sugar', 'almond-croissant': 'sugar', cheesecake: 'berries', tiramisu: 'cocoa', medovik: 'honey' };
-function plateAct(id: string, qty = 1, order?: Act['order']): Act {
-  const it = ITEM(id)!, g = GARNISH[id] ?? 'sugar', S = .4, PX = 560, PY = 486;
+function plateAct(id: string, qty = 1, order?: Act['order'], custom?: { art: ArtSpec; name: () => string; garnish: Garnish; cap?: string }): Act {
+  const base = ITEM(id), g = custom?.garnish ?? GARNISH[id] ?? 'sugar', S = .4, PX = 560, PY = 486;
+  const it = { art: custom?.art ?? base!.art };
+  const nm = custom?.name ?? (() => base!.name[state.lang]);
   const R: P[] = [[0, 775, 505], [.4, 720, 545], [1.0, 600, 430], [1.5, 572, 462], [1.8, 775, 505], [2.0, 720, 545], [2.4, 520, 410], [3.4, 610, 410], [3.8, 775, 505]];
   const serveT = 4.2, dur = 7.2;
-  return mkAct({ station: 'plain', name: () => it.name[state.lang], qty, order,
-    segs: [{ dur: 1.9, cap: () => tf('k.plate', { name: it.name[state.lang] }) }, { dur: 2.3, cap: () => t('k.g.' + g) }, { dur: dur - 4.2, cap: () => tf('k.serve', { name: it.name[state.lang] }) }],
+  return mkAct({ station: 'plain', name: () => nm(), qty, order,
+    segs: [{ dur: 1.9, cap: () => tf('k.plate', { name: nm() }) }, { dur: 2.3, cap: () => t(custom?.cap ?? 'k.g.' + g) }, { dur: dur - 4.2, cap: () => tf('k.serve', { name: nm() }) }],
     pose: (T) => ({ R: track(R, T), L: REST_L, ...(T > serveT ? smileFace(.3)(T - serveT) : between(T, 2.2, 3.6) ? { look: [-2, 7], head: [-2, 10] } : {}) }),
     draw: (T, h) => {
       let props = `<ellipse cx="${PX}" cy="${PY + 2}" rx="70" ry="9" fill="url(#g-plate)"/><ellipse cx="${PX}" cy="${PY}" rx="52" ry="6" fill="url(#g-plate-well)"/>`, fx = '', serve = '';
@@ -810,6 +812,14 @@ export function actsForLines(lines: Line[]): Act[] {
     if (l.kind === 'item') out.push(...actsForItem(l.item!, l.size, l.extras ?? [], l.qty));
     else if (l.kind === 'burger' && l.burger) out.push(burgerAct({ name: () => burgerName(l.burger!, state.lang), bun: l.burger.bun, layers: [...l.burger.fill] }, l.qty));
     else if (l.kind === 'coffee' && l.coffee) out.push(coffeeFromSpec(l.coffee, l.qty));
+    else if (l.kind === 'wrap' && l.wrap) {
+      const w = l.wrap, beef = w.meat !== 'chicken';
+      out.push(wrapAct({ name: () => wrapName(w, state.lang), meatC: w.meat === 'beef' ? '#7A3E1E' : w.meat === 'mix' ? '#94552A' : '#B8743A', doner: beef ? 'aDoner' : 'aDonerC', fries: w.add.includes('fries'),
+        cheese: w.add.includes('cheese') || w.sauces.includes('cheese'), jalapeno: w.add.includes('jalapeno'), spicy: w.sauces.includes('spicy'), extraSauce: w.sauces.length > 1 }, l.qty));
+    } else if (l.kind === 'hotdog' && l.hotdog) {
+      const h = l.hotdog;
+      out.push(plateAct('hotdog', l.qty, undefined, { art: { k: 'chotdog', h }, name: () => hotdogName(h, state.lang), garnish: h.sauces.length ? 'ketchupMustard' : 'picks', cap: h.sauces.includes('ketchup') && h.sauces.includes('mustard') ? undefined : h.sauces.length ? 'k.g.sauces' : 'k.g.dog' }));
+    }
     else if (l.kind === 'set' && l.set) out.push(...actsForItem(l.set.drink, 'M', [], l.qty), ...actsForItem(l.set.burger, undefined, [], l.qty));
   }
   return out.slice(0, 10);

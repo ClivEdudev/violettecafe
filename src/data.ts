@@ -148,6 +148,60 @@ export const LAB = {
   toppings: ['none', 'cinnamon', 'cocoa', 'cream'],
 };
 
+/* ---------- shawarma & hot dog builders ---------- */
+export interface Part { id: string; name: L10n; price: number; kcal: number; c: string }
+export const WRAP_BASES: Part[] = [
+  { id: 'lavash', name: n('Lavash', 'Лаваш', 'Lavash'), price: 6000, kcal: 180, c: '#F1D39A' },
+  { id: 'red', name: n('Qizil lavash', 'Красный лаваш', 'Tomato lavash'), price: 7000, kcal: 185, c: '#E9A27A' },
+  { id: 'pita', name: n('Pita non', 'Пита', 'Pita'), price: 7000, kcal: 210, c: '#F4DDAE' },
+];
+export const WRAP_MEATS: (Part & { dbl: number })[] = [
+  { id: 'chicken', name: n('Tovuq', 'Курица', 'Chicken'), price: 15000, kcal: 230, c: '#D9A05A', dbl: 9000 },
+  { id: 'beef', name: n('Mol goʻshti', 'Говядина', 'Beef'), price: 20000, kcal: 280, c: '#7A3E1E', dbl: 12000 },
+  { id: 'mix', name: n('Aralash', 'Микс', 'Mixed'), price: 18000, kcal: 255, c: '#A8642F', dbl: 11000 },
+];
+export const WRAP_ADDS: Part[] = [
+  { id: 'fries', name: n('Kartoshka fri', 'Картофель фри', 'Fries'), price: 4000, kcal: 120, c: '#F4C542' },
+  { id: 'tomato', name: n('Pomidor', 'Помидор', 'Tomato'), price: 2000, kcal: 8, c: '#E5432C' },
+  { id: 'cucumber', name: n('Bodring', 'Огурец', 'Cucumber'), price: 2000, kcal: 6, c: '#7DBA3E' },
+  { id: 'pickles', name: n('Tuzlangan bodring', 'Солёные огурцы', 'Pickles'), price: 2000, kcal: 6, c: '#8DAF44' },
+  { id: 'cabbage', name: n('Karam', 'Капуста', 'Cabbage'), price: 2000, kcal: 10, c: '#D6EDB0' },
+  { id: 'carrot', name: n('Koreyscha sabzi', 'Морковь по-корейски', 'Korean carrot'), price: 3000, kcal: 30, c: '#F08A24' },
+  { id: 'onion', name: n('Piyoz', 'Лук', 'Onion'), price: 1000, kcal: 8, c: '#C9A0DC' },
+  { id: 'cheese', name: n('Pishloq', 'Сыр', 'Cheese'), price: 4000, kcal: 90, c: '#F7B92E' },
+  { id: 'jalapeno', name: n('Halapeño', 'Халапеньо', 'Jalapeño'), price: 3000, kcal: 4, c: '#3E8A33' },
+];
+export const WRAP_SAUCES: Part[] = [
+  { id: 'garlic', name: n('Sarimsoqli', 'Чесночный', 'Garlic'), price: 1000, kcal: 60, c: '#FBF4E4' },
+  { id: 'spicy', name: n('Achchiq', 'Острый', 'Hot'), price: 1000, kcal: 25, c: '#D8431C' },
+  { id: 'ketchup', name: n('Ketchup', 'Кетчуп', 'Ketchup'), price: 1000, kcal: 20, c: '#B71C1C' },
+  { id: 'cheese', name: n('Pishloq sousi', 'Сырный', 'Cheese sauce'), price: 2000, kcal: 70, c: '#F4B731' },
+];
+export const MAX_WRAP_ADDS = 7, MAX_SAUCES = 3, MAX_HD_TOPS = 5;
+export const HD_SAUSAGES: Part[] = [
+  { id: 'beef', name: n('Mol goʻshti', 'Говяжья', 'Beef'), price: 10000, kcal: 230, c: '#A9452C' },
+  { id: 'chicken', name: n('Tovuq', 'Куриная', 'Chicken'), price: 8000, kcal: 190, c: '#D99A6C' },
+  { id: 'smoked', name: n('Dudlangan', 'Копчёная', 'Smoked'), price: 11000, kcal: 260, c: '#6E2E18' },
+  { id: 'spicy', name: n('Achchiq', 'Острая', 'Spicy'), price: 10000, kcal: 240, c: '#C2381E' },
+];
+export const HD_XL = 6000;
+export const HD_TOPS: Part[] = [
+  { id: 'onion', name: n('Qovurilgan piyoz', 'Жареный лук', 'Crispy onion'), price: 2000, kcal: 45, c: '#B9782E' },
+  { id: 'pickles', name: n('Tuzlangan bodring', 'Солёные огурцы', 'Pickles'), price: 2000, kcal: 6, c: '#8DAF44' },
+  { id: 'jalapeno', name: n('Halapeño', 'Халапеньо', 'Jalapeño'), price: 3000, kcal: 4, c: '#3E8A33' },
+  { id: 'cheese', name: n('Cheddar', 'Чеддер', 'Cheddar'), price: 4000, kcal: 80, c: '#F7B92E' },
+  { id: 'carrot', name: n('Koreyscha sabzi', 'Морковь по-корейски', 'Korean carrot'), price: 3000, kcal: 30, c: '#F08A24' },
+  { id: 'tomato', name: n('Pomidor', 'Помидор', 'Tomato'), price: 2000, kcal: 8, c: '#E5432C' },
+  { id: 'bacon', name: n('Mol goʻshti bekoni', 'Говяжий бекон', 'Beef bacon'), price: 6000, kcal: 90, c: '#C0503A' },
+];
+export const HD_SAUCES: Part[] = [
+  { id: 'ketchup', name: n('Ketchup', 'Кетчуп', 'Ketchup'), price: 1000, kcal: 20, c: '#B71C1C' },
+  { id: 'mustard', name: n('Xantal', 'Горчица', 'Mustard'), price: 1000, kcal: 10, c: '#E2B11E' },
+  { id: 'garlic', name: n('Sarimsoqli', 'Чесночный', 'Garlic mayo'), price: 1000, kcal: 60, c: '#FBF4E4' },
+  { id: 'cheese', name: n('Pishloq sousi', 'Сырный', 'Cheese sauce'), price: 2000, kcal: 70, c: '#F4B731' },
+  { id: 'bbq', name: n('Barbekyu', 'Барбекю', 'BBQ'), price: 1000, kcal: 30, c: '#5A1E10' },
+];
+
 /* ---------- ordering ---------- */
 export const ZONES = [
   { id: 'near', name: n('Yaqin hudud (3 km gacha)', 'Рядом (до 3 км)', 'Nearby (up to 3 km)'), fee: 7000, freeFrom: 120000, mins: 25 },

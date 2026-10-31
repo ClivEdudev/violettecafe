@@ -1,6 +1,7 @@
 // "Build your own": burger stacker with physics-style drops, and a coffee lab that pours as you choose.
 import { BUNS, FILLINGS, MAX_FILLINGS, LAB, SIZES } from './data.js';
 import { LAYERS, bunTop, bunBottom, latteArt, steam, plateSVG } from './art.js';
+import { initLab2 as initWrap2 } from './lab2.js';
 import { $, $$, clamp, ease, reduced, esc, state, t, tf, money, on, addLine, toast, tween } from './shared.js';
 import { DEFAULT_BURGER, DEFAULT_COFFEE, burgerPrice, burgerKcal, burgerPrep, burgerName, coffeePrice, coffeeName, coffeeStats, coffeeLayers, coffeeColor, } from './recipes.js';
 const INK = '#2A1440';
@@ -381,10 +382,10 @@ function initCoffee() {
 }
 /* =================== tabs =================== */
 function initTabs() {
-    const tabs = [$('#tabBurger'), $('#tabCoffee')];
+    const tabs = $$('#lab [role="tab"]');
     const select = (i) => {
         tabs.forEach((tb, k) => { tb.setAttribute('aria-selected', String(k === i)); tb.tabIndex = k === i ? 0 : -1; $('#' + tb.getAttribute('aria-controls')).hidden = k !== i; });
-        if (i === 1) {
+        if (tabs[i].id === 'tabCoffee') {
             cur.syrup = cur.milk = cur.coffee = cur.foam = 0;
             paintLiquid();
             setTimeout(() => pourTo(coffeeLayers(C)), 120);
@@ -394,7 +395,7 @@ function initTabs() {
         tb.addEventListener('click', () => select(i));
         tb.addEventListener('keydown', e => { if (e.key === 'ArrowRight' || e.key === 'ArrowLeft') {
             e.preventDefault();
-            const n = (i + 1) % 2;
+            const n = (i + (e.key === 'ArrowRight' ? 1 : tabs.length - 1)) % tabs.length;
             select(n);
             tabs[n].focus();
         } });
@@ -403,6 +404,7 @@ function initTabs() {
 }
 export function initLab() {
     initBurger();
+    initWrap2();
     initCoffee();
     initTabs();
     on('lang', () => { renderBurgerControls(); renderCoffeeControls(); });

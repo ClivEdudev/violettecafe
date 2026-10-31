@@ -117,6 +117,8 @@
       <div data-sr="slide"><h2 data-i18n="lab.title" data-split>Oʻzingiz yigʻing</h2><p class="sec-sub" data-i18n="lab.sub"></p></div>
       <div class="tabs" data-sr="right" role="tablist">
         <button role="tab" id="tabBurger" aria-controls="burgerLab" aria-selected="true" data-i18n="lab.tabBurger">Burger</button>
+        <button role="tab" id="tabWrap" aria-controls="wrapLab" aria-selected="false" data-i18n="lab.tabWrap">Shaurma</button>
+        <button role="tab" id="tabHotdog" aria-controls="hotdogLab" aria-selected="false" data-i18n="lab.tabHotdog">Hot-dog</button>
         <button role="tab" id="tabCoffee" aria-controls="coffeeLab" aria-selected="false" data-i18n="lab.tabCoffee">Kofe</button>
       </div>
     </div>
@@ -138,6 +140,54 @@
           <button type="button" class="btn btn-mini" id="bRandom" data-i18n="lab.random">Tasodifiy</button>
         </div>
         <div class="lab-buy"><b id="bPrice"></b><button type="button" class="btn btn-acc" id="bAdd" data-i18n="lab.add">Savatga qoʻshish</button></div>
+      </div>
+    </div>
+
+    <div class="lab-panel" id="wrapLab" role="tabpanel" aria-labelledby="tabWrap" hidden>
+      <div class="lab-stage wrap-stage" data-sr="clip">
+        <svg id="wrapSvg" viewBox="0 0 400 540" role="img" data-i18n-aria="lab.tabWrap" aria-label="Shaurma"></svg>
+        <div class="lab-name"><span id="wName"></span><small id="wStats"></small></div>
+      </div>
+      <div class="lab-controls" data-sr="up">
+        <h3 data-i18n="lab.base">Asos</h3>
+        <div class="seg" id="wBase" role="radiogroup" data-i18n-aria="lab.base" aria-label="Asos"></div>
+        <div class="two">
+          <div><h3 data-i18n="lab.meat">Goʻsht</h3><div class="seg" id="wMeat" role="radiogroup" data-i18n-aria="lab.meat" aria-label="Goʻsht"></div></div>
+          <div><h3 data-i18n="lab.portion">Goʻsht porsiyasi</h3><div class="seg" id="wDouble" role="radiogroup" data-i18n-aria="lab.portion" aria-label="Porsiya"></div></div>
+        </div>
+        <h3><span data-i18n="lab.adds">Ichiga nima?</span> <small id="wCount"></small></h3>
+        <div class="fill-grid pick-grid" id="wAdds"></div>
+        <h3><span data-i18n="lab.sauces">Souslar</span> <small id="wSCount"></small></h3>
+        <div class="fill-grid pick-grid sauce-grid" id="wSauces"></div>
+        <div class="lab-actions">
+          <button type="button" class="btn btn-mini" id="wClear" data-i18n="lab.clear">Tozalash</button>
+          <button type="button" class="btn btn-mini" id="wRandom" data-i18n="lab.random">Tasodifiy</button>
+        </div>
+        <div class="lab-buy"><b id="wPrice"></b><button type="button" class="btn btn-acc" id="wAdd" data-i18n="lab.addRoll">Oʻrab, savatga</button></div>
+      </div>
+    </div>
+
+    <div class="lab-panel" id="hotdogLab" role="tabpanel" aria-labelledby="tabHotdog" hidden>
+      <div class="lab-stage hotdog-stage" data-sr="clip">
+        <svg id="hotdogSvg" viewBox="0 0 400 540" role="img" data-i18n-aria="lab.tabHotdog" aria-label="Hot-dog"></svg>
+        <div class="lab-name"><span id="hName"></span><small id="hStats"></small></div>
+      </div>
+      <div class="lab-controls" data-sr="up">
+        <h3 data-i18n="lab.bun">Bulochka</h3>
+        <div class="seg" id="hBun" role="radiogroup" data-i18n-aria="lab.bun" aria-label="Bulochka"></div>
+        <div class="two">
+          <div><h3 data-i18n="lab.sausage">Sosiska</h3><div class="seg" id="hSaus" role="radiogroup" data-i18n-aria="lab.sausage" aria-label="Sosiska"></div></div>
+          <div><h3 data-i18n="lab.length">Uzunligi</h3><div class="seg" id="hLen" role="radiogroup" data-i18n-aria="lab.length" aria-label="Uzunligi"></div></div>
+        </div>
+        <h3><span data-i18n="lab.tops">Ustiga</span> <small id="hCount"></small></h3>
+        <div class="fill-grid pick-grid" id="hTops"></div>
+        <h3><span data-i18n="lab.sauces">Souslar</span> <small id="hSCount"></small></h3>
+        <div class="fill-grid pick-grid sauce-grid" id="hSauces"></div>
+        <div class="lab-actions">
+          <button type="button" class="btn btn-mini" id="hClear" data-i18n="lab.clear">Tozalash</button>
+          <button type="button" class="btn btn-mini" id="hRandom" data-i18n="lab.random">Tasodifiy</button>
+        </div>
+        <div class="lab-buy"><b id="hPrice"></b><button type="button" class="btn btn-acc" id="hAdd" data-i18n="lab.add">Savatga qoʻshish</button></div>
       </div>
     </div>
 

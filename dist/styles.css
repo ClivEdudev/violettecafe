@@ -892,3 +892,15 @@ main, .foot { overflow-x: clip; }
 @media (prefers-reduced-motion: reduce) { .tk-pill, .tk-dot, .tk-pulse { animation: none; } }
 /* never let a faded-out kitchen overlay catch taps or sit over the page */
 .afk:not(.on) { pointer-events: none; }
+
+/* build your own: four stations */
+.lab .tabs { flex-wrap: wrap; justify-content: center; }
+.pick-grid button[aria-pressed="true"] { border-color: var(--acc); background: color-mix(in srgb, var(--acc) 8%, var(--paper)); }
+.pick-grid button:disabled { opacity: .45; }
+.pick-grid svg { width: 100px; height: 36px; overflow: visible; }
+.sauce-grid { grid-template-columns: repeat(auto-fill, minmax(112px, 1fr)); }
+.sauce-grid svg { width: 64px; height: 22px; }
+.wrap-stage svg, .hotdog-stage svg { touch-action: manipulation; }
+@media (max-width: 640px) { .lab .tabs button { padding: 9px 14px; } }
+#wrapLab .two, #hotdogLab .two { grid-template-columns: 1fr auto; }
+@media (max-width: 640px) { #wrapLab .two, #hotdogLab .two { grid-template-columns: 1fr; } }

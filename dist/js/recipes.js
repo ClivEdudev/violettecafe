@@ -1,4 +1,4 @@
-import { BUNS, FILLINGS, LAB, SIZES } from './data.js';
+import { BUNS, FILLINGS, LAB, SIZES, WRAP_BASES, WRAP_MEATS, WRAP_ADDS, WRAP_SAUCES, HD_SAUSAGES, HD_TOPS, HD_SAUCES, HD_XL, MAX_WRAP_ADDS, MAX_SAUCES, MAX_HD_TOPS } from './data.js';
 export const DEFAULT_COFFEE = { temp: 'hot', size: 'M', shots: 1, milk: 'cow', milkAmt: 70, foam: 'thin', syrup: 'lavender', topping: 'none' };
 export const DEFAULT_BURGER = { bun: 'classic', fill: ['sauce', 'beef', 'cheese', 'lettuce', 'tomato'] };
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
@@ -138,4 +138,78 @@ export function sanitizeBurger(raw) {
     const bun = BUNS.some(b => b.id === r.bun) ? String(r.bun) : 'classic';
     const fill = Array.isArray(r.fill) ? r.fill.filter(f => FILLINGS.some(x => x.id === f)).slice(0, 9).map(String) : [];
     return { bun, fill };
+}
+export const DEFAULT_WRAP = { base: 'lavash', meat: 'chicken', double: false, add: ['fries', 'tomato', 'cucumber', 'cabbage'], sauces: ['garlic'] };
+export const DEFAULT_HOTDOG = { bun: 'brioche', sausage: 'beef', xl: false, tops: ['onion', 'pickles'], sauces: ['ketchup', 'mustard'] };
+const of = (list, id) => list.find(p => p.id === id);
+const sum = (list, ids, k) => ids.reduce((a, id) => a + (of(list, id)?.[k] ?? 0), 0);
+export function wrapPrice(w) {
+    const m = WRAP_MEATS.find(x => x.id === w.meat) ?? WRAP_MEATS[0];
+    return (of(WRAP_BASES, w.base)?.price ?? 6000) + m.price + (w.double ? m.dbl : 0) + sum(WRAP_ADDS, w.add, 'price') + sum(WRAP_SAUCES, w.sauces, 'price');
+}
+export function wrapKcal(w) {
+    const m = of(WRAP_MEATS, w.meat)?.kcal ?? 230;
+    return Math.round((of(WRAP_BASES, w.base)?.kcal ?? 180) + m * (w.double ? 1.6 : 1) + sum(WRAP_ADDS, w.add, 'kcal') + sum(WRAP_SAUCES, w.sauces, 'kcal'));
+}
+export const wrapPrep = (w) => 7 + (w.double ? 1 : 0) + (w.add.includes('fries') ? 1 : 0);
+const WN = {
+    chicken: { uz: 'Tovuqli', ru: 'с курицей', en: 'Chicken' }, beef: { uz: 'Goʻshtli', ru: 'с говядиной', en: 'Beef' }, mix: { uz: 'Aralash', ru: 'микс', en: 'Mixed' },
+    lavash: { uz: 'lavash', ru: 'Лаваш', en: 'lavash' }, red: { uz: 'qizil lavash', ru: 'Красный лаваш', en: 'tomato lavash' }, pita: { uz: 'shaurma (pita)', ru: 'Шаурма в пите', en: 'pita shawarma' },
+    double: { uz: 'Dabl', ru: 'двойной', en: 'Double' }, spicy: { uz: 'achchiq', ru: 'острый', en: 'spicy' }, cheesy: { uz: 'pishloqli', ru: 'сырный', en: 'cheesy' },
+};
+export function wrapName(w, lang) {
+    const spicy = w.add.includes('jalapeno') || w.sauces.includes('spicy'), cheesy = w.add.includes('cheese') || w.sauces.includes('cheese');
+    if (lang === 'ru') {
+        // "Острый двойной лаваш с курицей"
+        const adj = [spicy ? WN.spicy.ru : '', cheesy ? WN.cheesy.ru : '', w.double ? WN.double.ru : ''].filter(Boolean);
+        const base = WN[w.base]?.ru ?? WN.lavash.ru;
+        const head = adj.length ? adj.join(' ') + ' ' + base.charAt(0).toLowerCase() + base.slice(1) : base;
+        return (head.charAt(0).toUpperCase() + head.slice(1)) + ' ' + (WN[w.meat]?.ru ?? '');
+    }
+    const words = [w.double ? WN.double[lang] : '', WN[w.meat]?.[lang] ?? '', spicy ? WN.spicy[lang] : '', cheesy ? WN.cheesy[lang] : '', WN[w.base]?.[lang] ?? WN.lavash[lang]].filter(Boolean);
+    const s = words.join(' ');
+    return s.charAt(0).toUpperCase() + s.slice(1);
+}
+export const wrapArt = (w) => ({ k: 'cwrap', w });
+/* ---------- hot dog ---------- */
+export function hotdogPrice(h) {
+    return (BUNS.find(b => b.id === h.bun)?.price ?? 6000) + (of(HD_SAUSAGES, h.sausage)?.price ?? 10000) + (h.xl ? HD_XL : 0) + sum(HD_TOPS, h.tops, 'price') + sum(HD_SAUCES, h.sauces, 'price');
+}
+export function hotdogKcal(h) {
+    return Math.round(((BUNS.find(b => b.id === h.bun)?.kcal ?? 150) + (of(HD_SAUSAGES, h.sausage)?.kcal ?? 230) * (h.xl ? 1.5 : 1)) + sum(HD_TOPS, h.tops, 'kcal') + sum(HD_SAUCES, h.sauces, 'kcal'));
+}
+export const hotdogPrep = (h) => 5 + (h.tops.includes('bacon') ? 2 : 0) + (h.xl ? 1 : 0);
+const HN = {
+    beef: { uz: 'Klassik', ru: 'Классический', en: 'Classic' }, chicken: { uz: 'Tovuqli', ru: 'Куриный', en: 'Chicken' }, smoked: { uz: 'Dudlangan', ru: 'Копчёный', en: 'Smoked' }, spicy: { uz: 'Achchiq', ru: 'Острый', en: 'Spicy' },
+    base: { uz: 'hot-dog', ru: 'хот-дог', en: 'hot dog' }, cheesy: { uz: 'pishloqli', ru: 'сырный', en: 'cheesy' }, bacon: { uz: 'bekonli', ru: 'с беконом', en: 'bacon' },
+};
+export function hotdogName(h, lang) {
+    const cheesy = h.tops.includes('cheese') || h.sauces.includes('cheese');
+    const parts = [HN[h.sausage]?.[lang] ?? HN.beef[lang]];
+    if (h.tops.includes('bacon') && lang !== 'ru')
+        parts.push(HN.bacon[lang]);
+    if (cheesy)
+        parts.push(HN.cheesy[lang]);
+    if (h.xl)
+        parts.push('XL');
+    parts.push(HN.base[lang]);
+    if (h.tops.includes('bacon') && lang === 'ru')
+        parts.push(HN.bacon.ru);
+    return parts.join(' ');
+}
+export const hotdogArt = (h) => ({ k: 'chotdog', h });
+const ids = (v, list, max) => (Array.isArray(v) ? [...new Set(v.filter(x => list.some(p => p.id === x)).map(String))].slice(0, max) : []);
+export function sanitizeWrap(raw) {
+    if (!raw || typeof raw !== 'object')
+        return null;
+    const r = raw;
+    return { base: of(WRAP_BASES, String(r.base)) ? String(r.base) : 'lavash', meat: of(WRAP_MEATS, String(r.meat)) ? String(r.meat) : 'chicken', double: r.double === true,
+        add: ids(r.add, WRAP_ADDS, MAX_WRAP_ADDS), sauces: ids(r.sauces, WRAP_SAUCES, MAX_SAUCES) };
+}
+export function sanitizeHotdog(raw) {
+    if (!raw || typeof raw !== 'object')
+        return null;
+    const r = raw;
+    return { bun: BUNS.some(b => b.id === r.bun) ? String(r.bun) : 'classic', sausage: of(HD_SAUSAGES, String(r.sausage)) ? String(r.sausage) : 'beef', xl: r.xl === true,
+        tops: ids(r.tops, HD_TOPS, MAX_HD_TOPS), sauces: ids(r.sauces, HD_SAUCES, MAX_SAUCES) };
 }
