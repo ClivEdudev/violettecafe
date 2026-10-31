@@ -3,6 +3,7 @@ import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } 
 import { initPointer } from './ui.js';
 import { initScroll } from './scroll.js';
 import { initAfk, showOrder } from './afk.js';
+import { initTrack, startTrack, openTrack, langTrack } from './track.js';
 document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import {
   $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, plural, on, emit, cart, saveCart, setCart, addLine,
@@ -487,7 +488,8 @@ const split = { on: false, n: 2 };
 function eta(): Date {
   const prep = cart.length ? Math.max(...cart.map(linePrep)) : 0;
   const load = Math.min(10, Math.floor(count() / 4) * 2);
-  return new Date(tashkentNow().getTime() + (prep + 5 + load) * 60000);
+  const ride = order.method === 'delivery' ? (ZONES.find(z => z.id === order.zone) ?? ZONES[0]).mins : 0;
+  return new Date(tashkentNow().getTime() + (prep + 5 + load + ride) * 60000);
 }
 function renderCart() {
   const c = count();
@@ -725,6 +727,18 @@ async function sendOrder() {
     store.set('vc-stamps', prev + coffees);
     store.set('vc-last', { at: Date.now(), n: count(), total: subtotal(), lines: cart.map(({ sig: _s, who: _w, ...l }) => l) });
     const made = cart.map(l => ({ ...l }));
+    const isDelivery = order.method === 'delivery';
+    if (isDelivery) {
+      // real timestamps for the tracker: when the courier is due, and when the kitchen has to start to make it
+      const zone = ZONES.find(z => z.id === order.zone) ?? ZONES[0];
+      const tn = tashkentNow(), [hh, mm] = due.split(':').map(Number), target = new Date(tn); target.setHours(hh, mm, 0, 0);
+      if (target.getTime() < tn.getTime() - 60000) target.setDate(target.getDate() + 1);
+      const now = Date.now(), dueAt = now + (target.getTime() - tn.getTime());
+      const cookMin = Math.max(...made.map(linePrep)) + 5 + Math.min(10, Math.floor(count() / 4) * 2);
+      const cooked = Math.max(now + 3 * 60000, dueAt - zone.mins * 60000);
+      const start = Math.max(now, cooked - cookMin * 60000);
+      startTrack({ id, placed: now, start, cooked, due: dueAt, zone: zone.id, address: order.address, total: orderTotal(), lines: made });
+    }
     setCart([]);
     $('#coForm').hidden = true; $('#coSteps').hidden = true;
     const done = $('#coDone');
@@ -732,9 +746,11 @@ async function sendOrder() {
     done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('cappuccino')!.art)}</div><h4>${t('done.title')}</h4>
       <p>${tf('done.text', { id, phone: '+998 ' + fmtPhone(order.phone) })}</p><p class="eta-big">${tf('done.eta', { t: due })}</p>
       ${coffees ? `<p class="stamp-plus">${tf('done.stamp', { n: coffees })}</p>` : ''}
+      ${isDelivery ? `<button type="button" class="btn btn-ink tk-done-btn" data-track>${t('tr.open')}</button>` : ''}
       <button type="button" class="watch-btn" data-watch><span class="wb-play" aria-hidden="true"></span><span><b>${t('afk.watch')}</b><small>${t('afk.watchSub')}</small></span></button>
       <button class="btn btn-acc" data-close>${t('done.close')}</button>`;
     $('[data-watch]', done).addEventListener('click', () => showOrder(made, due));
+    done.querySelector('[data-track]')?.addEventListener('click', () => { closeOverlay($('#checkout')); setTimeout(openTrack, 250); });
     $<HTMLElement>('[data-close].btn', done).focus();
   } catch {
     fail(t('err.send'));
@@ -838,7 +854,8 @@ on('lang', () => { renderStatus(); renderReceipt(); renderChips(); renderGrid();
 buildScene(); fitScene(); renderTape(); renderVisit(); setWorldUI();
 applyLang();
 initLab(); initBudget();
-initPointer(t); initReveal(); initScroll(); initAfk();
+initPointer(t); initReveal(); initScroll(); initAfk(); initTrack();
+on('lang', langTrack);
 if (reduced) root.classList.add('reduced');
 updateHero(heroProgress()); onScroll();
 const hideLoader = () => { const l = document.getElementById('loader'); if (!l || l.classList.contains('gone')) return; l.classList.add('gone'); setTimeout(() => l.remove(), 700); root.classList.add('ready'); };

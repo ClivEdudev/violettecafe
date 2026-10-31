@@ -842,3 +842,51 @@ main, .foot { overflow-x: clip; }
 .watch-btn small { display: block; opacity: .65; font-size: .78rem; }
 .wb-play { flex: none; width: 40px; height: 40px; border-radius: 50%; background: #7A4FB0; position: relative; box-shadow: 0 0 0 6px color-mix(in srgb, #7A4FB0 20%, transparent); }
 .wb-play::after { content: ''; position: absolute; left: 15px; top: 12px; border-left: 14px solid #fff; border-top: 8px solid transparent; border-bottom: 8px solid transparent; }
+
+/* delivery tracking: the pill (only while a delivery is running) and the tracker */
+.tk-pill { position: fixed; left: 16px; bottom: calc(16px + env(safe-area-inset-bottom)); z-index: 280; display: flex; align-items: center; gap: 10px; padding: 9px 16px 9px 12px; border-radius: 999px; background: var(--ink); color: var(--bg); border: 2.5px solid var(--ink); box-shadow: 4px 4px 0 var(--acc); font: inherit; text-align: left; cursor: pointer; animation: tkIn .5s cubic-bezier(.3, 1.4, .5, 1) both; transition: transform .2s; }
+.tk-pill:hover { transform: translateY(-2px); }
+.tk-pill svg { width: 26px; height: 26px; fill: none; stroke: currentColor; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; }
+.tk-pt b { display: block; font-size: .9rem; line-height: 1.2; }
+.tk-pt small { display: block; font-size: .74rem; opacity: .75; font-variant-numeric: tabular-nums; }
+.tk-dot { width: 10px; height: 10px; border-radius: 50%; background: #3FD07A; box-shadow: 0 0 0 0 rgba(63, 208, 122, .7); animation: tkPing 1.6s infinite; }
+@keyframes tkPing { 70% { box-shadow: 0 0 0 10px rgba(63, 208, 122, 0); } 100% { box-shadow: 0 0 0 0 rgba(63, 208, 122, 0); } }
+@keyframes tkIn { from { transform: translateY(140%); } }
+.tracking .toast { bottom: calc(86px + env(safe-area-inset-bottom)); }
+.tk-sheet { width: min(560px, calc(100% - 32px)); padding: 26px 24px 22px; }
+.tk-id { margin: 0 0 4px; font-size: .82rem; font-weight: 700; color: var(--ink2); }
+.tk-sheet h3 { margin: 0; }
+.tk-eta { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 12px; margin: 6px 0 14px; }
+.tk-eta b { font: 400 2.2rem var(--display); font-variant-numeric: tabular-nums; color: var(--acc); }
+.tk-eta span { font-weight: 700; color: var(--ink2); }
+.tk-map { position: relative; border: 2.5px solid var(--ink); border-radius: 20px; overflow: hidden; }
+.tk-svg { display: block; width: 100%; height: auto; }
+.tk-ground { fill: #E9E1D2; } .tk-block { fill: #F7F2E8; stroke: #D8CDB8; stroke-width: 1.5; }
+.tk-street { stroke: #FFFFFF; stroke-width: 9; fill: none; opacity: .75; }
+.tk-canal { fill: none; stroke: #8EC3E0; stroke-width: 12; stroke-linecap: round; opacity: .8; }
+.tk-route { fill: none; stroke: #7A4FB0; stroke-width: 6; stroke-dasharray: 2 10; stroke-linecap: round; opacity: .55; }
+.tk-route-done { fill: none; stroke: #7A4FB0; stroke-width: 6; stroke-linecap: round; }
+.tk-cafe circle { fill: #7A4FB0; stroke: #fff; stroke-width: 3; } .tk-cafe text { font: 400 16px var(--display); fill: #fff; }
+.tk-steam { fill: #fff; stroke: #CBB8E3; }
+.tk-home path, .tk-home rect { fill: #E2452F; } .tk-home rect { fill: #fff; }
+.tk-pulse { fill: rgba(226, 69, 47, .18); animation: tkHome 1.8s ease-out infinite; transform-box: fill-box; transform-origin: center; }
+@keyframes tkHome { from { transform: scale(.6); opacity: 1; } to { transform: scale(1.5); opacity: 0; } }
+.tk-bike-bg { fill: #2A1440; stroke: #fff; stroke-width: 2.5; }
+.tk-wheel { fill: none; stroke: #fff; stroke-width: 2; } .tk-frame { fill: none; stroke: #fff; stroke-width: 2; stroke-linecap: round; stroke-linejoin: round; } .tk-box { fill: #F4B731; }
+.tk-dist { position: absolute; right: 10px; bottom: 10px; padding: 4px 10px; border-radius: 999px; background: var(--paper); border: 2px solid var(--ink); font-size: .78rem; font-weight: 800; color: var(--ink); }
+.tk-steps { list-style: none; margin: 16px 0 6px; padding: 0; display: grid; gap: 0; }
+.tk-steps li { display: grid; grid-template-columns: 22px 1fr; gap: 12px; position: relative; padding-bottom: 12px; color: var(--ink2); }
+.tk-steps li:not(:last-child)::before { content: ''; position: absolute; left: 10px; top: 20px; bottom: 0; width: 2px; background: var(--line); }
+.tk-steps li.done::before { background: var(--acc); }
+.tk-steps i { width: 22px; height: 22px; border-radius: 50%; border: 2.5px solid var(--line); background: var(--paper); }
+.tk-steps .done i { background: var(--acc); border-color: var(--acc); }
+.tk-steps .now i { border-color: var(--acc); box-shadow: 0 0 0 5px color-mix(in srgb, var(--acc) 22%, transparent); }
+.tk-steps .now, .tk-steps .done { color: var(--ink); }
+.tk-steps b { display: block; font-size: .95rem; } .tk-steps small { display: block; font-size: .8rem; opacity: .75; }
+.tk-steps .btn-mini { margin-top: 6px; }
+.tk-addr { margin: 6px 0 14px; font-weight: 700; } .tk-addr span { color: var(--ink2); }
+.tk-acts { display: flex; flex-wrap: wrap; gap: 10px; } .tk-acts .btn { flex: 1 1 180px; }
+.tk-note { margin: 12px 0 0; font-size: .78rem; }
+.tk-done-btn { width: 100%; margin-top: 14px; }
+@media (max-width: 640px) { .tk-pill { left: 12px; right: 12px; justify-content: flex-start; } .tk-sheet { padding: 22px 16px 18px; } }
+@media (prefers-reduced-motion: reduce) { .tk-pill, .tk-dot, .tk-pulse { animation: none; } }
