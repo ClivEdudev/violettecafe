@@ -1,6 +1,6 @@
 // Small shared core: DOM helpers, storage, language, cart, overlays, toasts.
 import { DICT } from './i18n.js';
-import { ITEM, EXTRAS, SIZES } from './data.js';
+import { ITEM, EXTRAS, SIZES, photoURL } from './data.js';
 import { burgerPrice, burgerName, burgerArt, burgerPrep, coffeePrice, coffeeName, coffeeArt, coffeePrep, sanitizeBurger, sanitizeCoffee } from './recipes.js';
 import { svg } from './art.js';
 export const $ = (s, root = document) => root.querySelector(s);
@@ -152,10 +152,29 @@ export function addLine(base, qty = 1, from) {
     }
     saveCart();
     if (from)
-        flyToCart(from, svg(lineArt({ ...base, sig, qty, who: -1 })));
+        flyToCart(from, lineVisual(base, 200));
     return true;
 }
 export function setCart(next) { cart = next; saveCart(); }
+/* ---------- photos (with the drawn illustration as fallback) ---------- */
+export function itemPic(it, w, alt = '', eager = false) {
+    if (!it.photo)
+        return svg(it.art, 'art', alt);
+    return `<img class="ph" src="${photoURL(it.photo, w)}" srcset="${photoURL(it.photo, w)} 1x, ${photoURL(it.photo, w * 2)} 2x" alt="${esc(alt)}" ${eager ? '' : 'loading="lazy"'} decoding="async" data-fb="${it.id}">`;
+}
+export function lineVisual(l, w) {
+    return l.kind === 'item' ? itemPic(ITEM(l.item), w) : svg(lineArt(l));
+}
+document.addEventListener('error', e => {
+    const img = e.target;
+    if (!(img instanceof HTMLImageElement) || !img.dataset.fb)
+        return;
+    const it = ITEM(img.dataset.fb);
+    if (it)
+        img.outerHTML = svg(it.art, 'art', img.alt);
+}, true);
+document.addEventListener('load', e => { const img = e.target; if (img instanceof HTMLImageElement && img.classList.contains('ph'))
+    img.classList.add('in'); }, true);
 /* ---------- fly to cart ---------- */
 export function flyToCart(from, artSvg) {
     const btn = $('#cartBtn');

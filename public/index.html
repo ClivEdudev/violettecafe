@@ -1,0 +1,344 @@
+<!doctype html>
+<html lang="uz">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>Violette — kofe va fast-food, Andijon</title>
+<meta name="description" content="Violette cafe, Andijon: kofe, lavash, burger va shirinliklar. Onlayn buyurtma, olib ketish, yetkazib berish va stol band qilish.">
+<meta name="theme-color" content="#F1EAF7">
+<meta name="color-scheme" content="light dark">
+<script src="js/theme-init.js"></script>
+<noscript><style>#loader{display:none!important}.noscript{display:block!important}</style></noscript>
+<meta property="og:title" content="Violette — kofe va fast-food, Andijon">
+<meta property="og:description" content="Menyu, oʻz burgeringiz va kofeingizni yigʻing, onlayn buyurtma.">
+<link rel="icon" href="favicon.svg" type="image/svg+xml">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Dela+Gothic+One&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+<link rel="stylesheet" href="styles.css">
+</head>
+<body>
+<div id="loader" aria-hidden="true">
+  <svg viewBox="0 0 120 120"><defs><clipPath id="ldClip"><path d="M30 34h60l-6 62q-1 8-9 8H45q-8 0-9-8z"/></clipPath></defs>
+    <g clip-path="url(#ldClip)"><rect class="ld-fill" x="20" y="34" width="80" height="80"/></g>
+    <path d="M30 34h60l-6 62q-1 8-9 8H45q-8 0-9-8z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/>
+    <path d="M89 48c14 0 14 26 -3 26" fill="none" stroke="currentColor" stroke-width="5" stroke-linecap="round"/>
+  </svg>
+  <p>Violette</p>
+</div>
+<div id="progress" aria-hidden="true"></div>
+<div id="wipe" aria-hidden="true"><svg viewBox="0 0 100 120" preserveAspectRatio="none"><path id="wipePath" d=""/></svg></div>
+<div id="bean" aria-hidden="true"><svg viewBox="0 0 24 32"><ellipse cx="12" cy="16" rx="10" ry="14"/><path d="M12 3c-5 6 5 14 0 26" fill="none" stroke-width="2.2"/></svg></div>
+<p class="noscript">Saytdan toʻliq foydalanish uchun brauzerda JavaScript-ni yoqing. · Включите JavaScript, чтобы пользоваться сайтом. · Please turn on JavaScript to use this site.</p>
+
+<header class="top">
+  <a class="logo" href="#top" aria-label="Violette">
+    <svg viewBox="0 0 44 44" aria-hidden="true">
+      <g class="petals"><ellipse cx="22" cy="11" rx="7" ry="9"/><ellipse cx="22" cy="11" rx="7" ry="9" transform="rotate(72 22 22)"/><ellipse cx="22" cy="11" rx="7" ry="9" transform="rotate(144 22 22)"/><ellipse cx="22" cy="11" rx="7" ry="9" transform="rotate(216 22 22)"/><ellipse cx="22" cy="11" rx="7" ry="9" transform="rotate(288 22 22)"/></g>
+      <ellipse cx="22" cy="22" rx="5" ry="6.5" fill="#F4B731"/><path d="M22 16.5c-2.4 3 2.4 7.6 0 11" fill="none" stroke="#2A1440" stroke-width="1.4"/>
+    </svg>
+    <span><b>Violette</b><small>cafe</small></span>
+  </a>
+  <div class="menu" id="menu">
+    <nav class="nav">
+      <a href="#menuSec" data-i18n="nav.menu">Menyu</a>
+      <a href="#lab" data-i18n="nav.lab">Konstruktor</a>
+      <a href="#budget" data-i18n="nav.budget">Pul yetadimi?</a>
+      <a href="#book" data-i18n="nav.book">Stol band qilish</a>
+      <a href="#visit" data-i18n="nav.visit">Manzil</a>
+    </nav>
+    <div class="lang" role="group" aria-label="Til / Язык / Language">
+      <button data-lang="uz">UZ</button><button data-lang="ru">RU</button><button data-lang="en">EN</button>
+    </div>
+  </div>
+  <a class="open-pill" id="openPill" href="#visit"><i></i><span></span></a>
+  <button class="icon-btn theme-btn" id="themeBtn" data-i18n-aria="aria.theme" aria-label="Tungi rejim" aria-pressed="false">
+    <svg viewBox="0 0 24 24" aria-hidden="true">
+      <mask id="moonMask"><rect width="24" height="24" fill="#fff"/><circle class="tm-bite" cx="24" cy="4" r="7" fill="#000"/></mask>
+      <circle class="tm-core" cx="12" cy="12" r="5" fill="currentColor" mask="url(#moonMask)"/>
+      <g class="tm-rays" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 1.5v2.5M12 20v2.5M1.5 12h2.5M20 12h2.5M4.6 4.6l1.8 1.8M17.6 17.6l1.8 1.8M4.6 19.4l1.8-1.8M17.6 6.4l1.8-1.8"/></g>
+    </svg>
+  </button>
+  <button class="icon-btn menu-btn" id="menuBtn" data-i18n-aria="aria.menu" aria-label="Menyu" aria-expanded="false" aria-controls="menu"><span aria-hidden="true"></span></button>
+  <button class="cart-btn" id="cartBtn" data-i18n-aria="aria.cart" aria-label="Savat">
+    <svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 9h14l-1.4 10.2a2 2 0 0 1-2 1.8H8.4a2 2 0 0 1-2-1.8z M8.5 9l2-5 M15.5 9l-2-5" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round" stroke-linecap="round"/></svg>
+    <span id="cartCount" hidden>0</span>
+  </button>
+</header>
+
+<div class="table-banner" id="tableBanner" hidden><span></span><button type="button" id="tableExit" data-i18n="table.exit">Bekor qilish</button></div>
+
+<main>
+  <section class="hero" id="top">
+    <div class="hero-pin">
+      <div class="hero-copy">
+        <p class="greet" id="greet"></p>
+        <h1 class="hero-title" data-i18n="hero.title" data-split>Ertalab kofe. Kechqurun burger.</h1>
+        <p class="hero-sub" data-i18n="hero.sub"></p>
+        <div class="hero-cta">
+          <a href="#menuSec" class="btn btn-ink" data-i18n="hero.menu">Menyuni ochish</a>
+          <button class="btn btn-line" id="heroCombo"><span data-i18n="hero.combo"></span> <b id="heroComboPrice"></b></button>
+        </div>
+        <p class="hero-stage-line" aria-live="polite"><span class="dot"></span><span id="heroStage"></span></p>
+      </div>
+      <div class="hero-stage">
+        <svg id="scene" viewBox="0 0 1200 800" role="img" aria-label="Violette latte va Violette burger"></svg>
+        <div class="receipt" id="receipt" aria-hidden="true"><div class="rc-paper" id="rcPaper"></div></div>
+      </div>
+      <p class="scroll-hint"><span class="mouse" aria-hidden="true"></span><span data-i18n="hero.scroll"></span></p>
+    </div>
+  </section>
+
+  <div class="tape" aria-hidden="true"><div class="tape-track" id="tape"></div></div>
+
+  <section class="menu-sec" id="menuSec">
+    <div class="sec-head">
+      <h2 data-i18n="menu.title" data-split>Menyu</h2>
+      <div class="world" role="radiogroup" data-i18n-aria="menu.world" aria-label="Menyu boʻlimi">
+        <button role="radio" data-world="coffee" aria-checked="true"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M4 9h13v5a6 6 0 0 1-6 6h-1a6 6 0 0 1-6-6z M17 11h1.5a2.5 2.5 0 0 1 0 5H16 M8 3c-1 2 1 3 0 5 M12 3c-1 2 1 3 0 5" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"/></svg><span data-i18n="world.coffee">Kofe va shirinlik</span></button>
+        <button role="radio" data-world="food" aria-checked="false"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M3 11a9 7 0 0 1 18 0z M3 15h18 M4 18.5h16a0 0 0 0 1 0 0 2 2 0 0 1-2 2H6a2 2 0 0 1-2-2z" fill="none" stroke="currentColor" stroke-width="2" stroke-linejoin="round"/></svg><span data-i18n="world.food">Fast-food</span></button>
+        <i class="world-knob" aria-hidden="true"></i>
+      </div>
+    </div>
+    <div class="menu-tools">
+      <div class="chips" id="chips" role="tablist"></div>
+      <label class="search"><svg viewBox="0 0 24 24" aria-hidden="true"><circle cx="11" cy="11" r="7" fill="none" stroke="currentColor" stroke-width="2"/><path d="M16.5 16.5L21 21" stroke="currentColor" stroke-width="2" stroke-linecap="round"/></svg>
+        <input type="search" id="q" data-i18n-ph="menu.search" placeholder="Qidirish" autocomplete="off"><button type="button" class="search-clear" id="qClear" data-i18n-aria="menu.clear" aria-label="Tozalash" hidden>×</button></label>
+    </div>
+    <div class="grid" id="grid" aria-live="polite"></div>
+    <p class="empty" id="empty" hidden></p>
+  </section>
+
+  <section class="lab" id="lab">
+    <div class="sec-head">
+      <div><h2 data-i18n="lab.title" data-split>Oʻzingiz yigʻing</h2><p class="sec-sub" data-i18n="lab.sub"></p></div>
+      <div class="tabs" role="tablist">
+        <button role="tab" id="tabBurger" aria-controls="burgerLab" aria-selected="true" data-i18n="lab.tabBurger">Burger</button>
+        <button role="tab" id="tabCoffee" aria-controls="coffeeLab" aria-selected="false" data-i18n="lab.tabCoffee">Kofe</button>
+      </div>
+    </div>
+
+    <div class="lab-panel" id="burgerLab" role="tabpanel" aria-labelledby="tabBurger">
+      <div class="lab-stage burger-stage">
+        <svg id="burgerSvg" viewBox="0 0 400 540" role="img" data-i18n-aria="lab.tabBurger" aria-label="Burger"></svg>
+        <div class="ruler" aria-hidden="true"><i></i><span id="bHeight">0 sm</span></div>
+        <div class="lab-name"><span id="bName"></span><small id="bStats"></small></div>
+      </div>
+      <div class="lab-controls">
+        <h3 data-i18n="lab.bun">Bulochka</h3>
+        <div class="seg" id="bunSeg" role="radiogroup" data-i18n-aria="lab.bun" aria-label="Bulochka"></div>
+        <h3><span data-i18n="lab.fillings">Ichiga nima?</span> <small id="bCount"></small></h3>
+        <div class="fill-grid" id="fillGrid"></div>
+        <div class="lab-actions">
+          <button type="button" class="btn btn-mini" id="bUndo" data-i18n="lab.undo">Oxirgisini olish</button>
+          <button type="button" class="btn btn-mini" id="bClear" data-i18n="lab.clear">Tozalash</button>
+          <button type="button" class="btn btn-mini" id="bRandom" data-i18n="lab.random">Tasodifiy</button>
+        </div>
+        <div class="lab-buy"><b id="bPrice"></b><button type="button" class="btn btn-acc" id="bAdd" data-i18n="lab.add">Savatga qoʻshish</button></div>
+      </div>
+    </div>
+
+    <div class="lab-panel" id="coffeeLab" role="tabpanel" aria-labelledby="tabCoffee" hidden>
+      <div class="lab-stage cup-stage">
+        <svg id="cupSvg" viewBox="0 0 400 540" role="img" data-i18n-aria="lab.tabCoffee" aria-label="Kofe"></svg>
+        <div class="meters">
+          <div><span data-i18n="lab.strength">Kuchi</span><i><b id="mStrength"></b></i></div>
+          <div><span data-i18n="lab.sweet">Shirinligi</span><i><b id="mSweet"></b></i></div>
+        </div>
+        <div class="lab-name"><span id="cName"></span><small id="cStats"></small></div>
+      </div>
+      <div class="lab-controls">
+        <div class="two">
+          <div><h3 data-i18n="lab.temp">Harorat</h3><div class="seg" id="cTemp" role="radiogroup"></div></div>
+          <div><h3 data-i18n="lab.size">Hajmi</h3><div class="seg" id="cSize" role="radiogroup"></div></div>
+        </div>
+        <h3 data-i18n="lab.shots">Espresso</h3>
+        <div class="stepper" id="cShots"><button type="button" data-d="-1" data-i18n-aria="aria.less" aria-label="Kamroq">−</button><output></output><button type="button" data-d="1" data-i18n-aria="aria.more" aria-label="Koʻproq">+</button></div>
+        <h3 data-i18n="lab.milk">Sut</h3>
+        <div class="seg" id="cMilk" role="radiogroup"></div>
+        <label class="slider" id="cMilkAmtWrap"><span data-i18n="lab.milkAmt">Sut miqdori</span><input type="range" id="cMilkAmt" min="10" max="100" step="5"><output id="cMilkAmtOut"></output></label>
+        <h3 id="cFoamH" data-i18n="lab.foam">Koʻpik</h3>
+        <div class="seg" id="cFoam" role="radiogroup"></div>
+        <h3 data-i18n="lab.syrup">Sirop</h3>
+        <div class="seg seg-wrap" id="cSyrup" role="radiogroup"></div>
+        <h3 data-i18n="lab.topping">Ustiga</h3>
+        <div class="seg seg-wrap" id="cTop" role="radiogroup"></div>
+        <div class="lab-buy"><b id="cPrice"></b><button type="button" class="btn btn-acc" id="cAdd" data-i18n="lab.add">Savatga qoʻshish</button></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="budget" id="budget">
+    <div class="sec-head">
+      <div><h2 data-i18n="budget.title" data-split>Pul yetadimi?</h2><p class="sec-sub" data-i18n="budget.sub"></p></div>
+    </div>
+    <div class="budget-wrap">
+      <form class="budget-form" id="budgetForm">
+        <label class="field"><span data-i18n="budget.amount">Qancha pulingiz bor?</span>
+          <div class="money-in"><input id="bgAmount" inputmode="numeric" autocomplete="off" value="100 000"><em data-i18n="cur">soʻm</em></div>
+          <input type="range" id="bgRange" min="20000" max="600000" step="5000" value="100000" data-i18n-aria="budget.amount" aria-label="Qancha pulingiz bor?">
+        </label>
+        <div class="field"><span data-i18n="budget.people">Necha kishi?</span>
+          <div class="stepper" id="bgPeople"><button type="button" data-d="-1" data-i18n-aria="aria.less" aria-label="Kamroq">−</button><output>2</output><button type="button" data-d="1" data-i18n-aria="aria.more" aria-label="Koʻproq">+</button></div>
+        </div>
+        <div class="field"><span data-i18n="budget.mood">Nimani xohlaysiz?</span>
+          <div class="seg" id="bgMood" role="radiogroup"></div>
+        </div>
+        <button class="btn btn-acc btn-big" id="bgSpin" type="submit"><span data-i18n="budget.spin">Aylantirish</span></button>
+      </form>
+      <div class="slot-side">
+        <div class="slot" id="slot" aria-hidden="true">
+          <div class="slot-top"><span>V</span><i></i><i></i><i></i></div>
+          <div class="reels"><div class="reel"><div class="strip"></div></div><div class="reel"><div class="strip"></div></div><div class="reel"><div class="strip"></div></div></div>
+          <div class="slot-lever"><i></i></div>
+        </div>
+        <div class="bg-result" id="bgResult" aria-live="polite"></div>
+      </div>
+    </div>
+  </section>
+
+  <section class="book" id="book">
+    <div class="book-card">
+      <div class="book-copy">
+        <h2 data-i18n="book.title" data-split>Stol band qilish</h2>
+        <p class="sec-sub" data-i18n="book.sub"></p>
+        <ul class="book-notes"><li data-i18n="book.n1"></li><li data-i18n="book.n2"></li></ul>
+      </div>
+      <form class="book-form" id="bookForm" novalidate>
+        <div class="row2">
+          <label class="field"><span data-i18n="f.name">Ismingiz</span><input id="bkName" autocomplete="name" maxlength="60" required></label>
+          <label class="field"><span data-i18n="f.phone">Telefon</span><div class="phone-in"><em>+998</em><input id="bkPhone" inputmode="tel" autocomplete="tel-national" placeholder="90 123 45 67" required></div></label>
+        </div>
+        <div class="field"><span data-i18n="book.date">Sana</span><div class="date-chips" id="bkDates" role="radiogroup"></div></div>
+        <div class="row2">
+          <div class="field"><span data-i18n="book.time">Vaqt</span><div class="time-chips" id="bkTimes" role="radiogroup"></div></div>
+          <div class="field"><span data-i18n="book.guests">Mehmonlar</span><div class="stepper" id="bkGuests"><button type="button" data-d="-1" data-i18n-aria="aria.less" aria-label="Kamroq">−</button><output>2</output><button type="button" data-d="1" data-i18n-aria="aria.more" aria-label="Koʻproq">+</button></div></div>
+        </div>
+        <label class="field"><span data-i18n="book.comment">Izoh (ixtiyoriy)</span><input id="bkComment" maxlength="200" data-i18n-ph="book.commentPh"></label>
+        <p class="form-err" id="bkErr" role="alert"></p>
+        <button class="btn btn-acc btn-big" type="submit" id="bkSend" data-i18n="book.send">Band qilish</button>
+        <div class="book-done" id="bookDone" hidden></div>
+      </form>
+    </div>
+  </section>
+
+  <section class="visit" id="visit">
+    <div class="visit-info">
+      <h2 data-i18n="visit.title" data-split>Bizni toping</h2>
+      <dl>
+        <div><dt data-i18n="visit.addr">Manzil</dt><dd><span data-i18n="visit.addrV"></span><br><a id="plusLink" href="https://plus.codes/8JGJP8WQ+PW" target="_blank" rel="noopener">P8WQ+PW, Andijon</a></dd></div>
+        <div><dt data-i18n="visit.hours">Ish vaqti</dt><dd id="hoursV"></dd></div>
+        <div><dt data-i18n="visit.phone">Telefon</dt><dd><span id="phoneV"></span></dd></div>
+        <div><dt data-i18n="visit.social">Ijtimoiy tarmoqlar</dt><dd class="socials"><a id="tgLink" target="_blank" rel="noopener">Telegram</a><a id="igLink" target="_blank" rel="noopener">Instagram</a></dd></div>
+      </dl>
+      <div class="apps"><span data-i18n="visit.apps"></span><b>Uzum Tezkor</b><b>Yandex Eats</b></div>
+      <div class="visit-cta">
+        <a class="btn btn-ink" id="routeLink" target="_blank" rel="noopener" data-i18n="visit.route">Yoʻl topish</a>
+      </div>
+    </div>
+    <div class="map"><iframe title="Violette — map" loading="lazy" referrerpolicy="no-referrer-when-downgrade" src="https://maps.google.com/maps?q=40.74681,72.33981&z=16&output=embed"></iframe></div>
+  </section>
+</main>
+
+<footer class="foot">
+  <div class="foot-word" aria-hidden="true">Violette</div>
+  <p><span data-i18n="foot.note"></span></p>
+  <p class="foot-small">© <span id="year"></span> Violette cafe, Andijon</p>
+</footer>
+
+<!-- item dialog -->
+<div class="modal" id="itemModal" role="dialog" aria-modal="true" aria-labelledby="imName" hidden>
+  <div class="scrim" data-close></div>
+  <div class="sheet item-sheet">
+    <button class="x" data-close data-i18n-aria="aria.close" aria-label="Yopish">×</button>
+    <div class="im-art" id="imArt"></div>
+    <div class="im-body">
+      <div class="im-tags" id="imTags"></div>
+      <h3 id="imName"></h3>
+      <p id="imDesc"></p>
+      <p class="im-meta" id="imMeta"></p>
+      <div id="imSizes"></div>
+      <div id="imExtras"></div>
+      <div class="im-buy">
+        <div class="stepper" id="imQty"><button type="button" data-d="-1" data-i18n-aria="aria.less" aria-label="Kamroq">−</button><output>1</output><button type="button" data-d="1" data-i18n-aria="aria.more" aria-label="Koʻproq">+</button></div>
+        <button class="btn btn-acc" id="imAdd"><span data-i18n="card.add">Qoʻshish</span> <b id="imPrice"></b></button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- cart drawer -->
+<aside class="drawer" id="cart" role="dialog" aria-modal="true" aria-labelledby="cartTitle" hidden>
+  <div class="scrim" data-close></div>
+  <div class="drawer-panel">
+    <header class="dr-head"><h3 id="cartTitle" data-i18n="cart.title">Savat</h3><button class="x" data-close data-i18n-aria="aria.close" aria-label="Yopish">×</button></header>
+    <div class="dr-body">
+      <ul class="lines" id="lines"></ul>
+      <div class="cart-empty" id="cartEmpty"><svg viewBox="0 0 120 100" aria-hidden="true"><path d="M20 30h80l-8 60H28z" fill="none" stroke="currentColor" stroke-width="5" stroke-linejoin="round"/><path d="M40 30l10-18M80 30L70 12" stroke="currentColor" stroke-width="5" stroke-linecap="round"/></svg><p data-i18n="cart.empty"></p><a href="#menuSec" class="btn btn-ink" data-close data-i18n="cart.browse"></a></div>
+      <div class="split" id="split" hidden>
+        <label class="switch"><input type="checkbox" id="splitOn"><i></i><span data-i18n="split.title">Hisobni boʻlish</span></label>
+        <div class="split-body" id="splitBody" hidden>
+          <div class="split-people"><span data-i18n="split.people">Necha kishi?</span><div class="stepper" id="splitN"><button type="button" data-d="-1" data-i18n-aria="aria.less" aria-label="Kamroq">−</button><output>2</output><button type="button" data-d="1" data-i18n-aria="aria.more" aria-label="Koʻproq">+</button></div></div>
+          <p class="hint" data-i18n="split.hint"></p>
+          <div class="split-res" id="splitRes"></div>
+        </div>
+      </div>
+      <div class="stamps" id="stamps"></div>
+    </div>
+    <footer class="dr-foot" id="cartFoot">
+      <div class="sum"><span data-i18n="cart.subtotal">Jami</span><b id="cartSub"></b></div>
+      <p class="eta" id="cartEta"></p>
+      <button class="btn btn-acc btn-big" id="toCheckout" data-i18n="cart.checkout">Rasmiylashtirish</button>
+    </footer>
+  </div>
+</aside>
+
+<!-- checkout -->
+<div class="modal" id="checkout" role="dialog" aria-modal="true" aria-labelledby="coTitle" hidden>
+  <div class="scrim" data-close></div>
+  <div class="sheet co-sheet">
+    <button class="x" data-close data-i18n-aria="aria.close" aria-label="Yopish">×</button>
+    <h3 id="coTitle" data-i18n="co.title">Buyurtma</h3>
+    <ol class="steps" id="coSteps"><li data-i18n="co.s1"></li><li data-i18n="co.s2"></li><li data-i18n="co.s3"></li></ol>
+    <form id="coForm" novalidate>
+      <div class="co-step" data-step="1">
+        <div class="how" id="coHow" role="radiogroup"></div>
+        <div id="coHowExtra"></div>
+      </div>
+      <div class="co-step" data-step="2" hidden>
+        <div class="row2">
+          <label class="field"><span data-i18n="f.name">Ismingiz</span><input id="coName" autocomplete="name" maxlength="60"></label>
+          <label class="field"><span data-i18n="f.phone">Telefon</span><div class="phone-in"><em>+998</em><input id="coPhone" inputmode="tel" autocomplete="tel-national" placeholder="90 123 45 67"></div></label>
+        </div>
+        <label class="field" id="coAddrWrap"><span data-i18n="f.address">Manzil</span><input id="coAddr" autocomplete="street-address" maxlength="160" data-i18n-ph="f.addressPh"></label>
+        <div class="field" id="coTimeWrap"><span id="coTimeLabel"></span><div class="time-chips" id="coTimes" role="radiogroup"></div></div>
+        <div class="field"><span data-i18n="f.payment">Toʻlov</span><div class="seg" id="coPay" role="radiogroup"></div></div>
+        <label class="field"><span data-i18n="f.comment">Izoh</span><input id="coComment" maxlength="200" data-i18n-ph="f.commentPh"></label>
+      </div>
+      <div class="co-step" data-step="3" hidden>
+        <div class="review" id="coReview"></div>
+      </div>
+      <p class="form-err" id="coErr" role="alert"></p>
+      <div class="co-nav">
+        <button type="button" class="btn btn-line" id="coBack" data-i18n="co.back">Orqaga</button>
+        <button type="submit" class="btn btn-acc" id="coNext"></button>
+      </div>
+    </form>
+    <div class="co-done" id="coDone" hidden></div>
+  </div>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+
+<!-- Netlify Forms registration (posted from JavaScript) -->
+<form name="order" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input name="bot-field"><input name="order_id"><input name="method"><input name="table"><input name="name"><input name="phone"><input name="address"><input name="zone"><input name="time">
+  <input name="payment"><textarea name="comment"></textarea><textarea name="items"></textarea><textarea name="split"></textarea><input name="subtotal"><input name="delivery"><input name="total"><input name="lang">
+</form>
+<form name="booking" data-netlify="true" netlify-honeypot="bot-field" hidden>
+  <input name="bot-field"><input name="name"><input name="phone"><input name="date"><input name="time"><input name="guests"><textarea name="comment"></textarea><input name="lang">
+</form>
+
+<script type="module" src="js/main.js"></script>
+</body>
+</html>

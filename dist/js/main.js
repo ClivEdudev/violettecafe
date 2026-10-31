@@ -1,6 +1,6 @@
 import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT } from './data.js';
 import { svg, steam, LAYERS, bunTop, bunBottom, latteArt } from './art.js';
-import { $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, on, emit, cart, saveCart, setCart, addLine, unitPrice, lineName, lineSub, lineArt, linePrep, isCoffeeLine, subtotal, count, toast, openOverlay, closeOverlay, tashkentNow, hhmm, ddmmyyyy, pad, isLang, } from './shared.js';
+import { $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, on, emit, cart, saveCart, setCart, addLine, unitPrice, lineName, lineSub, linePrep, isCoffeeLine, subtotal, count, toast, openOverlay, closeOverlay, tashkentNow, hhmm, ddmmyyyy, pad, isLang, itemPic, lineVisual, } from './shared.js';
 import { initLab } from './lab.js';
 import { initBudget } from './budget.js';
 const root = document.documentElement;
@@ -260,7 +260,7 @@ function cardHTML(i, k) {
     const hot = i.art.k === 'drink' && ['cup', 'small', 'pot'].includes(i.art.d.v);
     return `<article class="card${hot ? ' hot' : ''}" data-id="${i.id}" style="--k:${k}">
     <button class="card-hit" data-open="${i.id}" aria-label="${esc(i.name[state.lang])} — ${t('card.open')}"></button>
-    <div class="card-art">${svg(i.art)}</div>
+    <div class="card-art">${itemPic(i, 520, i.name[state.lang])}</div>
     <div class="card-tags">${tagHTML(i.tags)}</div>
     <h3>${esc(i.name[state.lang])}</h3>
     <p class="card-desc">${esc(i.desc[state.lang])}</p>
@@ -400,7 +400,7 @@ function imPrice() {
 }
 function renderItem() {
     const it = ITEM(im.id);
-    $('#imArt').innerHTML = svg(it.art, 'art', it.name[state.lang]);
+    $('#imArt').innerHTML = itemPic(it, 760, it.name[state.lang], true);
     $('#imTags').innerHTML = tagHTML(it.tags);
     $('#imName').textContent = it.name[state.lang];
     $('#imDesc').textContent = it.desc[state.lang];
@@ -469,7 +469,7 @@ function renderCart() {
     $('#cartFoot').hidden = empty;
     $('#split').hidden = cart.length < 1;
     $('#lines').innerHTML = cart.map((l, i) => `<li class="line" data-i="${i}">
-      <div class="ln-art">${svg(lineArt(l))}</div>
+      <div class="ln-art">${lineVisual(l, 140)}</div>
       <div class="ln-main"><b>${esc(lineName(l))}</b><small>${esc(lineSub(l))}</small>
         <div class="ln-row">
           <div class="stepper sm"><button type="button" data-q="-1" aria-label="${t('aria.less')}">−</button><output>${l.qty}</output><button type="button" data-q="1" aria-label="${t('aria.more')}">+</button></div>

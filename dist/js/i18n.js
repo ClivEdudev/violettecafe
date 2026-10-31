@@ -46,7 +46,7 @@ const uz = {
     'done.title': 'Rahmat! Buyurtma qabul qilindi', 'done.text': 'Buyurtma raqami: {id}. Administrator tasdiqlash uchun {phone} raqamiga qoʻngʻiroq qiladi.', 'done.eta': 'Taxminiy tayyor boʻlish vaqti: {t}', 'done.close': 'Yopish', 'done.stamp': '+{n} muhr kofe kartochkangizga',
     'table.banner': '{n}-stoldan buyurtma beryapsiz — taomni stolingizga olib kelamiz.', 'table.exit': 'Bekor qilish',
     'visit.title': 'Bizni toping', 'visit.addr': 'Manzil', 'visit.addrV': 'Andijon shahri (aniq manzil kafe bilan tasdiqlanadi)', 'visit.hours': 'Ish vaqti', 'visit.hoursV': 'Har kuni {o} – {c}', 'visit.phone': 'Telefon', 'visit.social': 'Ijtimoiy tarmoqlar', 'visit.route': 'Yoʻl topish', 'visit.apps': 'Ilovalarda ham:',
-    'foot.note': 'Bu sayt namunaviy: narxlar, ish vaqti va aloqa maʼlumotlari kafe tasdiqlagach yangilanadi.',
+    'foot.note': 'Bu sayt namunaviy: narxlar, ish vaqti va aloqa maʼlumotlari kafe tasdiqlagach yangilanadi. Taom suratlari Unsplash’dan namuna sifatida olingan.',
     'items.one': 'ta', 'items.many': 'ta',
 };
 const ru = {
@@ -97,7 +97,7 @@ const ru = {
     'done.title': 'Спасибо! Заказ принят', 'done.text': 'Номер заказа: {id}. Администратор позвонит на {phone} для подтверждения.', 'done.eta': 'Ориентировочно готово к {t}', 'done.close': 'Закрыть', 'done.stamp': '+{n} штамп. на кофейную карту',
     'table.banner': 'Вы заказываете со стола {n} — принесём заказ к столу.', 'table.exit': 'Отменить',
     'visit.title': 'Как нас найти', 'visit.addr': 'Адрес', 'visit.addrV': 'г. Андижан (точный адрес подтвердит кафе)', 'visit.hours': 'Часы работы', 'visit.hoursV': 'Ежедневно {o} – {c}', 'visit.phone': 'Телефон', 'visit.social': 'Соцсети', 'visit.route': 'Проложить маршрут', 'visit.apps': 'Также в приложениях:',
-    'foot.note': 'Это демонстрационный сайт: цены, часы работы и контакты обновятся после подтверждения кафе.',
+    'foot.note': 'Это демонстрационный сайт: цены, часы работы и контакты обновятся после подтверждения кафе. Фото блюд — примеры с Unsplash.',
     'items.one': 'шт', 'items.few': 'шт', 'items.many': 'шт',
 };
 const en = {
@@ -148,7 +148,7 @@ const en = {
     'done.title': 'Thank you! Order received', 'done.text': 'Order number: {id}. The manager will call {phone} to confirm.', 'done.eta': 'Estimated ready time: {t}', 'done.close': 'Close', 'done.stamp': '+{n} stamps on your coffee card',
     'table.banner': 'You’re ordering from table {n} — we’ll bring it to your table.', 'table.exit': 'Cancel',
     'visit.title': 'Find us', 'visit.addr': 'Address', 'visit.addrV': 'Andijan (exact address to be confirmed by the cafe)', 'visit.hours': 'Opening hours', 'visit.hoursV': 'Daily {o} – {c}', 'visit.phone': 'Phone', 'visit.social': 'Social media', 'visit.route': 'Get directions', 'visit.apps': 'Also on:',
-    'foot.note': 'This is a sample site: prices, hours and contacts will be updated once the cafe confirms them.',
+    'foot.note': 'This is a sample site: prices, hours and contacts will be updated once the cafe confirms them. Food photos are sample images from Unsplash.',
     'items.one': 'item', 'items.many': 'items',
 };
 export const DICT = { uz, ru, en };

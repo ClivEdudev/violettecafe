@@ -1,7 +1,6 @@
 // "Will it fit my budget?" — a slot machine that builds a filling set for each person within the money they have.
 import { ITEMS, SIZES } from './data.js';
-import { svg } from './art.js';
-import { $, $$, clamp, reduced, esc, state, t, tf, money, on, addLine, toast } from './shared.js';
+import { $, $$, clamp, reduced, esc, state, t, tf, money, on, addLine, toast, itemPic } from './shared.js';
 const bg = { amount: 100000, people: 2, mood: 'both' };
 let last = null;
 const priceOf = (i) => i.price + (i.sized ? SIZES[1].add : 0);
@@ -54,7 +53,7 @@ function pickSets() {
 }
 const REEL_H = () => $('.reel').getBoundingClientRect().height || 120;
 function cellHTML(i) {
-    return `<div class="cell">${i ? svg(i.art) : '<span class="cell-none">—</span>'}</div>`;
+    return `<div class="cell">${i ? itemPic(i, 300, '', true) : '<span class="cell-none">—</span>'}</div>`;
 }
 function spinReels(final, done) {
     const strips = $$('.reel .strip');
@@ -86,7 +85,7 @@ function renderResult() {
     }
     const total = last.reduce((a, s) => a + sum(s), 0);
     box.innerHTML = `<ul class="bg-people">${last.map((s, p) => `<li style="--k:${p}"><span class="bg-who">${tf('budget.person', { n: p + 1 })}</span>
-      <div class="bg-items">${s.filter(Boolean).map(i => `<span class="bg-item">${svg(i.art)}<small>${esc(i.name[state.lang])}</small></span>`).join('')}</div>
+      <div class="bg-items">${s.filter(Boolean).map(i => `<span class="bg-item">${itemPic(i, 120)}<small>${esc(i.name[state.lang])}</small></span>`).join('')}</div>
       <b>${money(sum(s))}</b></li>`).join('')}</ul>
     <div class="bg-sum"><div><span>${t('budget.total')}</span><b>${money(total)}</b></div><div><span>${t('budget.left')}</span><b>${money(bg.amount - total)}</b></div>
     <button type="button" class="btn btn-ink" id="bgAdd">${t('budget.addAll')}</button></div>`;

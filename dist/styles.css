@@ -603,3 +603,20 @@ input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 
 @media (prefers-reduced-motion: reduce) {
   *, *::before, *::after { animation-duration: .01ms !important; animation-iteration-count: 1 !important; transition-duration: .01ms !important; scroll-behavior: auto !important; }
 }
+
+/* ============ photos ============ */
+img.ph { display: block; width: 100%; height: 100%; object-fit: cover; opacity: 0; transition: opacity .5s, transform .5s cubic-bezier(.3, 1.2, .5, 1); background: var(--bg2); }
+img.ph.in { opacity: 1; }
+.card-art { padding: 0; }
+.card-art img.ph { border-radius: inherit; }
+.card:hover .card-art img.ph { transform: scale(1.06); }
+.card-art::after { content: ''; position: absolute; inset: auto 0 0; height: 30%; background: linear-gradient(transparent, rgba(23, 13, 34, .18)); pointer-events: none; border-radius: 0 0 18px 18px; }
+.card-art { position: relative; }
+.im-art { padding: 0; overflow: hidden; }
+.im-art img.ph { min-height: 320px; }
+.ln-art { overflow: hidden; }
+.cell { padding: 0; }
+.cell img.ph { opacity: 1; }
+.bg-item img.ph { width: 46px; height: 46px; border-radius: 12px; flex: none; }
+.flyer img.ph { opacity: 1; border-radius: 50%; border: 3px solid var(--ink); }
+@media (max-width: 960px) { .im-art img.ph { min-height: 0; max-height: 280px; } }
