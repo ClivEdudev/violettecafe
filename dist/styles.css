@@ -792,3 +792,32 @@ main, .foot { overflow-x: clip; }
   .card-meta .dts { display: none; }
 }
 @media (max-width: 640px) { .repeat-last small { display: none; } .repeat-last { padding: 7px 12px; font-size: .84rem; } .card-tags { right: 52px; flex-wrap: wrap; } }
+
+/* ============ away screen (barista at work while the visitor is idle) ============ */
+.afk { position: fixed; inset: 0; z-index: 1000; background: #140B1A; color: #F4ECF8; opacity: 0; transition: opacity .6s ease; display: flex; flex-direction: column; overflow: hidden; }
+.afk.on { opacity: 1; }
+.afk-on body { overflow: hidden; }
+.ak-scene { position: absolute; inset: 0; width: 100%; height: 100%; animation: akZoom 24s ease-in-out infinite alternate; transform-origin: 55% 60%; }
+@keyframes akZoom { from { transform: scale(1.02); } to { transform: scale(1.09) translateX(-1%); } }
+.ak-top, .ak-bottom { position: relative; z-index: 1; padding-inline: max(20px, 4vw); }
+.ak-top { display: flex; align-items: center; gap: 18px; padding-top: max(18px, env(safe-area-inset-top)); padding-bottom: 40px; background: linear-gradient(#140B1A, rgba(20, 11, 26, 0)); }
+.ak-logo { font: 400 1.4rem var(--display); color: #fff; }
+.ak-top p { margin: 0; flex: 1; font-weight: 700; color: rgba(244, 236, 248, .8); }
+.ak-clock { font: 400 1.6rem var(--display); font-variant-numeric: tabular-nums; color: #FFE2A8; }
+.ak-bottom { margin-top: auto; padding-top: 60px; padding-bottom: max(22px, env(safe-area-inset-bottom)); background: linear-gradient(rgba(20, 11, 26, 0), rgba(20, 11, 26, .92) 45%); display: flex; flex-direction: column; align-items: center; gap: 12px; text-align: center; }
+.ak-steps { display: flex; gap: 6px; }
+.ak-steps i { width: 28px; height: 4px; border-radius: 2px; background: rgba(255, 255, 255, .2); transition: background-color .4s; }
+.ak-steps i.on { background: #FFC98A; }
+.ak-caption { margin: 0; font: 400 clamp(1.3rem, 3.2vw, 2.2rem)/1.15 var(--display); color: #fff; text-shadow: 0 4px 24px rgba(0, 0, 0, .5); }
+.ak-order { opacity: 0; transform: translateY(10px); pointer-events: none; transition: opacity .5s, transform .5s; }
+.afk.serving .ak-order { opacity: 1; transform: none; pointer-events: auto; }
+.ak-hint { margin: 0; font-size: .82rem; font-weight: 600; color: rgba(244, 236, 248, .55); }
+.ak-chalk-t { font: 400 30px var(--display); fill: #F4ECF8; }
+.ak-chalk { font: 700 17px var(--body); fill: rgba(244, 236, 248, .78); }
+.ak-badge { font: 400 22px var(--display); fill: rgba(255, 255, 255, .85); }
+.ak-lamp { animation: akSway 6s ease-in-out infinite alternate; animation-delay: var(--d); }
+@keyframes akSway { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
+.ak-bokeh { animation: akFloat 9s ease-in-out infinite alternate; animation-delay: calc(var(--d) * -1); }
+@keyframes akFloat { to { transform: translate(var(--x), -30px); } }
+@media (max-width: 640px) { .ak-top p { display: none; } .ak-scene { animation: none; } }
+@media (max-aspect-ratio: 9/10) { .afk { background: linear-gradient(#2A1934, #1C1024 55%, #3E2314 56%, #2a160c); } }

@@ -2,6 +2,7 @@ import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT, SET_DRI
 import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } from './art.js';
 import { initPointer } from './ui.js';
 import { initScroll } from './scroll.js';
+import { initAfk } from './afk.js';
 document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import { $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, plural, on, emit, cart, saveCart, setCart, addLine, unitPrice, lineName, lineSub, linePrep, isCoffeeLine, subtotal, count, toast, openOverlay, closeOverlay, tashkentNow, hhmm, ddmmyyyy, pad, isLang, itemPic, lineVisual, addSavedLines, } from './shared.js';
 import { initLab } from './lab.js';
@@ -1108,6 +1109,7 @@ initBudget();
 initPointer(t);
 initReveal();
 initScroll();
+initAfk();
 if (reduced)
     root.classList.add('reduced');
 updateHero(heroProgress());

@@ -2,6 +2,7 @@ import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT, SET_DRI
 import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } from './art.js';
 import { initPointer } from './ui.js';
 import { initScroll } from './scroll.js';
+import { initAfk } from './afk.js';
 document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import {
   $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, plural, on, emit, cart, saveCart, setCart, addLine,
@@ -834,7 +835,7 @@ on('lang', () => { renderStatus(); renderReceipt(); renderChips(); renderGrid();
 buildScene(); fitScene(); renderTape(); renderVisit(); setWorldUI();
 applyLang();
 initLab(); initBudget();
-initPointer(t); initReveal(); initScroll();
+initPointer(t); initReveal(); initScroll(); initAfk();
 if (reduced) root.classList.add('reduced');
 updateHero(heroProgress()); onScroll();
 const hideLoader = () => { const l = document.getElementById('loader'); if (!l || l.classList.contains('gone')) return; l.classList.add('gone'); setTimeout(() => l.remove(), 700); root.classList.add('ready'); };
