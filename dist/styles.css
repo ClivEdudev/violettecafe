@@ -620,3 +620,10 @@ img.ph.in { opacity: 1; }
 .bg-item img.ph { width: 46px; height: 46px; border-radius: 12px; flex: none; }
 .flyer img.ph { opacity: 1; border-radius: 50%; border: 3px solid var(--ink); }
 @media (max-width: 960px) { .im-art img.ph { min-height: 0; max-height: 280px; } }
+
+/* ============ realistic hero & labs ============ */
+#scene .pill-t { font: 800 17px var(--body); fill: var(--ink); }
+.photo-hero #scene .neon { opacity: .22; }
+[data-theme="dark"].photo-hero #scene .neon { opacity: 1; }
+.lab-stage { background: radial-gradient(ellipse 70% 55% at 50% 38%, color-mix(in srgb, var(--disc-a) 80%, #fff 20%), var(--disc-b) 75%); }
+.lab-stage::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 26%; background: linear-gradient(to bottom, transparent, rgba(42, 20, 64, .08)); pointer-events: none; }

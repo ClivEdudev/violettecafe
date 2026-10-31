@@ -4,7 +4,7 @@ Coffee shop and fast-food website for Violette cafe, Andijan (Plus Code P8WQ+PW,
 Zero-dependency static site written in TypeScript, in Uzbek, Russian and English.
 
 ## What it does
-- **Scroll-driven hero**: a glass fills with lavender syrup, milk and espresso, gets foam and a latte-art heart, then a Violette burger drops in layer by layer and a receipt prints with the pair's price ("Get this pair" adds both).
+- **Scroll-driven hero** built from real photos: the drink photo fills with colour from the bottom like a pour (steam rises when it's full), then the burger photo is stacked slice by slice from the top of the screen, and a receipt prints with the pair's price ("Get this pair" adds both). If the photos can't load, a drawn version of the same animation plays instead.
 - **Two-world menu**: a Coffee & sweets / Fast food switch floods the screen with liquid and re-colours the site (violet for coffee, ketchup red for food). Opens on coffee before noon and on food after, by Tashkent time. Category chips, search across all three languages, item dialog with sizes (S/M/L) and extras.
 - **Build your own** (`src/lab.ts`):
   - Burger stacker: pick a bun, drop up to 9 fillings (the top bun hops up and lands back), undo, clear, "Surprise me". Live price, calories, prep time, height in cm and an auto-generated name.
@@ -20,7 +20,8 @@ Zero-dependency static site written in TypeScript, in Uzbek, Russian and English
 - Menu, prices, phone, socials, hours, delivery zones: `src/data.ts` (prices, phone and hours are **placeholders** — replace with the cafe's real data).
 - Texts in all three languages: `src/i18n.ts`.
 - Photos: each dish in `src/data.ts` has a `photo` id from Unsplash (free licence, loaded from images.unsplash.com). Replace them with the cafe's own photos before launch — put the files in `public/img/` and change `photoURL` in `src/data.ts`. If a photo fails to load, the drawn illustration from `src/art.ts` is shown instead.
-- Illustrations: `src/art.ts` (used by the hero, the builders and as photo fallback).
+- Illustrations: `src/art.ts` — realistic burger layers and coffee glass (gradients, texture filters, gloss, soft shadows from `REAL_DEFS`) used by the builders, plus fallbacks for the hero and menu photos.
+- Hero photos: `HERO_PHOTOS` in `src/main.ts`.
 
 ## Build and deploy
 ```

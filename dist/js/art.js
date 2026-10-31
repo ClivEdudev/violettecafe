@@ -147,42 +147,100 @@ function pot(d) {
     s += steam(310, 196, .6);
     return s;
 }
+export const REAL_DEFS = `<svg class="real-defs" width="0" height="0" aria-hidden="true" focusable="false" style="position:absolute;width:0;height:0;overflow:hidden">
+<defs>
+  <filter id="fx-bread" x="-10%" y="-20%" width="120%" height="160%"><feTurbulence type="fractalNoise" baseFrequency="1.4" numOctaves="2" seed="4" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 .45  0 0 0 0 .25  0 0 0 0 .08  0 0 0 .55 -.12" result="c"/><feComposite in="c" in2="SourceGraphic" operator="in" result="t"/>
+    <feBlend in="t" in2="SourceGraphic" mode="multiply" result="b"/><feDropShadow in="b" dx="0" dy="5" stdDeviation="4" flood-color="#2a1208" flood-opacity=".35"/></filter>
+  <filter id="fx-meat" x="-10%" y="-30%" width="120%" height="180%"><feTurbulence type="fractalNoise" baseFrequency="2.2" numOctaves="3" seed="9" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 .1  0 0 0 0 .04  0 0 0 0 .02  0 0 0 1.2 -.35" result="c"/><feComposite in="c" in2="SourceGraphic" operator="in" result="t"/>
+    <feBlend in="t" in2="SourceGraphic" mode="multiply" result="b"/><feDropShadow in="b" dx="0" dy="4" stdDeviation="3" flood-color="#1a0a04" flood-opacity=".45"/></filter>
+  <filter id="fx-crisp" x="-10%" y="-30%" width="120%" height="180%"><feTurbulence type="turbulence" baseFrequency="1.1" numOctaves="2" seed="2" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 .55  0 0 0 0 .3  0 0 0 0 .05  0 0 0 .9 -.2" result="c"/><feComposite in="c" in2="SourceGraphic" operator="in" result="t"/>
+    <feBlend in="t" in2="SourceGraphic" mode="multiply" result="b"/><feDropShadow in="b" dx="0" dy="4" stdDeviation="3" flood-color="#2a1208" flood-opacity=".4"/></filter>
+  <filter id="fx-soft" x="-10%" y="-40%" width="120%" height="200%"><feDropShadow dx="0" dy="3" stdDeviation="2.5" flood-color="#1a0a04" flood-opacity=".32"/></filter>
+  <filter id="fx-foam" x="0" y="0" width="100%" height="100%"><feTurbulence type="fractalNoise" baseFrequency="3" numOctaves="1" seed="7" result="n"/>
+    <feColorMatrix in="n" type="matrix" values="0 0 0 0 1  0 0 0 0 1  0 0 0 0 1  0 0 0 .9 -.35" result="c"/><feComposite in="c" in2="SourceGraphic" operator="in" result="t"/><feMerge><feMergeNode in="SourceGraphic"/><feMergeNode in="t"/></feMerge></filter>
+  <filter id="fx-mix" x="0" y="-5%" width="100%" height="110%"><feGaussianBlur stdDeviation="0 5"/></filter>
+  <filter id="fx-steam" x="-50%" y="-50%" width="200%" height="200%"><feGaussianBlur stdDeviation="4"/></filter>
+  <filter id="fx-photo" x="-10%" y="-10%" width="120%" height="125%"><feDropShadow dx="0" dy="18" stdDeviation="16" flood-color="#1a0a24" flood-opacity=".32"/></filter>
+  <filter id="fx-gray"><feColorMatrix type="saturate" values=".05"/></filter>
+  <radialGradient id="g-bun-classic" cx=".36" cy=".22" r=".95"><stop offset="0" stop-color="#F9CF8E"/><stop offset=".35" stop-color="#E8A552"/><stop offset=".75" stop-color="#BE7130"/><stop offset="1" stop-color="#8A4A1C"/></radialGradient>
+  <radialGradient id="g-bun-brioche" cx=".36" cy=".22" r=".95"><stop offset="0" stop-color="#FFE3A6"/><stop offset=".35" stop-color="#F2B550"/><stop offset=".75" stop-color="#C97B22"/><stop offset="1" stop-color="#94520F"/></radialGradient>
+  <radialGradient id="g-bun-violet" cx=".36" cy=".22" r=".95"><stop offset="0" stop-color="#D9BDF7"/><stop offset=".35" stop-color="#9D6BD8"/><stop offset=".75" stop-color="#6A3BA3"/><stop offset="1" stop-color="#3F1F6B"/></radialGradient>
+  <radialGradient id="g-bun-black" cx=".36" cy=".22" r=".95"><stop offset="0" stop-color="#7C7079"/><stop offset=".35" stop-color="#47394A"/><stop offset=".75" stop-color="#2A202C"/><stop offset="1" stop-color="#140E15"/></radialGradient>
+  <linearGradient id="g-crumb" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FBE6BE"/><stop offset=".45" stop-color="#F0CF95"/><stop offset="1" stop-color="#D9A862"/></linearGradient>
+  <linearGradient id="g-gloss" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#fff" stop-opacity=".75"/><stop offset="1" stop-color="#fff" stop-opacity="0"/></linearGradient>
+  <linearGradient id="g-patty" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8A4B2C"/><stop offset=".25" stop-color="#6A3620"/><stop offset=".75" stop-color="#4A2414"/><stop offset="1" stop-color="#2E150B"/></linearGradient>
+  <linearGradient id="g-chicken" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F6C277"/><stop offset=".4" stop-color="#E39A3F"/><stop offset="1" stop-color="#A9601E"/></linearGradient>
+  <linearGradient id="g-cheese" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFE07A"/><stop offset=".5" stop-color="#F7B92E"/><stop offset="1" stop-color="#E0901A"/></linearGradient>
+  <linearGradient id="g-lettuce" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C6EA7E"/><stop offset=".45" stop-color="#7DBA3E"/><stop offset="1" stop-color="#4C8A28"/></linearGradient>
+  <radialGradient id="g-tomato" cx=".5" cy=".35" r=".7"><stop offset="0" stop-color="#FF8B6B"/><stop offset=".6" stop-color="#E5432C"/><stop offset="1" stop-color="#A82519"/></radialGradient>
+  <linearGradient id="g-pickle" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#C1D97A"/><stop offset=".6" stop-color="#8DAF44"/><stop offset="1" stop-color="#5F7E27"/></linearGradient>
+  <linearGradient id="g-bacon" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F4B9A5"/><stop offset=".3" stop-color="#C0503A"/><stop offset=".55" stop-color="#E9917A"/><stop offset=".8" stop-color="#9E3324"/><stop offset="1" stop-color="#6E2016"/></linearGradient>
+  <radialGradient id="g-yolk" cx=".38" cy=".32" r=".7"><stop offset="0" stop-color="#FFF1B0"/><stop offset=".35" stop-color="#FFC21A"/><stop offset="1" stop-color="#E88A00"/></radialGradient>
+  <linearGradient id="g-white" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFFFFF"/><stop offset="1" stop-color="#EEE6D8"/></linearGradient>
+  <linearGradient id="g-sauce" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF6E6"/><stop offset="1" stop-color="#E6CDA4"/></linearGradient>
+  <linearGradient id="g-ketchup" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0524B"/><stop offset="1" stop-color="#A3140F"/></linearGradient>
+  <radialGradient id="g-plate" cx=".5" cy=".4" r=".62"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".7" stop-color="#F3EEF6"/><stop offset=".92" stop-color="#DCD3E3"/><stop offset="1" stop-color="#BFB3C9"/></radialGradient>
+  <radialGradient id="g-plate-well" cx=".5" cy=".55" r=".6"><stop offset="0" stop-color="#F5F1F7"/><stop offset="1" stop-color="#E2DAE8"/></radialGradient>
+  <linearGradient id="g-glass" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#fff" stop-opacity=".55"/><stop offset=".12" stop-color="#fff" stop-opacity=".12"/><stop offset=".55" stop-color="#fff" stop-opacity=".04"/><stop offset=".86" stop-color="#fff" stop-opacity=".18"/><stop offset="1" stop-color="#fff" stop-opacity=".5"/></linearGradient>
+  <linearGradient id="g-shade" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".32"/><stop offset=".22" stop-color="#000" stop-opacity="0"/><stop offset=".6" stop-color="#fff" stop-opacity=".1"/><stop offset=".85" stop-color="#000" stop-opacity=".08"/><stop offset="1" stop-color="#000" stop-opacity=".38"/></linearGradient>
+  <linearGradient id="g-foam" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF8EE"/><stop offset=".7" stop-color="#F1DFC6"/><stop offset="1" stop-color="#D9B98F"/></linearGradient>
+  <linearGradient id="g-straw" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#C98A10"/><stop offset=".4" stop-color="#FFD866"/><stop offset="1" stop-color="#B57A08"/></linearGradient>
+  <radialGradient id="g-cream" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".7" stop-color="#FBF3E8"/><stop offset="1" stop-color="#E7D6BF"/></radialGradient>
+</defs></svg>`;
 const sesame = (cx, y, w) => {
     let s = '';
-    for (let i = 0; i < 11; i++) {
-        const x = cx - w * .36 + ((i * 47) % 100) / 100 * w * .72, yy = y + 12 + ((i * 31) % 26);
-        s += `<ellipse cx="${x}" cy="${yy}" rx="4.5" ry="2.4" fill="#FFF3D6" transform="rotate(${(i * 37) % 60 - 30} ${x} ${yy})"/>`;
+    for (let i = 0; i < 14; i++) {
+        const x = cx - w * .36 + ((i * 47) % 100) / 100 * w * .72, yy = y + 12 + ((i * 31) % 30), r = (i * 37) % 70 - 35;
+        s += `<g transform="rotate(${r} ${x} ${yy})"><ellipse cx="${x + .8}" cy="${yy + 1.2}" rx="4.6" ry="2.3" fill="#7A4518" opacity=".35"/><ellipse cx="${x}" cy="${yy}" rx="4.4" ry="2.2" fill="#FFF3D9"/><ellipse cx="${x - 1}" cy="${yy - .6}" rx="2" ry=".9" fill="#fff"/></g>`;
     }
     return s;
 };
-const BUN = {
-    classic: { c: '#E3A04C', seed: true }, brioche: { c: '#E9B44C', seed: false }, violet: { c: '#8E5CC9', seed: true }, black: { c: '#3A2F3C', seed: true },
-};
+const BUNS_ART = { classic: true, brioche: false, violet: true, black: true };
 export function bunTop(kind = 'classic') {
-    const b = BUN[kind] ?? BUN.classic;
-    return { h: 62, svg: (y, cx, w) => `<path d="M${cx - w / 2} ${y + 60} C ${cx - w / 2} ${y - 6}, ${cx + w / 2} ${y - 6}, ${cx + w / 2} ${y + 60} Q ${cx} ${y + 70} ${cx - w / 2} ${y + 60}z" fill="${b.c}" stroke="${INK}" stroke-width="3.5"/><path d="M${cx - w * .32} ${y + 22} q${w * .12} -16 ${w * .3} -14" fill="none" stroke="#fff" stroke-opacity=".4" stroke-width="8" stroke-linecap="round"/>${b.seed ? sesame(cx, y, w) : ''}` };
+    const seeds = BUNS_ART[kind] ?? true, g = `url(#g-bun-${BUNS_ART[kind] === undefined ? 'classic' : kind})`;
+    return { h: 70, svg: (y, cx, w) => `<g filter="url(#fx-bread)"><path d="M${cx - w / 2} ${y + 62} C ${cx - w / 2} ${y - 4}, ${cx + w / 2} ${y - 4}, ${cx + w / 2} ${y + 62} Q ${cx + w / 2} ${y + 70} ${cx + w / 2 - 12} ${y + 70} H ${cx - w / 2 + 12} Q ${cx - w / 2} ${y + 70} ${cx - w / 2} ${y + 62}z" fill="${g}"/></g>
+    <path d="M${cx - w / 2 + 4} ${y + 60} Q ${cx} ${y + 72} ${cx + w / 2 - 4} ${y + 60}" fill="none" stroke="#000" stroke-opacity=".18" stroke-width="6"/>
+    <ellipse cx="${cx - w * .17}" cy="${y + 19}" rx="${w * .22}" ry="9" fill="url(#g-gloss)" transform="rotate(-9 ${cx - w * .17} ${y + 19})"/>
+    ${seeds ? sesame(cx, y, w) : `<ellipse cx="${cx + w * .12}" cy="${y + 14}" rx="${w * .1}" ry="4" fill="#fff" opacity=".35"/>`}` };
 }
 export function bunBottom(kind = 'classic') {
-    const b = BUN[kind] ?? BUN.classic;
-    return { h: 30, svg: (y, cx, w) => `<path d="M${cx - w / 2 + 4} ${y} h${w - 8} q4 0 2 10 l-6 14 q-3 6 -10 6 h${-(w - 36)} q-7 0 -10 -6 l-6 -14 q-2 -10 2 -10z" fill="${b.c}" stroke="${INK}" stroke-width="3.5"/><rect x="${cx - w / 2 + 6}" y="${y + 1}" width="${w - 12}" height="6" fill="${shade(b.c, .25)}"/>` };
+    const g = `url(#g-bun-${BUNS_ART[kind] === undefined ? 'classic' : kind})`;
+    return { h: 32, svg: (y, cx, w) => `<g filter="url(#fx-bread)"><path d="M${cx - w / 2 + 2} ${y + 6} Q ${cx - w / 2} ${y} ${cx - w / 2 + 8} ${y} H ${cx + w / 2 - 8} Q ${cx + w / 2} ${y} ${cx + w / 2 - 2} ${y + 6} L ${cx + w / 2 - 10} ${y + 26} Q ${cx + w / 2 - 14} ${y + 32} ${cx + w / 2 - 24} ${y + 32} H ${cx - w / 2 + 24} Q ${cx - w / 2 + 14} ${y + 32} ${cx - w / 2 + 10} ${y + 26}z" fill="${g}"/>
+    <rect x="${cx - w / 2 + 3}" y="${y}" width="${w - 6}" height="8" rx="4" fill="url(#g-crumb)"/></g>` };
 }
-export const LAYERS = {
-    beef: { h: 30, svg: (y, cx, w) => `<rect x="${cx - w / 2 - 4}" y="${y}" width="${w + 8}" height="30" rx="15" fill="#6B3A24" stroke="${INK}" stroke-width="3.5"/>${[0, 1, 2, 3, 4, 5].map(i => `<path d="M${cx - w * .4 + i * w * .16} ${y + 9} l10 8" stroke="#4A2516" stroke-width="3" stroke-linecap="round"/>`).join('')}` },
-    chicken: { h: 30, svg: (y, cx, w) => `<path d="M${cx - w / 2 - 8} ${y + 15} q4 -16 20 -14 q10 -6 22 0 q12 -6 24 0 q12 -6 24 0 q12 -6 24 0 q12 -6 24 0 q16 -2 18 14 q-2 16 -18 15 h${-(w - 2)} q-18 1 -18 -15z" fill="#D9933A" stroke="${INK}" stroke-width="3.5"/>${[0, 1, 2, 3, 4, 5, 6].map(i => `<circle cx="${cx - w * .42 + i * w * .14}" cy="${y + 12 + (i % 2) * 6}" r="2.6" fill="#F2C178"/>`).join('')}` },
-    cheese: { h: 10, svg: (y, cx, w) => `<path d="M${cx - w / 2} ${y} h${w} l-4 6 l-14 16 l-8 -14 h-${w * .3} l-12 20 l-10 -20 h-${w * .25} l-12 14 l-6 -14 h-${w * .2}z" fill="#F4B731" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>` },
-    lettuce: { h: 14, svg: (y, cx, w) => { let p = `M${cx - w / 2 - 10} ${y + 6}`; for (let i = 0; i < 9; i++)
-            p += ` q${(w + 20) / 18} ${i % 2 ? -10 : 10} ${(w + 20) / 9} 0`; return `<path d="${p} v8 h-${w + 20}z" fill="#7CB342" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`; } },
-    tomato: { h: 14, svg: (y, cx, w) => `<rect x="${cx - w / 2 + 2}" y="${y}" width="${w / 2 - 4}" height="14" rx="7" fill="#E2452F" stroke="${INK}" stroke-width="3"/><rect x="${cx + 2}" y="${y}" width="${w / 2 - 4}" height="14" rx="7" fill="#E2452F" stroke="${INK}" stroke-width="3"/><circle cx="${cx - w / 4}" cy="${y + 7}" r="2.5" fill="#FFB199"/><circle cx="${cx + w / 4}" cy="${y + 7}" r="2.5" fill="#FFB199"/>` },
-    onion: { h: 10, svg: (y, cx, w) => [0, 1, 2, 3].map(i => `<ellipse cx="${cx - w * .33 + i * w * .22}" cy="${y + 5}" rx="${w * .12}" ry="5" fill="none" stroke="#C9A3E6" stroke-width="5"/>`).join('') },
-    pickles: { h: 10, svg: (y, cx, w) => [0, 1, 2].map(i => `<ellipse cx="${cx - w * .3 + i * w * .3}" cy="${y + 5}" rx="${w * .14}" ry="6" fill="#8BAF3A" stroke="${INK}" stroke-width="2.5"/>`).join('') },
-    jalapeno: { h: 10, svg: (y, cx, w) => [0, 1, 2, 3, 4].map(i => `<circle cx="${cx - w * .38 + i * w * .19}" cy="${y + 5}" r="7" fill="#3F9142" stroke="${INK}" stroke-width="2.5"/><circle cx="${cx - w * .38 + i * w * .19}" cy="${y + 5}" r="3" fill="#E9F2B7"/>`).join('') },
-    bacon: { h: 12, svg: (y, cx, w) => { let p = `M${cx - w / 2 - 6} ${y + 6}`; for (let i = 0; i < 8; i++)
-            p += ` q${(w + 12) / 16} ${i % 2 ? -8 : 8} ${(w + 12) / 8} 0`; return `<path d="${p}" fill="none" stroke="${INK}" stroke-width="13" stroke-linecap="round"/><path d="${p}" fill="none" stroke="#B5432F" stroke-width="8" stroke-linecap="round"/><path d="${p}" fill="none" stroke="#F0A08A" stroke-width="2.5" stroke-linecap="round"/>`; } },
-    egg: { h: 14, svg: (y, cx, w) => `<path d="M${cx - w / 2 + 6} ${y + 7} q0 -8 ${w * .3} -7 q${w * .2} -4 ${w * .4} 0 q${w * .3} 0 ${w * .3 - 12} 8 q0 8 ${-w * .5} 6 q${-w * .5} 2 ${-w * .5 + 6} -7z" fill="#FFFDF5" stroke="${INK}" stroke-width="3"/><circle cx="${cx + 6}" cy="${y + 6}" r="8" fill="#F4B731" stroke="${INK}" stroke-width="2.5"/>` },
-    sauce: { h: 8, svg: (y, cx, w) => { let p = `M${cx - w / 2 + 4} ${y + 2} h${w - 8}`; for (let i = 0; i < 6; i++)
-            p += ''; return `<path d="${p} q2 8 -10 10 q-6 -2 -10 6 q-6 -10 -20 -6 h-${w - 80} q-8 6 -14 -2 q-8 4 -10 -4z" fill="#F1E0C7" stroke="${INK}" stroke-width="2.5" stroke-linejoin="round"/>`; } },
-    ketchup: { h: 6, svg: (y, cx, w) => `<path d="M${cx - w / 2 + 8} ${y + 3} q${w / 8} -6 ${w / 4} 0 t${w / 4} 0 t${w / 4} 0 t${w / 4 - 16} 0" fill="none" stroke="#C62828" stroke-width="6" stroke-linecap="round"/>` },
+const bumps = (x0, x1, y, amp, n) => {
+    let d = `M${x0} ${y}`;
+    const step = (x1 - x0) / n;
+    for (let i = 0; i < n; i++)
+        d += ` q${step / 2} ${-(amp * (.6 + ((i * 7) % 5) / 10))} ${step} 0`;
+    return d;
 };
+export const LAYERS = {
+    beef: { h: 34, svg: (y, cx, w) => `<g filter="url(#fx-meat)"><path d="${bumps(cx - w / 2 - 6, cx + w / 2 + 6, y + 6, 6, 18)} Q ${cx + w / 2 + 12} ${y + 8} ${cx + w / 2 + 10} ${y + 18} Q ${cx + w / 2 + 8} ${y + 34} ${cx + w / 2 - 8} ${y + 34} H ${cx - w / 2 + 8} Q ${cx - w / 2 - 8} ${y + 34} ${cx - w / 2 - 10} ${y + 18} Q ${cx - w / 2 - 12} ${y + 8} ${cx - w / 2 - 6} ${y + 6}z" fill="url(#g-patty)"/></g>
+    ${[0, 1, 2, 3, 4, 5, 6].map(i => `<circle cx="${cx - w * .42 + i * w * .14}" cy="${y + 12 + (i % 2) * 6}" r="1.6" fill="#E9A57A" opacity=".55"/>`).join('')}
+    <path d="M${cx - w * .35} ${y + 10} Q ${cx} ${y + 4} ${cx + w * .3} ${y + 10}" stroke="#fff" stroke-opacity=".18" stroke-width="3" fill="none"/>` },
+    chicken: { h: 34, svg: (y, cx, w) => `<g filter="url(#fx-crisp)"><path d="${bumps(cx - w / 2 - 10, cx + w / 2 + 10, y + 8, 9, 14)} Q ${cx + w / 2 + 18} ${y + 20} ${cx + w / 2 + 6} ${y + 32} ${bumps(cx + w / 2 + 6, cx - w / 2 - 6, y + 32, -5, 12).replace(/^M[^q]+/, '')} Q ${cx - w / 2 - 18} ${y + 20} ${cx - w / 2 - 10} ${y + 8}z" fill="url(#g-chicken)"/></g>
+    ${Array.from({ length: 16 }, (_, i) => `<circle cx="${cx - w * .45 + ((i * 41) % 100) / 100 * w * .9}" cy="${y + 8 + ((i * 17) % 20)}" r="${1.2 + (i % 3) * .6}" fill="#FCE2B0" opacity=".7"/>`).join('')}` },
+    cheese: { h: 10, svg: (y, cx, w) => `<g filter="url(#fx-soft)"><path d="M${cx - w / 2 - 4} ${y} H ${cx + w / 2 + 4} l-2 6 q-4 2 -6 10 q-2 8 -6 0 q-2 -6 -10 -6 H ${cx + w * .1} q-8 0 -9 12 q-2 10 -7 0 q-1 -12 -9 -12 H ${cx - w * .3} q-6 0 -7 8 q-2 6 -6 0 q-1 -8 -8 -8 H ${cx - w / 2 + 2}z" fill="url(#g-cheese)"/></g>
+    <path d="M${cx - w / 2 + 6} ${y + 2} H ${cx + w / 2 - 20}" stroke="#FFF4C2" stroke-width="1.6" opacity=".8"/>` },
+    lettuce: { h: 16, svg: (y, cx, w) => { let d = `M${cx - w / 2 - 14} ${y + 8}`; const n = 16, st = (w + 28) / n; for (let i = 0; i < n; i++)
+            d += ` q${st / 2} ${i % 2 ? -9 : 9} ${st} ${i % 3 === 0 ? -2 : 1}`; return `<g filter="url(#fx-soft)"><path d="${d} L ${cx + w / 2 + 6} ${y + 16} H ${cx - w / 2 - 6}z" fill="url(#g-lettuce)"/></g>${[0, 1, 2, 3, 4].map(i => `<path d="M${cx - w * .4 + i * w * .2} ${y + 14} q 6 -6 14 -8" stroke="#E2F5B0" stroke-width="1.4" fill="none" opacity=".7"/>`).join('')}`; } },
+    tomato: { h: 15, svg: (y, cx, w) => [0, 1].map(k => { const x = cx - w / 2 + 4 + k * (w / 2), sw = w / 2 - 8; return `<g filter="url(#fx-soft)"><rect x="${x}" y="${y}" width="${sw}" height="15" rx="7.5" fill="url(#g-tomato)"/></g><rect x="${x + 6}" y="${y + 3}" width="${sw - 12}" height="5" rx="2.5" fill="#FF9F86" opacity=".7"/>${[0, 1, 2].map(j => `<ellipse cx="${x + sw * (.25 + j * .25)}" cy="${y + 9}" rx="3" ry="1.6" fill="#FFE2A8" opacity=".85"/>`).join('')}`; }).join('') },
+    onion: { h: 10, svg: (y, cx, w) => [0, 1, 2, 3].map(i => `<ellipse cx="${cx - w * .33 + i * w * .22}" cy="${y + 5}" rx="${w * .12}" ry="4.6" fill="none" stroke="#B98CD6" stroke-width="6" opacity=".85"/><ellipse cx="${cx - w * .33 + i * w * .22}" cy="${y + 4}" rx="${w * .12}" ry="4.6" fill="none" stroke="#F6ECFB" stroke-width="2.4" opacity=".9"/>`).join('') },
+    pickles: { h: 10, svg: (y, cx, w) => [0, 1, 2].map(i => { const x = cx - w * .3 + i * w * .3; return `<g filter="url(#fx-soft)"><ellipse cx="${x}" cy="${y + 5}" rx="${w * .14}" ry="6" fill="url(#g-pickle)"/></g><ellipse cx="${x}" cy="${y + 4.5}" rx="${w * .09}" ry="3.6" fill="#D8E9A0" opacity=".7"/>${[0, 1, 2, 3].map(j => `<circle cx="${x - w * .05 + j * w * .033}" cy="${y + 5 + (j % 2)}" r="1.1" fill="#F2F7D2"/>`).join('')}`; }).join('') },
+    jalapeno: { h: 10, svg: (y, cx, w) => [0, 1, 2, 3, 4].map(i => { const x = cx - w * .38 + i * w * .19; return `<g filter="url(#fx-soft)"><circle cx="${x}" cy="${y + 5}" r="7.5" fill="#3E8A33"/></g><circle cx="${x}" cy="${y + 5}" r="4.6" fill="#D9EBA8"/><circle cx="${x - 1}" cy="${y + 4}" r="1.2" fill="#FFF8D8"/><circle cx="${x + 1.6}" cy="${y + 6}" r="1.1" fill="#FFF8D8"/>`; }).join('') },
+    bacon: { h: 12, svg: (y, cx, w) => { let p = `M${cx - w / 2 - 8} ${y + 6}`; for (let i = 0; i < 8; i++)
+            p += ` q${(w + 16) / 16} ${i % 2 ? -8 : 8} ${(w + 16) / 8} 0`; return `<g filter="url(#fx-soft)"><path d="${p}" fill="none" stroke="#7A2418" stroke-width="12" stroke-linecap="round"/><path d="${p}" fill="none" stroke="#C0503A" stroke-width="9" stroke-linecap="round"/></g><path d="${p}" fill="none" stroke="#F3B6A1" stroke-width="2.6" stroke-linecap="round" transform="translate(0 -1.5)"/>`; } },
+    egg: { h: 15, svg: (y, cx, w) => `<g filter="url(#fx-soft)"><path d="M${cx - w / 2 + 2} ${y + 8} q4 -9 ${w * .3} -8 q${w * .2} -4 ${w * .42} 0 q${w * .3} 0 ${w * .28 - 8} 9 q-2 7 ${-w * .5} 6 q${-w * .48} 2 ${-w * .5 + 8} -7z" fill="url(#g-white)"/></g><circle cx="${cx + 8}" cy="${y + 6}" r="10" fill="url(#g-yolk)"/><ellipse cx="${cx + 4}" cy="${y + 2.5}" rx="3.5" ry="2" fill="#fff" opacity=".8"/>` },
+    sauce: { h: 8, svg: (y, cx, w) => `<path d="M${cx - w / 2 + 2} ${y + 2} H ${cx + w / 2 - 2} q2 5 -6 7 q-6 0 -8 6 q-3 -8 -12 -6 H ${cx - w * .1} q-6 0 -7 9 q-3 -9 -10 -9 H ${cx - w / 2 + 14} q-6 4 -10 -2z" fill="url(#g-sauce)" filter="url(#fx-soft)"/><path d="M${cx - w * .4} ${y + 3} H ${cx + w * .3}" stroke="#fff" stroke-width="1.4" opacity=".8"/>` },
+    ketchup: { h: 6, svg: (y, cx, w) => `<path d="M${cx - w / 2 + 10} ${y + 3} q${w / 8} -7 ${w / 4} 0 t${w / 4} 0 t${w / 4} 0 t${w / 4 - 20} 0" fill="none" stroke="url(#g-ketchup)" stroke-width="7" stroke-linecap="round" filter="url(#fx-soft)"/><path d="M${cx - w / 2 + 12} ${y + 1.5} q${w / 8} -7 ${w / 4} 0 t${w / 4} 0" fill="none" stroke="#fff" stroke-width="1.4" stroke-linecap="round" opacity=".55"/>` },
+};
+export const plateSVG = (cx, cy, rx) => `<ellipse cx="${cx}" cy="${cy + 12}" rx="${rx + 10}" ry="${rx * .15}" fill="#1a0a24" opacity=".18" filter="url(#fx-steam)"/>
+  <ellipse cx="${cx}" cy="${cy}" rx="${rx}" ry="${rx * .15}" fill="url(#g-plate)"/><ellipse cx="${cx}" cy="${cy - 2}" rx="${rx * .7}" ry="${rx * .1}" fill="url(#g-plate-well)"/>
+  <path d="M${cx - rx * .95} ${cy - 2} A ${rx} ${rx * .15} 0 0 1 ${cx + rx * .95} ${cy - 2}" fill="none" stroke="#fff" stroke-width="2" opacity=".9"/>`;
 export function stackBurger(layers, cx = 200, base = 262, w = 210) {
     const bun = layers.find(l => l.startsWith('bun:'))?.slice(4) ?? 'classic';
     const mids = layers.filter(l => !l.startsWith('bun:'));

@@ -1,5 +1,7 @@
 import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT } from './data.js';
-import { svg, steam, LAYERS, bunTop, bunBottom, latteArt } from './art.js';
+import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, REAL_DEFS } from './art.js';
+import { photoURL } from './data.js';
+document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import { $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, on, emit, cart, saveCart, setCart, addLine, unitPrice, lineName, lineSub, linePrep, isCoffeeLine, subtotal, count, toast, openOverlay, closeOverlay, tashkentNow, hhmm, ddmmyyyy, pad, isLang, itemPic, lineVisual, } from './shared.js';
 import { initLab } from './lab.js';
 import { initBudget } from './budget.js';
@@ -104,6 +106,7 @@ function buildScene() {
     <circle id="disc" cx="510" cy="440" r="330" fill="url(#discG)"/>
     <g id="discRing" fill="none" stroke="var(--ring)" stroke-width="2" stroke-dasharray="3 12"><circle cx="510" cy="440" r="372"/></g>
     <text class="neon" x="510" y="128" text-anchor="middle">Violette</text>
+    <g id="drawn">
     <path class="counter-edge" d="M110 652 H920"/>
     <ellipse cx="${cx}" cy="660" rx="150" ry="16" fill="#2A1440" opacity=".18"/>
     <ellipse cx="${BURGER.cx}" cy="662" rx="200" ry="22" fill="#2A1440" opacity=".14"/>
@@ -127,9 +130,116 @@ function buildScene() {
     <g id="heroSteam" opacity="0">${steam(cx, top - 26, 1.4)}</g>
     <g id="burger">${layersSvg}</g>
     <g id="crumbs"></g>
-    <g class="sparkle" id="sparkles" opacity="0">${[[880, 380], [560, 400], [900, 520], [540, 290]].map(([x, yy], i) => `<path style="--d:${i * .3}s" d="M${x} ${yy - 14} l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4z" fill="#F4B731"/>`).join('')}</g>`;
+    <g class="sparkle" id="sparkles" opacity="0">${[[880, 380], [560, 400], [900, 520], [540, 290]].map(([x, yy], i) => `<path style="--d:${i * .3}s" d="M${x} ${yy - 14} l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4z" fill="#F4B731"/>`).join('')}</g>
+    </g>`;
 }
-function fitScene() { scene.setAttribute('viewBox', innerWidth <= 960 ? '150 170 790 540' : '0 0 1200 800'); }
+function fitScene() { scene.setAttribute('viewBox', innerWidth <= 960 ? (photoMode ? '96 140 850 540' : '150 170 790 540') : '0 0 1200 800'); }
+/* ----- photographic hero: the drink fills with colour, the burger is stacked from slices of a real photo ----- */
+const HERO_PHOTOS = { drink: ITEM('violette-latte').photo, burger: ITEM('classic-burger').photo };
+const PF = { lx: 96, ly: 150, lw: 350, lh: 510, bx: 470, by: 196, bw: 456, bh: 464, strips: 7, r: 34 };
+let photoMode = false;
+function roundedStrip(x, y, w, h, r, top, bottom) {
+    const rt = top ? r : 0, rb = bottom ? r : 0;
+    return `M${x + rt} ${y} H${x + w - rt} ${rt ? `Q${x + w} ${y} ${x + w} ${y + rt}` : ''} V${y + h - rb} ${rb ? `Q${x + w} ${y + h} ${x + w - rb} ${y + h}` : ''} H${x + rb} ${rb ? `Q${x} ${y + h} ${x} ${y + h - rb}` : ''} V${y + rt} ${rt ? `Q${x} ${y} ${x + rt} ${y}` : ''}z`;
+}
+function buildPhotoScene() {
+    const { lx, ly, lw, lh, bx, by, bw, bh, strips: n, r } = PF;
+    const drink = photoURL(HERO_PHOTOS.drink, 900), burger = photoURL(HERO_PHOTOS.burger, 1000);
+    const sh = bh / n;
+    let clips = `<clipPath id="cpLatte"><path d="${roundedStrip(lx, ly, lw, lh, r, true, true)}"/></clipPath><clipPath id="cpFill"><path id="fillWave"/></clipPath>`;
+    let stripsSvg = '';
+    for (let i = 0; i < n; i++) {
+        clips += `<clipPath id="cpS${i}"><path d="${roundedStrip(bx, by + i * sh, bw, sh + (i < n - 1 ? 1.5 : 0), r, i === 0, i === n - 1)}"/></clipPath>`;
+        stripsSvg += `<g class="ps" data-i="${i}" opacity="0"><image href="${burger}" x="${bx}" y="${by}" width="${bw}" height="${bh}" preserveAspectRatio="xMidYMid slice" clip-path="url(#cpS${i})"/>
+      <path d="M${bx + 6} ${by + i * sh + sh} H${bx + bw - 6}" stroke="#000" stroke-opacity=".0" stroke-width="2"/></g>`;
+    }
+    const pill = (x, y, id, w) => `<g id="${id}" opacity="0"><rect x="${x}" y="${y}" width="${w}" height="46" rx="23" fill="var(--paper)" stroke="var(--ink)" stroke-width="3"/><text x="${x + 22}" y="${y + 30}" class="pill-t"></text></g>`;
+    const g = `<g id="photoScene" opacity="0">
+    <defs>${clips}</defs>
+    <rect x="${lx}" y="${ly}" width="${lw}" height="${lh}" rx="${r}" fill="var(--paper)" filter="url(#fx-photo)"/>
+    <image href="${drink}" x="${lx}" y="${ly}" width="${lw}" height="${lh}" preserveAspectRatio="xMidYMid slice" clip-path="url(#cpLatte)" filter="url(#fx-gray)" opacity=".38"/>
+    <g clip-path="url(#cpLatte)"><image href="${drink}" x="${lx}" y="${ly}" width="${lw}" height="${lh}" preserveAspectRatio="xMidYMid slice" clip-path="url(#cpFill)"/></g>
+    <path id="fillEdge" fill="none" stroke="#fff" stroke-width="3" stroke-opacity=".8" clip-path="url(#cpLatte)"/>
+    <rect x="${lx}" y="${ly}" width="${lw}" height="${lh}" rx="${r}" fill="none" stroke="var(--ink)" stroke-width="3.5"/>
+    <g id="pSteam" opacity="0" filter="url(#fx-steam)">${steam(lx + lw / 2, ly - 18, 1.6).replace(/stroke="#9D7BD1"/, 'stroke="#FFFFFF"')}</g>
+    <rect id="bShadow" x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${r}" fill="var(--paper)" filter="url(#fx-photo)" opacity="0"/>
+    ${stripsSvg}
+    <rect id="bFrame" x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${r}" fill="none" stroke="var(--ink)" stroke-width="3.5" opacity="0"/>
+    ${pill(lx + 18, ly + lh - 66, 'pillL', 250)}${pill(bx + 18, by + bh - 66, 'pillB', 260)}
+  </g>`;
+    scene.insertAdjacentHTML('beforeend', g);
+    renderPills();
+}
+function renderPills() {
+    const L = $('#pillL .pill-t', scene), B = $('#pillB .pill-t', scene);
+    if (!L || !B)
+        return;
+    L.textContent = `${HL.name[state.lang]} · ${money(HL.price)}`;
+    B.textContent = `${HB.name[state.lang]} · ${money(HB.price)}`;
+    [L, B].forEach(tx => { try {
+        const w = tx.getComputedTextLength();
+        if (w > 0)
+            tx.previousElementSibling.setAttribute('width', String(Math.ceil(w + 44)));
+    }
+    catch { /* not rendered yet */ } });
+}
+function updatePhoto(p) {
+    const { lx, ly, lw, lh, by, bh, strips: n } = PF;
+    const fill = ease(clamp((p - .03) / .33));
+    const level = ly + lh + 20 - fill * (lh + 40);
+    const ph = p * 50;
+    let d = `M${lx - 20} ${level}`;
+    for (let i = 0; i <= 12; i++)
+        d += ` L${lx - 20 + i * ((lw + 40) / 12)} ${level + Math.sin(i * 1.1 + ph) * (fill > 0 && fill < 1 ? 9 : 0)}`;
+    const fw = $('#fillWave', scene);
+    fw.setAttribute('d', `${d} L${lx + lw + 20} ${ly + lh + 40} L${lx - 20} ${ly + lh + 40}z`);
+    $('#fillEdge', scene).setAttribute('d', fill > 0 && fill < 1 ? d : '');
+    $('#pSteam', scene).setAttribute('opacity', String(clamp((p - .36) / .06) * .9));
+    const sh = bh / n;
+    $$('.ps', scene).forEach(g => {
+        const i = Number(g.dataset.i), order = n - 1 - i;
+        const k = clamp((p - (.4 + order * .042)) / .075);
+        let dy;
+        if (k <= 0)
+            dy = -900;
+        else if (k < .72) {
+            const f = k / .72;
+            dy = -(by + i * sh + 120) * (1 - f * f);
+        }
+        else {
+            const f = (k - .72) / .28;
+            dy = -16 * Math.sin(Math.PI * f) * (1 - f * .4);
+        }
+        g.setAttribute('transform', `translate(0 ${dy})`);
+        g.setAttribute('opacity', k <= 0 ? '0' : String(Math.min(1, k * 4)));
+    });
+    const done = clamp((p - (.4 + (n - 1) * .042 + .075)) / .04);
+    $('#bShadow', scene).setAttribute('opacity', String(done));
+    $('#bFrame', scene).setAttribute('opacity', String(done));
+    $('#pillL', scene).setAttribute('opacity', String(clamp((p - .38) / .04)));
+    $('#pillB', scene).setAttribute('opacity', String(done));
+}
+function loadImg(src, ms = 9000) {
+    return new Promise((res, rej) => { const im = new Image(); const tm = setTimeout(() => rej(new Error('timeout')), ms); im.onload = () => { clearTimeout(tm); res(); }; im.onerror = () => { clearTimeout(tm); rej(new Error('err')); }; im.src = src; });
+}
+function initPhotoHero() {
+    Promise.all([loadImg(photoURL(HERO_PHOTOS.drink, 900)), loadImg(photoURL(HERO_PHOTOS.burger, 1000))]).then(() => {
+        buildPhotoScene();
+        photoMode = true;
+        root.classList.add('photo-hero');
+        $('#drawn', scene).setAttribute('opacity', '0');
+        const ps = $('#photoScene', scene);
+        if (!reduced)
+            ps.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, fill: 'forwards' });
+        else
+            ps.setAttribute('opacity', '1');
+        ps.setAttribute('opacity', '1');
+        setTimeout(() => $('#drawn', scene).setAttribute('display', 'none'), 500);
+        fitScene();
+        heroP = -1;
+        updateHero(heroProgress());
+    }).catch(() => { });
+}
 const stageKeys = ['hero.s0', 'hero.s1', 'hero.s2', 'hero.s3', 'hero.s4', 'hero.s5', 'hero.s6'];
 let stageIdx = -1, heroP = -1;
 function setAttrs(el, a) { for (const k in a)
@@ -138,6 +248,8 @@ function updateHero(p) {
     if (Math.abs(p - heroP) < .0005)
         return;
     heroP = p;
+    if (photoMode)
+        updatePhoto(p);
     const { cx, top, bot } = GLASS;
     const floor = bot + 4, inner = bot - top - 22;
     const pour = clamp((p - .03) / .3);
@@ -973,7 +1085,7 @@ function onScroll() {
 addEventListener('scroll', onScroll, { passive: true });
 addEventListener('resize', () => { heroP = -1; fitScene(); onScroll(); });
 /* =============== boot =============== */
-on('lang', () => { renderStatus(); renderReceipt(); renderChips(); renderGrid(); renderCart(); renderBooking(); renderTable(); if (!$('#itemModal').hidden && im.id)
+on('lang', () => { renderStatus(); renderReceipt(); renderPills(); renderChips(); renderGrid(); renderCart(); renderBooking(); renderTable(); if (!$('#itemModal').hidden && im.id)
     renderItem(); if (!$('#checkout').hidden && !$('#coForm').hidden) {
     if (order.step === 2)
         captureStep2();
@@ -981,6 +1093,7 @@ on('lang', () => { renderStatus(); renderReceipt(); renderChips(); renderGrid();
 } });
 buildScene();
 fitScene();
+initPhotoHero();
 renderTape();
 renderVisit();
 setWorldUI();

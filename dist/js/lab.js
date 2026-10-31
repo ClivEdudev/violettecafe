@@ -1,6 +1,6 @@
 // "Build your own": burger stacker with physics-style drops, and a coffee lab that pours as you choose.
 import { BUNS, FILLINGS, MAX_FILLINGS, LAB, SIZES } from './data.js';
-import { LAYERS, bunTop, bunBottom, latteArt, steam } from './art.js';
+import { LAYERS, bunTop, bunBottom, latteArt, steam, plateSVG } from './art.js';
 import { $, $$, clamp, ease, reduced, esc, state, t, tf, money, on, addLine, toast, tween } from './shared.js';
 import { DEFAULT_BURGER, DEFAULT_COFFEE, burgerPrice, burgerKcal, burgerPrep, burgerName, coffeePrice, coffeeName, coffeeStats, coffeeLayers, coffeeColor, } from './recipes.js';
 const INK = '#2A1440';
@@ -19,9 +19,7 @@ function renderBurger() {
     const ys = [];
     const groups = all.map((l, i) => { y -= l.h - 4; ys.push(y); return `<g class="lyr" data-i="${i}"><g class="lyr-in" style="transform-origin:${CX}px ${y + l.h}px">${l.svg(y, CX, W)}</g></g>`; });
     $('#burgerSvg').innerHTML = `
-    <ellipse cx="${CX}" cy="${BASE + 14}" rx="170" ry="22" fill="${INK}" opacity=".12"/>
-    <ellipse class="plate" cx="${CX}" cy="${BASE + 4}" rx="166" ry="24"/>
-    <ellipse cx="${CX}" cy="${BASE}" rx="120" ry="12" fill="var(--plate-in)"/>
+    ${plateSVG(CX, BASE + 6, 172)}
     <g id="bStack" style="transform-origin:${CX}px ${BASE}px; transform: scale(${bScale})">${groups.join('')}</g>
     <g id="bCrumbs"></g>`;
     return { ys };
@@ -176,28 +174,41 @@ function vessel() {
 }
 function buildCup() {
     const v = vessel(), iced = C.temp === 'iced';
-    const handle = iced ? '' : `<path d="M${G.cx + v.wt / 2 - 10} ${v.top + 50} c 70 -6, 74 120, -8 ${130}" fill="none" stroke="${INK}" stroke-width="22" stroke-linecap="round"/><path d="M${G.cx + v.wt / 2 - 10} ${v.top + 50} c 70 -6, 74 120, -8 ${130}" fill="none" stroke="var(--glass-handle)" stroke-width="12" stroke-linecap="round"/>`;
-    const lid = iced ? `<path id="cLid" d="M${G.cx - v.wt / 2 - 10} ${v.top} Q${G.cx - v.wt / 2} ${v.top - 70} ${G.cx} ${v.top - 72} Q${G.cx + v.wt / 2} ${v.top - 70} ${G.cx + v.wt / 2 + 10} ${v.top}z" fill="#fff" fill-opacity=".35" stroke="${INK}" stroke-width="4"/>
-     <path d="M${G.cx + 26} ${G.bot - 70} L${G.cx + 64} ${v.top - 140}" stroke="${INK}" stroke-width="20" stroke-linecap="round"/><path d="M${G.cx + 26} ${G.bot - 70} L${G.cx + 64} ${v.top - 140}" stroke="#F4B731" stroke-width="12" stroke-linecap="round"/>` : '';
+    const L = G.cx - v.wt / 2, R = G.cx + v.wt / 2, bl = G.cx - v.wb / 2, br = G.cx + v.wb / 2;
+    const hp = `M${R - 8} ${v.top + 46} c 74 -8, 78 126, -6 ${136}`;
+    const handle = iced ? '' : `<path d="${hp}" fill="none" stroke="rgba(42,20,64,.22)" stroke-width="24" stroke-linecap="round"/><path d="${hp}" fill="none" stroke="rgba(255,255,255,.55)" stroke-width="20" stroke-linecap="round"/><path d="${hp}" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="4" stroke-linecap="round" transform="translate(-3 -3)"/>`;
+    const drops = iced ? Array.from({ length: 26 }, (_, i) => { const f = ((i * 37) % 100) / 100, yy = v.top + 40 + ((i * 53) % 100) / 100 * (G.bot - v.top - 70); const x = bl + (L - bl) * (1 - (yy - v.top) / (G.bot - v.top)) + 8 + f * (v.wb + (v.wt - v.wb) * (1 - (yy - v.top) / (G.bot - v.top)) - 16); const r = 1.6 + (i % 4) * .9; return `<circle cx="${x}" cy="${yy}" r="${r}" fill="rgba(255,255,255,.55)"/><circle cx="${x - r * .3}" cy="${yy - r * .3}" r="${r * .35}" fill="#fff"/>`; }).join('') : '';
+    const lid = iced ? `<path d="M${L - 10} ${v.top} Q${L} ${v.top - 66} ${G.cx} ${v.top - 70} Q${R} ${v.top - 66} ${R + 10} ${v.top}z" fill="rgba(255,255,255,.22)" stroke="rgba(255,255,255,.75)" stroke-width="2.5"/>
+     <path d="M${L + 18} ${v.top - 18} Q${L + 30} ${v.top - 52} ${G.cx - 20} ${v.top - 58}" fill="none" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".7"/>
+     <rect x="${L - 12}" y="${v.top - 6}" width="${v.wt + 24}" height="12" rx="6" fill="rgba(255,255,255,.55)" stroke="rgba(42,20,64,.25)"/>
+     <path d="M${G.cx + 26} ${G.bot - 70} L${G.cx + 64} ${v.top - 140}" stroke="url(#g-straw)" stroke-width="15" stroke-linecap="round"/>
+     <path d="M${G.cx + 26} ${G.bot - 70} L${G.cx + 64} ${v.top - 140}" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-dasharray="10 14" opacity=".55"/>` : '';
     $('#cupSvg').innerHTML = `
     <defs><clipPath id="cupClip"><path d="${v.path}"/></clipPath></defs>
-    <ellipse cx="${G.cx}" cy="${G.bot + 18}" rx="${v.wb * .9}" ry="16" fill="${INK}" opacity=".12"/>
-    ${iced ? '' : `<ellipse class="plate" cx="${G.cx}" cy="${G.bot + 8}" rx="${v.wb * .95 + 40}" ry="24"/>`}
+    ${iced ? `<ellipse cx="${G.cx}" cy="${G.bot + 14}" rx="${v.wb * .75}" ry="12" fill="#1a0a24" opacity=".25" filter="url(#fx-steam)"/>` : plateSVG(G.cx, G.bot + 10, v.wb * .95 + 48)}
     ${handle}
     <rect id="cStream" x="${G.cx - 7}" y="-10" width="14" height="0" rx="7"/>
-    <path d="${v.path}" fill="var(--glass)"/>
+    <path d="${v.path}" fill="rgba(255,255,255,.18)"/>
     <g clip-path="url(#cupClip)">
-      <rect id="cSyrupR" x="0" width="400"/><rect id="cMilkR" x="0" width="400"/><rect id="cCoffeeR" x="0" width="400"/><rect id="cFoamR" x="0" width="400" fill="#F4E9DC"/>
-      <path id="cBlend1" fill="none" stroke-width="10" opacity=".55"/><path id="cBlend2" fill="none" stroke-width="10" opacity=".55"/>
+      <g filter="url(#fx-mix)"><rect id="cSyrupR" x="0" width="400"/><rect id="cMilkR" x="0" width="400"/><rect id="cCoffeeR" x="0" width="400"/></g>
+      <rect id="cFoamR" x="0" width="400" fill="url(#g-foam)" filter="url(#fx-foam)"/>
+      <rect id="cShade" x="${bl - 30}" width="${v.wt + 60}" fill="url(#g-shade)"/>
       <g id="cIce"></g>
     </g>
     <g id="cSurface"></g>
+    <path d="${v.path}" fill="url(#g-glass)"/>
+    <path d="${v.path}" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="3" stroke-linejoin="round"/>
+    <path d="${v.path}" fill="none" stroke="rgba(42,20,64,.28)" stroke-width="1.4" stroke-linejoin="round" transform="translate(0 1.5)"/>
+    <path d="M${L + 16} ${v.top + 30} L${bl + 12} ${G.bot - 46}" stroke="#fff" stroke-width="10" stroke-linecap="round" opacity=".45"/>
+    <path d="M${L + 34} ${v.top + 40} L${bl + 26} ${G.bot - 120}" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".5"/>
+    <path d="M${R - 18} ${v.top + 50} L${br - 12} ${G.bot - 60}" stroke="#fff" stroke-width="5" stroke-linecap="round" opacity=".28"/>
+    <ellipse cx="${G.cx}" cy="${G.bot - 6}" rx="${v.wb / 2 - 4}" ry="9" fill="rgba(255,255,255,.35)"/>
     <g id="cTopping"></g>
-    <path d="${v.path}" fill="none" stroke="${INK}" stroke-width="5" stroke-linejoin="round"/>
-    <path d="M${G.cx - v.wt / 2 + 20} ${v.top + 34} L${G.cx - v.wb / 2 + 14} ${G.bot - 50}" stroke="#fff" stroke-width="9" stroke-linecap="round" opacity=".5"/>
-    <ellipse cx="${G.cx}" cy="${v.top}" rx="${v.wt / 2}" ry="10" fill="none" stroke="${INK}" stroke-width="4"/>
+    ${drops}
+    <ellipse cx="${G.cx}" cy="${v.top}" rx="${v.wt / 2}" ry="10" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="3"/>
+    <ellipse cx="${G.cx}" cy="${v.top}" rx="${v.wt / 2}" ry="10" fill="none" stroke="rgba(42,20,64,.2)" stroke-width="1.2" transform="translate(0 2)"/>
     ${lid}
-    <g id="cSteam" opacity="${iced ? 0 : .9}">${steam(G.cx, v.top - (iced ? 80 : 30), 1.2)}</g>`;
+    <g id="cSteam" opacity="${iced ? 0 : .85}" filter="url(#fx-steam)">${steam(G.cx, v.top - 30, 1.5).replace(/stroke="#9D7BD1"/, 'stroke="#FFFFFF"')}</g>`;
     if (iced)
         dropIce(false);
 }
@@ -206,10 +217,16 @@ function dropIce(animate) {
     const g = $('#cIce');
     if (!g)
         return;
-    const cubes = [[-48, .22], [22, .3], [-12, .5], [40, .58], [-40, .7]];
-    g.innerHTML = cubes.map(([x, f], i) => { const y = v.top + (G.bot - v.top) * f; return `<rect class="ice" x="${G.cx + x - 24}" y="${y}" width="48" height="44" rx="10" fill="#fff" fill-opacity=".5" stroke="#fff" stroke-width="3" transform="rotate(${i * 21 - 30} ${G.cx + x} ${y + 22})"/>`; }).join('');
+    const cubes = [[-48, .2], [24, .28], [-10, .46], [42, .56], [-40, .68]];
+    g.innerHTML = cubes.map(([x, f], i) => {
+        const y = v.top + (G.bot - v.top) * f, cx = G.cx + x;
+        return `<g class="ice" transform="rotate(${i * 21 - 30} ${cx} ${y + 22})">
+      <rect x="${cx - 25}" y="${y}" width="50" height="46" rx="11" fill="rgba(255,255,255,.28)" stroke="rgba(255,255,255,.8)" stroke-width="2"/>
+      <rect x="${cx - 17}" y="${y + 7}" width="22" height="14" rx="5" fill="rgba(255,255,255,.55)"/>
+      <path d="M${cx + 14} ${y + 10} v24" stroke="rgba(255,255,255,.7)" stroke-width="2.5" stroke-linecap="round"/></g>`;
+    }).join('');
     if (animate)
-        $$('rect', g).forEach((r, i) => anim(r, [{ transform: 'translateY(-420px)' }, { transform: 'translateY(0)', offset: .7, easing: 'cubic-bezier(.55,0,1,.45)' }, { transform: 'translateY(-14px)', offset: .85 }, { transform: 'translateY(0)' }], { duration: 640, delay: i * 70, fill: 'backwards' }));
+        $$('.ice', g).forEach((r, i) => anim(r, [{ translate: '0 -420px' }, { translate: '0 0', offset: .7, easing: 'cubic-bezier(.55,0,1,.45)' }, { translate: '0 -14px', offset: .85 }, { translate: '0 0' }], { duration: 640, delay: i * 70, fill: 'backwards' }));
 }
 function paintLiquid() {
     const v = vessel(), H = G.bot - v.top - 12;
@@ -217,29 +234,35 @@ function paintLiquid() {
     let y = floor;
     const set = (id, frac, fill) => { const h = H * frac; y -= h; const r = $('#' + id); r.setAttribute('y', String(y)); r.setAttribute('height', String(Math.max(0, h + (h > .5 ? 2 : 0)))); r.setAttribute('fill', fill); return y; };
     const milkC = LAB.milkC[C.milk] ?? '#F6EFE6';
-    const yS = set('cSyrupR', cur.syrup, LAB.syrupC[C.syrup] ?? '#B79AD8');
-    const yM = set('cMilkR', cur.milk, milkC);
-    const yC = set('cCoffeeR', cur.coffee, C.milk === 'none' ? coffeeColor(C) : '#9A6A45');
-    const yF = set('cFoamR', cur.foam, '#F4E9DC');
-    const wave = (yy) => `M0 ${yy} ${Array.from({ length: 14 }, (_, i) => `q15 ${i % 2 ? -6 : 6} 30 0`).join(' ')}`;
-    const b1 = $('#cBlend1'), b2 = $('#cBlend2');
-    b1.setAttribute('d', cur.syrup > .01 && cur.milk > .01 ? wave(yS) : '');
-    b1.setAttribute('stroke', LAB.syrupC[C.syrup] ?? '#B79AD8');
-    b2.setAttribute('d', cur.milk > .01 && cur.coffee > .01 ? wave(yM) : '');
-    b2.setAttribute('stroke', '#C69C72');
+    set('cSyrupR', cur.syrup, LAB.syrupC[C.syrup] ?? '#B79AD8');
+    set('cMilkR', cur.milk, milkC);
+    const yC = set('cCoffeeR', cur.coffee, C.milk === 'none' ? coffeeColor(C) : '#8A5A38');
+    const yF = set('cFoamR', cur.foam, 'url(#g-foam)');
+    const shade = $('#cShade');
+    shade.setAttribute('y', String(yF));
+    shade.setAttribute('height', String(Math.max(0, floor - yF)));
     const surf = yF;
     const s = $('#cSurface');
     const iced = C.temp === 'iced';
     const showTop = !iced && surf < floor - 6;
-    const rx = (v.wb + (v.wt - v.wb) * ((G.bot - surf) / (G.bot - v.top))) / 2 - 6;
-    const topCol = cur.foam > .005 ? '#F4E9DC' : C.milk === 'none' ? '#7A4B30' : '#C69C72';
-    s.innerHTML = showTop ? `<ellipse cx="${G.cx}" cy="${surf}" rx="${rx}" ry="${Math.max(4, rx * .14)}" fill="${topCol}" stroke="${cur.coffee > .01 ? '#9A6A45' : 'none'}" stroke-width="3"/>${cur.foam > .02 ? `<g transform="translate(0 ${surf}) scale(1 .3) translate(0 ${-surf})">${latteArt(C.foam === 'thick' ? 'heart' : 'rosetta', G.cx, surf, 2.2, '#C69C72')}</g>` : ''}` : '';
+    const rx = (v.wb + (v.wt - v.wb) * ((G.bot - surf) / (G.bot - v.top))) / 2 - 5;
+    const ry = Math.max(4, rx * .14);
+    const foamy = cur.foam > .005;
+    const topCol = foamy ? '#F7EBDD' : C.milk === 'none' ? '#5A321D' : '#B07A50';
+    s.innerHTML = showTop ? `<ellipse cx="${G.cx}" cy="${surf}" rx="${rx}" ry="${ry}" fill="${topCol}"${foamy ? ' filter="url(#fx-foam)"' : ''}/>
+    ${!foamy && C.milk === 'none' ? `<ellipse cx="${G.cx}" cy="${surf}" rx="${rx * .92}" ry="${ry * .8}" fill="#B9773F" opacity=".55"/>` : ''}
+    <ellipse cx="${G.cx}" cy="${surf}" rx="${rx}" ry="${ry}" fill="none" stroke="#7A4B30" stroke-opacity=".35" stroke-width="2.5"/>
+    ${cur.foam > .02 ? `<g transform="translate(0 ${surf}) scale(1 .3) translate(0 ${-surf})" opacity=".9">${latteArt(C.foam === 'thick' ? 'heart' : 'rosetta', G.cx, surf, 2.2, '#C08A5C')}</g>` : ''}
+    <ellipse cx="${G.cx - rx * .4}" cy="${surf - ry * .3}" rx="${rx * .3}" ry="${ry * .25}" fill="#fff" opacity=".35"/>` : '';
+    void yC;
     const tp = $('#cTopping');
     const ty = iced ? v.top - 8 : surf;
     if (C.topping === 'cream')
-        tp.innerHTML = `<path d="M${G.cx - 70} ${ty + 4} q-8 -34 28 -40 q6 -34 42 -28 q36 -8 40 28 q36 6 28 40z" fill="#FFF9F2" stroke="${INK}" stroke-width="4"/>`;
+        tp.innerHTML = `<g filter="url(#fx-soft)"><path d="M${G.cx - 74} ${ty + 4} q-10 -30 24 -38 q2 -34 40 -30 q20 -24 40 0 q38 -4 40 30 q34 8 24 38z" fill="url(#g-cream)"/></g>
+      <path d="M${G.cx - 50} ${ty - 14} q30 -14 60 -4 M${G.cx - 30} ${ty - 36} q22 -10 44 0 M${G.cx - 4} ${ty - 54} q8 -8 16 0" fill="none" stroke="#E2CDB0" stroke-width="2.4" stroke-linecap="round"/>
+      <ellipse cx="${G.cx - 24}" cy="${ty - 40}" rx="12" ry="5" fill="#fff" opacity=".9"/>`;
     else if (C.topping === 'cocoa' || C.topping === 'cinnamon')
-        tp.innerHTML = Array.from({ length: 22 }, (_, i) => `<circle cx="${G.cx - rx * .8 + ((i * 37) % 100) / 100 * rx * 1.6}" cy="${ty - 3 + ((i * 13) % 8)}" r="2.6" fill="${C.topping === 'cocoa' ? '#3A1F14' : '#9A5A2A'}"/>`).join('');
+        tp.innerHTML = Array.from({ length: 46 }, (_, i) => `<circle cx="${G.cx - rx * .85 + ((i * 37) % 100) / 100 * rx * 1.7}" cy="${ty - 4 + ((i * 13) % 9)}" r="${1 + (i % 3) * .7}" fill="${C.topping === 'cocoa' ? '#3A1F14' : '#8A4B1F'}" opacity=".85"/>`).join('');
     else
         tp.innerHTML = '';
     return surf;
