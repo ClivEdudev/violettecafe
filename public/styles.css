@@ -813,7 +813,7 @@ main, .foot { overflow-x: clip; }
 .afk.serving .ak-order { opacity: 1; transform: none; pointer-events: auto; }
 .ak-hint { margin: 0; font-size: .82rem; font-weight: 600; color: rgba(244, 236, 248, .55); }
 .ak-chalk-t { font: 400 30px var(--display); fill: #F4ECF8; }
-.ak-chalk { font: 700 17px var(--body); fill: rgba(244, 236, 248, .78); }
+.ak-chalk { font: 700 14px var(--body); fill: rgba(244, 236, 248, .78); }
 .ak-badge { font: 400 22px var(--display); fill: rgba(255, 255, 255, .85); }
 .ak-lamp { animation: akSway 6s ease-in-out infinite alternate; animation-delay: var(--d); }
 @keyframes akSway { from { transform: rotate(-2deg); } to { transform: rotate(2deg); } }
@@ -821,3 +821,10 @@ main, .foot { overflow-x: clip; }
 @keyframes akFloat { to { transform: translate(var(--x), -30px); } }
 @media (max-width: 640px) { .ak-top p { display: none; } .ak-scene { animation: none; } }
 @media (max-aspect-ratio: 9/10) { .afk { background: linear-gradient(#2A1934, #1C1024 55%, #3E2314 56%, #2a160c); } }
+
+.ak-tag { font: 800 8px var(--body); fill: #2C1A3C; }
+.ak-flag { font: 400 9px var(--display); fill: #fff; }
+.ak-flicker { animation: akFlicker 1.3s ease-in-out infinite alternate; }
+@keyframes akFlicker { to { opacity: .35; } }
+.ak-spin { animation: akSpin 1.8s linear infinite; }
+@keyframes akSpin { to { transform: translateX(-14px); } }
