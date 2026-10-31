@@ -1,6 +1,6 @@
 import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT } from './data.js';
-import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, REAL_DEFS } from './art.js';
-import { photoURL } from './data.js';
+import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } from './art.js';
+import { initPointer } from './ui.js';
 document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import { $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, on, emit, cart, saveCart, setCart, addLine, unitPrice, lineName, lineSub, linePrep, isCoffeeLine, subtotal, count, toast, openOverlay, closeOverlay, tashkentNow, hhmm, ddmmyyyy, pad, isLang, itemPic, lineVisual, } from './shared.js';
 import { initLab } from './lab.js';
@@ -75,15 +75,17 @@ function renderStatus() {
     $('#hoursV').textContent = tf('visit.hoursV', { o: `${pad(CAFE.open)}:00`, c: `${pad(CAFE.close)}:00` });
 }
 setInterval(renderStatus, 60000);
-/* =============== HERO: scroll-driven latte + burger =============== */
+/* =============== HERO: scroll-driven latte + burger (drawn to look real) =============== */
 const scene = $('#scene');
 const HL = ITEM('violette-latte'), HB = ITEM('violette-burger');
-const GLASS = { cx: 320, top: 330, bot: 650, wt: 210, wb: 172 };
-const BURGER = { cx: 700, base: 648, w: 310, layers: ['bottom', 'sauce', 'beef', 'cheese', 'onion', 'lettuce', 'top'] };
+const GLASS = { cx: 330, top: 300, bot: 650, wt: 214, wb: 178 };
+const BURGER = { cx: 712, base: 646, w: 300, layers: ['bottom', 'sauce', 'beef', 'cheese', 'onion', 'lettuce', 'tomato', 'top'] };
 let burgerY = [];
 function buildScene() {
     const { cx, top, bot, wt, wb } = GLASS;
-    const gp = `M${cx - wt / 2} ${top} L${cx - wb / 2} ${bot - 6} Q${cx} ${bot + 10} ${cx + wb / 2} ${bot - 6} L${cx + wt / 2} ${top}z`;
+    const L = cx - wt / 2, R = cx + wt / 2, bl = cx - wb / 2, br = cx + wb / 2;
+    const gp = `M${L} ${top} L${bl} ${bot - 8} Q${cx} ${bot + 10} ${br} ${bot - 8} L${R} ${top}z`;
+    const hp = `M${R - 8} ${top + 60} c 86 -10, 92 150, -8 ${160}`;
     let stars = '';
     for (let i = 0; i < 38; i++) {
         const x = (i * 157) % 1200, y = (i * 71) % 300 + 10, r = 1 + (i % 3) * .7;
@@ -92,154 +94,54 @@ function buildScene() {
     let layersSvg = '', y = BURGER.base;
     burgerY = [];
     BURGER.layers.forEach((id, i) => {
-        const L = id === 'bottom' ? bunBottom('violet') : id === 'top' ? bunTop('violet') : LAYERS[id];
-        y -= L.h - 4;
+        const Ly = id === 'bottom' ? bunBottom('violet') : id === 'top' ? bunTop('violet') : LAYERS[id];
+        y -= Ly.h - 4;
         burgerY.push(y);
-        layersSvg += `<g class="bl" data-i="${i}"><g class="bl-in">${L.svg(y, BURGER.cx, BURGER.w)}</g></g>`;
+        layersSvg += `<g class="bl" data-i="${i}"><g class="bl-in">${Ly.svg(y, BURGER.cx, BURGER.w)}</g></g>`;
     });
     scene.innerHTML = `
     <defs>
       <clipPath id="glassClip"><path d="${gp}"/></clipPath>
       <radialGradient id="discG" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="var(--disc-a)"/><stop offset="1" stop-color="var(--disc-b)"/></radialGradient>
+      <linearGradient id="g-stream" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".25"/><stop offset=".35" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
     </defs>
     <g class="sky">${stars}</g>
-    <circle id="disc" cx="510" cy="440" r="330" fill="url(#discG)"/>
-    <g id="discRing" fill="none" stroke="var(--ring)" stroke-width="2" stroke-dasharray="3 12"><circle cx="510" cy="440" r="372"/></g>
-    <text class="neon" x="510" y="128" text-anchor="middle">Violette</text>
-    <g id="drawn">
-    <path class="counter-edge" d="M110 652 H920"/>
-    <ellipse cx="${cx}" cy="660" rx="150" ry="16" fill="#2A1440" opacity=".18"/>
-    <ellipse cx="${BURGER.cx}" cy="662" rx="200" ry="22" fill="#2A1440" opacity=".14"/>
-    <ellipse class="plate" cx="${BURGER.cx}" cy="652" rx="196" ry="26"/>
-    <rect id="stream" x="${cx - 7}" y="-20" width="14" height="0" rx="7"/>
-    <path d="${gp}" fill="var(--glass)"/>
+    <circle id="disc" cx="520" cy="440" r="330" fill="url(#discG)"/>
+    <g id="discRing" fill="none" stroke="var(--ring)" stroke-width="2" stroke-dasharray="3 12"><circle cx="520" cy="440" r="372"/></g>
+    <text class="neon" x="520" y="128" text-anchor="middle">Violette</text>
+    <ellipse cx="${cx}" cy="${bot + 12}" rx="${wb * .72}" ry="14" fill="#1a0a24" opacity=".28" filter="url(#fx-steam)"/>
+    ${plateSVG(BURGER.cx, BURGER.base + 10, 206)}
+    <g id="pour"><rect id="stream" x="${cx - 7}" y="-20" width="14" height="0" rx="7"/><rect id="streamHi" x="${cx - 7}" y="-20" width="14" height="0" rx="7" fill="url(#g-stream)"/></g>
+    <path d="${hp}" fill="none" stroke="rgba(42,20,64,.22)" stroke-width="26" stroke-linecap="round"/>
+    <path d="${hp}" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="22" stroke-linecap="round"/>
+    <path d="${hp}" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".9" transform="translate(-4 -4)"/>
+    <path d="${gp}" fill="rgba(255,255,255,.2)"/>
     <g clip-path="url(#glassClip)">
-      <rect id="lqSyrup" x="${cx - 130}" width="260" fill="#B79AD8"/>
-      <rect id="lqMilk" x="${cx - 130}" width="260" fill="#F4ECF8"/>
-      <rect id="lqCoffee" x="${cx - 130}" width="260" fill="#C69C72"/>
-      <rect id="lqFoam" x="${cx - 130}" width="260" fill="#F2E7F8"/>
-      <path id="lqWave" fill="none" stroke-width="6" opacity=".55"/>
+      <g filter="url(#fx-mix)">
+        <rect id="lqSyrup" x="${L - 20}" width="${wt + 40}" fill="#B08CDB"/>
+        <rect id="lqMilk" x="${L - 20}" width="${wt + 40}" fill="#F5EDF6"/>
+        <rect id="lqCoffee" x="${L - 20}" width="${wt + 40}" fill="#9A6A45"/>
+      </g>
+      <rect id="lqFoam" x="${L - 20}" width="${wt + 40}" fill="url(#g-foam)" filter="url(#fx-foam)"/>
+      <rect id="lqShade" x="${bl - 20}" width="${wt + 40}" fill="url(#g-shade)"/>
       <g id="splash"></g>
     </g>
-    <g id="heart" opacity="0">${latteArt('heart', cx, 0, 2.2, '#9D7BD1')}</g>
-    <path d="${gp}" fill="none" stroke="#2A1440" stroke-width="5" stroke-linejoin="round"/>
-    <path d="M${cx - wt / 2 + 18} ${top + 30} L${cx - wb / 2 + 14} ${bot - 40}" stroke="#fff" stroke-width="9" stroke-linecap="round" opacity=".55"/>
-    <ellipse cx="${cx}" cy="${top}" rx="${wt / 2}" ry="10" fill="none" stroke="#2A1440" stroke-width="5"/>
-    <g id="glassBadge"><rect x="${cx - 52}" y="${top + 150}" width="104" height="62" rx="31" fill="#FBF8FD" stroke="#2A1440" stroke-width="4"/>
-      <text x="${cx}" y="${top + 192}" text-anchor="middle" class="badge-v">V</text></g>
-    <g id="heroSteam" opacity="0">${steam(cx, top - 26, 1.4)}</g>
+    <g id="surfaceTop"></g>
+    <path d="${gp}" fill="url(#g-glass)"/>
+    <path d="${gp}" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="3.5" stroke-linejoin="round"/>
+    <path d="${gp}" fill="none" stroke="rgba(42,20,64,.3)" stroke-width="1.6" stroke-linejoin="round" transform="translate(0 2)"/>
+    <path d="M${L + 20} ${top + 36} L${bl + 14} ${bot - 54}" stroke="#fff" stroke-width="12" stroke-linecap="round" opacity=".45"/>
+    <path d="M${L + 42} ${top + 50} L${bl + 32} ${bot - 150}" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".5"/>
+    <path d="M${R - 20} ${top + 60} L${br - 14} ${bot - 70}" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".28"/>
+    <ellipse cx="${cx}" cy="${bot - 7}" rx="${wb / 2 - 5}" ry="10" fill="rgba(255,255,255,.38)"/>
+    <text x="${cx}" y="${top + 205}" text-anchor="middle" class="glass-print">Violette</text>
+    <ellipse cx="${cx}" cy="${top}" rx="${wt / 2}" ry="11" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="3.5"/>
+    <ellipse cx="${cx}" cy="${top}" rx="${wt / 2}" ry="11" fill="none" stroke="rgba(42,20,64,.22)" stroke-width="1.4" transform="translate(0 2.5)"/>
+    <g id="heroSteam" opacity="0" filter="url(#fx-steam)">${steam(cx, top - 30, 1.6).replace(/stroke="#9D7BD1"/, 'stroke="#FFFFFF"')}</g>
     <g id="burger">${layersSvg}</g>
-    <g id="crumbs"></g>
-    <g class="sparkle" id="sparkles" opacity="0">${[[880, 380], [560, 400], [900, 520], [540, 290]].map(([x, yy], i) => `<path style="--d:${i * .3}s" d="M${x} ${yy - 14} l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4z" fill="#F4B731"/>`).join('')}</g>
-    </g>`;
+    <g class="sparkle" id="sparkles" opacity="0">${[[900, 380], [560, 400], [920, 520], [560, 280]].map(([x, yy], i) => `<path style="--d:${i * .3}s" d="M${x} ${yy - 14} l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4z" fill="#F4B731"/>`).join('')}</g>`;
 }
-function fitScene() { scene.setAttribute('viewBox', innerWidth <= 960 ? (photoMode ? '96 140 850 540' : '150 170 790 540') : '0 0 1200 800'); }
-/* ----- photographic hero: the drink fills with colour, the burger is stacked from slices of a real photo ----- */
-const HERO_PHOTOS = { drink: ITEM('violette-latte').photo, burger: ITEM('classic-burger').photo };
-const PF = { lx: 96, ly: 150, lw: 350, lh: 510, bx: 470, by: 196, bw: 456, bh: 464, strips: 7, r: 34 };
-let photoMode = false;
-function roundedStrip(x, y, w, h, r, top, bottom) {
-    const rt = top ? r : 0, rb = bottom ? r : 0;
-    return `M${x + rt} ${y} H${x + w - rt} ${rt ? `Q${x + w} ${y} ${x + w} ${y + rt}` : ''} V${y + h - rb} ${rb ? `Q${x + w} ${y + h} ${x + w - rb} ${y + h}` : ''} H${x + rb} ${rb ? `Q${x} ${y + h} ${x} ${y + h - rb}` : ''} V${y + rt} ${rt ? `Q${x} ${y} ${x + rt} ${y}` : ''}z`;
-}
-function buildPhotoScene() {
-    const { lx, ly, lw, lh, bx, by, bw, bh, strips: n, r } = PF;
-    const drink = photoURL(HERO_PHOTOS.drink, 900), burger = photoURL(HERO_PHOTOS.burger, 1000);
-    const sh = bh / n;
-    let clips = `<clipPath id="cpLatte"><path d="${roundedStrip(lx, ly, lw, lh, r, true, true)}"/></clipPath><clipPath id="cpFill"><path id="fillWave"/></clipPath>`;
-    let stripsSvg = '';
-    for (let i = 0; i < n; i++) {
-        clips += `<clipPath id="cpS${i}"><path d="${roundedStrip(bx, by + i * sh, bw, sh + (i < n - 1 ? 1.5 : 0), r, i === 0, i === n - 1)}"/></clipPath>`;
-        stripsSvg += `<g class="ps" data-i="${i}" opacity="0"><image href="${burger}" x="${bx}" y="${by}" width="${bw}" height="${bh}" preserveAspectRatio="xMidYMid slice" clip-path="url(#cpS${i})"/>
-      <path d="M${bx + 6} ${by + i * sh + sh} H${bx + bw - 6}" stroke="#000" stroke-opacity=".0" stroke-width="2"/></g>`;
-    }
-    const pill = (x, y, id, w) => `<g id="${id}" opacity="0"><rect x="${x}" y="${y}" width="${w}" height="46" rx="23" fill="var(--paper)" stroke="var(--ink)" stroke-width="3"/><text x="${x + 22}" y="${y + 30}" class="pill-t"></text></g>`;
-    const g = `<g id="photoScene" opacity="0">
-    <defs>${clips}</defs>
-    <rect x="${lx}" y="${ly}" width="${lw}" height="${lh}" rx="${r}" fill="var(--paper)" filter="url(#fx-photo)"/>
-    <image href="${drink}" x="${lx}" y="${ly}" width="${lw}" height="${lh}" preserveAspectRatio="xMidYMid slice" clip-path="url(#cpLatte)" filter="url(#fx-gray)" opacity=".38"/>
-    <g clip-path="url(#cpLatte)"><image href="${drink}" x="${lx}" y="${ly}" width="${lw}" height="${lh}" preserveAspectRatio="xMidYMid slice" clip-path="url(#cpFill)"/></g>
-    <path id="fillEdge" fill="none" stroke="#fff" stroke-width="3" stroke-opacity=".8" clip-path="url(#cpLatte)"/>
-    <rect x="${lx}" y="${ly}" width="${lw}" height="${lh}" rx="${r}" fill="none" stroke="var(--ink)" stroke-width="3.5"/>
-    <g id="pSteam" opacity="0" filter="url(#fx-steam)">${steam(lx + lw / 2, ly - 18, 1.6).replace(/stroke="#9D7BD1"/, 'stroke="#FFFFFF"')}</g>
-    <rect id="bShadow" x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${r}" fill="var(--paper)" filter="url(#fx-photo)" opacity="0"/>
-    ${stripsSvg}
-    <rect id="bFrame" x="${bx}" y="${by}" width="${bw}" height="${bh}" rx="${r}" fill="none" stroke="var(--ink)" stroke-width="3.5" opacity="0"/>
-    ${pill(lx + 18, ly + lh - 66, 'pillL', 250)}${pill(bx + 18, by + bh - 66, 'pillB', 260)}
-  </g>`;
-    scene.insertAdjacentHTML('beforeend', g);
-    renderPills();
-}
-function renderPills() {
-    const L = $('#pillL .pill-t', scene), B = $('#pillB .pill-t', scene);
-    if (!L || !B)
-        return;
-    L.textContent = `${HL.name[state.lang]} · ${money(HL.price)}`;
-    B.textContent = `${HB.name[state.lang]} · ${money(HB.price)}`;
-    [L, B].forEach(tx => { try {
-        const w = tx.getComputedTextLength();
-        if (w > 0)
-            tx.previousElementSibling.setAttribute('width', String(Math.ceil(w + 44)));
-    }
-    catch { /* not rendered yet */ } });
-}
-function updatePhoto(p) {
-    const { lx, ly, lw, lh, by, bh, strips: n } = PF;
-    const fill = ease(clamp((p - .03) / .33));
-    const level = ly + lh + 20 - fill * (lh + 40);
-    const ph = p * 50;
-    let d = `M${lx - 20} ${level}`;
-    for (let i = 0; i <= 12; i++)
-        d += ` L${lx - 20 + i * ((lw + 40) / 12)} ${level + Math.sin(i * 1.1 + ph) * (fill > 0 && fill < 1 ? 9 : 0)}`;
-    const fw = $('#fillWave', scene);
-    fw.setAttribute('d', `${d} L${lx + lw + 20} ${ly + lh + 40} L${lx - 20} ${ly + lh + 40}z`);
-    $('#fillEdge', scene).setAttribute('d', fill > 0 && fill < 1 ? d : '');
-    $('#pSteam', scene).setAttribute('opacity', String(clamp((p - .36) / .06) * .9));
-    const sh = bh / n;
-    $$('.ps', scene).forEach(g => {
-        const i = Number(g.dataset.i), order = n - 1 - i;
-        const k = clamp((p - (.4 + order * .042)) / .075);
-        let dy;
-        if (k <= 0)
-            dy = -900;
-        else if (k < .72) {
-            const f = k / .72;
-            dy = -(by + i * sh + 120) * (1 - f * f);
-        }
-        else {
-            const f = (k - .72) / .28;
-            dy = -16 * Math.sin(Math.PI * f) * (1 - f * .4);
-        }
-        g.setAttribute('transform', `translate(0 ${dy})`);
-        g.setAttribute('opacity', k <= 0 ? '0' : String(Math.min(1, k * 4)));
-    });
-    const done = clamp((p - (.4 + (n - 1) * .042 + .075)) / .04);
-    $('#bShadow', scene).setAttribute('opacity', String(done));
-    $('#bFrame', scene).setAttribute('opacity', String(done));
-    $('#pillL', scene).setAttribute('opacity', String(clamp((p - .38) / .04)));
-    $('#pillB', scene).setAttribute('opacity', String(done));
-}
-function loadImg(src, ms = 9000) {
-    return new Promise((res, rej) => { const im = new Image(); const tm = setTimeout(() => rej(new Error('timeout')), ms); im.onload = () => { clearTimeout(tm); res(); }; im.onerror = () => { clearTimeout(tm); rej(new Error('err')); }; im.src = src; });
-}
-function initPhotoHero() {
-    Promise.all([loadImg(photoURL(HERO_PHOTOS.drink, 900)), loadImg(photoURL(HERO_PHOTOS.burger, 1000))]).then(() => {
-        buildPhotoScene();
-        photoMode = true;
-        root.classList.add('photo-hero');
-        $('#drawn', scene).setAttribute('opacity', '0');
-        const ps = $('#photoScene', scene);
-        if (!reduced)
-            ps.animate([{ opacity: 0 }, { opacity: 1 }], { duration: 500, fill: 'forwards' });
-        else
-            ps.setAttribute('opacity', '1');
-        ps.setAttribute('opacity', '1');
-        setTimeout(() => $('#drawn', scene).setAttribute('display', 'none'), 500);
-        fitScene();
-        heroP = -1;
-        updateHero(heroProgress());
-    }).catch(() => { });
-}
+function fitScene() { scene.setAttribute('viewBox', innerWidth <= 960 ? '160 150 780 560' : '0 0 1200 800'); }
 const stageKeys = ['hero.s0', 'hero.s1', 'hero.s2', 'hero.s3', 'hero.s4', 'hero.s5', 'hero.s6'];
 let stageIdx = -1, heroP = -1;
 function setAttrs(el, a) { for (const k in a)
@@ -248,13 +150,11 @@ function updateHero(p) {
     if (Math.abs(p - heroP) < .0005)
         return;
     heroP = p;
-    if (photoMode)
-        updatePhoto(p);
-    const { cx, top, bot } = GLASS;
-    const floor = bot + 4, inner = bot - top - 22;
+    const { cx, top, bot, wt, wb } = GLASS;
+    const floor = bot + 6, inner = bot - top - 24;
     const pour = clamp((p - .03) / .3);
-    const syrupH = inner * .1 * clamp(pour / .22), milkH = inner * .5 * clamp((pour - .22) / .43), coffeeH = inner * .22 * clamp((pour - .65) / .35);
-    const foamH = inner * .1 * ease(clamp((p - .33) / .05));
+    const syrupH = inner * .12 * clamp(pour / .22), milkH = inner * .5 * clamp((pour - .22) / .43), coffeeH = inner * .2 * clamp((pour - .65) / .35);
+    const foamH = inner * .09 * ease(clamp((p - .33) / .05));
     let yy = floor;
     const lay = (id, h) => { yy -= h; setAttrs($('#' + id, scene), { y: yy, height: Math.max(0, h + (h > 0 ? 2 : 0)) }); };
     lay('lqSyrup', syrupH);
@@ -262,24 +162,28 @@ function updateHero(p) {
     lay('lqCoffee', coffeeH);
     lay('lqFoam', foamH);
     const surface = yy;
-    const wave = $('#lqWave', scene);
-    const ph = p * 60;
-    wave.setAttribute('d', surface < floor - 2 ? `M${cx - 130} ${surface} ${Array.from({ length: 9 }, (_, i) => `q14 ${i % 2 ? -7 : 7} 30 0`).join(' ')}`.replace(/q/g, 'q') : '');
-    wave.setAttribute('stroke', foamH > 0 ? '#E6D6F3' : coffeeH > 0 ? '#A97F5A' : milkH > 0 ? '#FFFFFF' : '#C9B2E8');
-    wave.setAttribute('transform', `translate(${(ph % 30) - 30} 0)`);
-    const streaming = pour > 0 && pour < 1;
-    const sCol = pour < .22 ? '#B79AD8' : pour < .65 ? '#F4ECF8' : '#7A4B30';
-    setAttrs($('#stream', scene), { height: streaming ? Math.max(0, surface + 4) : 0, fill: sCol, width: streaming ? 14 - 6 * Math.abs(Math.sin(p * 80)) * .3 : 0, x: cx - 7 });
-    $('#splash', scene).innerHTML = streaming ? [-30, -12, 10, 28].map((d, i) => `<circle cx="${cx + d + Math.sin(p * 90 + i) * 6}" cy="${surface - 6 - Math.abs(Math.sin(p * 70 + i * 2)) * 18}" r="${4 + (i % 2) * 2}" fill="${sCol}"/>`).join('') : '';
+    setAttrs($('#lqShade', scene), { y: surface, height: Math.max(0, floor - surface) });
+    const filled = surface < floor - 3;
+    const rx = (wb + (wt - wb) * ((bot - surface) / (bot - top))) / 2 - 5, ry = Math.max(4, rx * .13);
+    const foamy = foamH > 1;
+    const topCol = foamy ? '#F7ECE0' : coffeeH > 1 ? '#A87650' : milkH > 1 ? '#F7F0F8' : '#B892DE';
     const hk = ease(clamp((p - .35) / .05));
-    const heart = $('#heart', scene);
-    heart.setAttribute('opacity', String(hk));
-    heart.setAttribute('transform', `translate(0 ${surface + 2}) scale(1 ${.4 * hk}) translate(${cx * (1 - 1)} 0)`);
-    $('#heroSteam', scene).setAttribute('opacity', String(clamp((p - .36) / .06) * .9));
-    // burger
+    const wob = pour > 0 && pour < 1 ? Math.sin(p * 120) * 2 : 0;
+    $('#surfaceTop', scene).innerHTML = filled ? `<ellipse cx="${cx}" cy="${surface + wob}" rx="${rx}" ry="${ry}" fill="${topCol}"${foamy ? ' filter="url(#fx-foam)"' : ''}/>
+    <ellipse cx="${cx}" cy="${surface + wob}" rx="${rx}" ry="${ry}" fill="none" stroke="#6B4630" stroke-opacity=".25" stroke-width="2.5"/>
+    ${hk > 0 ? `<g opacity="${hk}" transform="translate(0 ${surface}) scale(1 ${.3 * hk}) translate(0 ${-surface})">${latteArt('heart', cx, surface, 2.6, '#B07FD8')}</g>` : ''}
+    <ellipse cx="${cx - rx * .4}" cy="${surface - ry * .3}" rx="${rx * .28}" ry="${ry * .25}" fill="#fff" opacity=".4"/>` : '';
+    const streaming = pour > 0 && pour < 1;
+    const sCol = pour < .22 ? '#B08CDB' : pour < .65 ? '#F5EDF6' : '#7A4B30';
+    const sw = streaming ? 13 + Math.sin(p * 90) * 1.5 : 0;
+    setAttrs($('#stream', scene), { height: streaming ? Math.max(0, surface + 4) : 0, fill: sCol, width: sw, x: cx - sw / 2 });
+    setAttrs($('#streamHi', scene), { height: streaming ? Math.max(0, surface + 4) : 0, width: sw, x: cx - sw / 2 });
+    $('#splash', scene).innerHTML = streaming ? [-34, -14, 12, 32].map((d, i) => `<circle cx="${cx + d + Math.sin(p * 90 + i) * 6}" cy="${surface - 4 - Math.abs(Math.sin(p * 70 + i * 2)) * 16}" r="${3 + (i % 2) * 2}" fill="${sCol}" opacity=".9"/>`).join('') : '';
+    $('#heroSteam', scene).setAttribute('opacity', String(clamp((p - .36) / .06) * .85));
+    // burger: each layer drops in with a soft landing
     const n = BURGER.layers.length;
     $$('.bl', scene).forEach((g, i) => {
-        const start = .4 + i * .042, k = clamp((p - start) / .075);
+        const start = .4 + i * .038, k = clamp((p - start) / .075);
         let dy, sq = 1;
         if (k < .72) {
             const f = k / .72;
@@ -287,8 +191,8 @@ function updateHero(p) {
         }
         else {
             const f = (k - .72) / .28;
-            dy = -22 * Math.sin(Math.PI * f) * (1 - f * .4);
-            sq = 1 - .12 * Math.sin(Math.PI * Math.min(1, f * 2)) * (1 - f);
+            dy = -18 * Math.sin(Math.PI * f) * (1 - f * .4);
+            sq = 1 - .1 * Math.sin(Math.PI * Math.min(1, f * 2)) * (1 - f);
         }
         if (k <= 0)
             dy = -900;
@@ -297,10 +201,10 @@ function updateHero(p) {
         g.firstElementChild.setAttribute('transform', `translate(${BURGER.cx} ${yb}) scale(${2 - sq} ${sq}) translate(${-BURGER.cx} ${-yb})`);
         g.setAttribute('opacity', k <= 0 ? '0' : '1');
     });
-    const done = clamp((p - (.4 + (n - 1) * .042 + .075)) / .04);
+    const done = clamp((p - (.4 + (n - 1) * .038 + .075)) / .04);
     $('#sparkles', scene).setAttribute('opacity', String(done));
     $('#disc', scene).setAttribute('r', String(330 + p * 30));
-    $('#discRing', scene).setAttribute('transform', `rotate(${p * 90} 510 440)`);
+    $('#discRing', scene).setAttribute('transform', `rotate(${p * 90} 520 440)`);
     // receipt
     const rk = clamp((p - .76) / .18);
     const paper = $('#rcPaper');
@@ -1015,44 +919,6 @@ function renderTable() {
         $('span', b).textContent = tf('table.banner', { n: order.table });
 }
 $('#tableExit').addEventListener('click', () => { order.table = ''; order.method = 'pickup'; renderTable(); history.replaceState(null, '', location.pathname + location.hash); });
-/* =============== bean cursor companion =============== */
-function initBean() {
-    const bean = $('#bean');
-    if (!finePointer || reduced) {
-        bean.remove();
-        return;
-    }
-    let x = innerWidth / 2, y = innerHeight / 2, tx = x, ty = y, vx = 0, rot = 0, shown = false, big = false;
-    addEventListener('pointermove', e => {
-        if (e.pointerType !== 'mouse')
-            return;
-        tx = e.clientX + 18;
-        ty = e.clientY + 22;
-        if (!shown) {
-            shown = true;
-            x = tx;
-            y = ty;
-            bean.classList.add('on');
-        }
-        const el = e.target.closest?.('a,button,.card,input,label,[role=radio],[role=tab]');
-        if (!!el !== big) {
-            big = !!el;
-            bean.classList.toggle('big', big);
-        }
-    }, { passive: true });
-    document.addEventListener('pointerleave', () => { shown = false; bean.classList.remove('on'); });
-    addEventListener('pointerdown', () => { bean.classList.remove('tap'); void bean.offsetWidth; bean.classList.add('tap'); });
-    const loop = () => {
-        const nx = x + (tx - x) * .2, ny = y + (ty - y) * .2;
-        vx = nx - x;
-        x = nx;
-        y = ny;
-        rot += (clamp(vx * 3, -40, 40) - rot) * .15;
-        bean.style.transform = `translate3d(${x}px, ${y}px, 0) rotate(${rot}deg)`;
-        requestAnimationFrame(loop);
-    };
-    requestAnimationFrame(loop);
-}
 /* =============== reveal (headings) =============== */
 function initReveal() {
     if (reduced || !('IntersectionObserver' in window)) {
@@ -1085,7 +951,7 @@ function onScroll() {
 addEventListener('scroll', onScroll, { passive: true });
 addEventListener('resize', () => { heroP = -1; fitScene(); onScroll(); });
 /* =============== boot =============== */
-on('lang', () => { renderStatus(); renderReceipt(); renderPills(); renderChips(); renderGrid(); renderCart(); renderBooking(); renderTable(); if (!$('#itemModal').hidden && im.id)
+on('lang', () => { renderStatus(); renderReceipt(); renderChips(); renderGrid(); renderCart(); renderBooking(); renderTable(); if (!$('#itemModal').hidden && im.id)
     renderItem(); if (!$('#checkout').hidden && !$('#coForm').hidden) {
     if (order.step === 2)
         captureStep2();
@@ -1093,14 +959,13 @@ on('lang', () => { renderStatus(); renderReceipt(); renderPills(); renderChips()
 } });
 buildScene();
 fitScene();
-initPhotoHero();
 renderTape();
 renderVisit();
 setWorldUI();
 applyLang();
 initLab();
 initBudget();
-initBean();
+initPointer(t);
 initReveal();
 if (reduced)
     root.classList.add('reduced');

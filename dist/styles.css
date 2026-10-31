@@ -55,16 +55,6 @@ section { position: relative; }
 #wipe.on { display: block; }
 #wipe svg { width: 100%; height: 100%; }
 #wipe path { fill: var(--wc, var(--violet)); }
-#bean { position: fixed; left: 0; top: 0; z-index: 450; width: 18px; height: 24px; margin: -12px 0 0 -9px; pointer-events: none; opacity: 0; transition: opacity .25s; }
-#bean svg { width: 100%; height: 100%; transition: transform .25s cubic-bezier(.3, 1.5, .5, 1); }
-#bean ellipse { fill: #7A3F22; stroke: #3A1F14; stroke-width: 1.4; transition: fill .25s; }
-#bean path { stroke: #2A140A; }
-#bean.on { opacity: 1; }
-#bean.big svg { transform: scale(1.5); }
-#bean.big ellipse { fill: var(--violet); stroke: var(--ink); }
-#bean.tap svg { animation: beanTap .3s; }
-@keyframes beanTap { 40% { transform: scale(1.9, 1.1); } }
-
 /* ============ buttons ============ */
 .btn { --b: var(--ink); display: inline-flex; align-items: center; justify-content: center; gap: .5em; min-height: 48px; padding: 10px 22px; border-radius: 999px; border: 2.5px solid var(--b); font-weight: 800; text-decoration: none; letter-spacing: .005em; box-shadow: 4px 4px 0 var(--sh); transition: transform .15s, box-shadow .15s, background-color .2s, color .2s; white-space: nowrap; }
 .btn:hover { transform: translate(-1px, -1px); box-shadow: 5px 5px 0 var(--sh); }
@@ -623,7 +613,31 @@ img.ph.in { opacity: 1; }
 
 /* ============ realistic hero & labs ============ */
 #scene .pill-t { font: 800 17px var(--body); fill: var(--ink); }
-.photo-hero #scene .neon { opacity: .22; }
-[data-theme="dark"].photo-hero #scene .neon { opacity: 1; }
+#scene .glass-print { font: 400 30px var(--display); fill: #fff; opacity: .55; letter-spacing: 1px; }
 .lab-stage { background: radial-gradient(ellipse 70% 55% at 50% 38%, color-mix(in srgb, var(--disc-a) 80%, #fff 20%), var(--disc-b) 75%); }
 .lab-stage::after { content: ''; position: absolute; left: 0; right: 0; bottom: 0; height: 26%; background: linear-gradient(to bottom, transparent, rgba(42, 20, 64, .08)); pointer-events: none; }
+
+/* ============ custom cursor (coffee bean + outline that frames what you're about to use) ============ */
+:root { --cur-stitch: var(--acc); --cur-edge: rgba(255, 255, 255, .95); }
+:root[data-theme="dark"] { --cur-edge: rgba(23, 13, 34, .9); }
+html.has-cursor, html.has-cursor * { cursor: none !important; }
+html.has-cursor iframe { cursor: auto !important; }
+.cur-dot, .cur-ring { position: fixed; left: 0; top: 0; pointer-events: none; z-index: 2147483000; opacity: 0; transition: opacity .25s; }
+html.cur-on .cur-dot, html.cur-on .cur-ring { opacity: 1; }
+.cur-dot { width: 15px; height: 20px; margin: -10px 0 0 -7.5px; will-change: translate; transition: opacity .25s, scale .25s cubic-bezier(.3, 1.4, .5, 1), rotate .3s; rotate: -20deg; filter: drop-shadow(0 0 1.5px var(--cur-edge)) drop-shadow(0 3px 4px rgba(0, 0, 0, .35)); }
+.cur-dot svg { width: 100%; height: 100%; }
+html.cur-down .cur-dot { scale: .78; }
+.cur-ring { width: 30px; height: 30px; border-radius: 15px; will-change: translate, width, height; }
+.cur-ring::before { content: ''; position: absolute; inset: 0; border-radius: inherit; border: 1.5px solid color-mix(in srgb, var(--cur-stitch) 55%, transparent); transition: border-color .25s, background-color .25s, box-shadow .3s, border-width .2s; }
+.cur-label { position: absolute; left: 50%; top: 0; translate: -50% -50%; padding: 5px 12px; border-radius: 999px; background: var(--cur-stitch); color: var(--acc-ink); font: 700 .78rem/1.1 var(--body); white-space: nowrap; box-shadow: 0 8px 18px -8px rgba(42, 20, 64, .6); opacity: 0; scale: .8; transition: opacity .2s, scale .3s cubic-bezier(.3, 1.4, .5, 1); }
+html.cur-labelled .cur-label { opacity: 1; scale: 1; }
+[data-cur="snap"] .cur-ring::before { border: 2px solid var(--cur-stitch); background-color: color-mix(in srgb, var(--cur-stitch) 7%, transparent); }
+[data-cur="snap"] .cur-dot, [data-cur="zone"] .cur-dot { scale: .7; rotate: 0deg; }
+[data-cur="zone"] .cur-ring::before { border: 2px solid color-mix(in srgb, var(--cur-stitch) 75%, transparent); background-color: color-mix(in srgb, var(--cur-stitch) 4%, transparent); box-shadow: 0 0 0 6px color-mix(in srgb, var(--cur-stitch) 8%, transparent); }
+[data-cur="text"] .cur-ring::before { border: 1.5px solid color-mix(in srgb, var(--cur-stitch) 60%, transparent); }
+[data-cur="text"] .cur-dot { width: 3px; height: 24px; margin: -12px 0 0 -1.5px; rotate: 0deg; border-radius: 2px; background: var(--cur-stitch); filter: none; }
+[data-cur="text"] .cur-dot svg { display: none; }
+[data-cur="disabled"] .cur-ring::before { border: 1.5px dashed color-mix(in srgb, var(--ink) 35%, transparent); }
+[data-cur="disabled"] .cur-dot { filter: grayscale(1); opacity: .6; }
+.cur-ripple { position: fixed; z-index: 2147482999; width: 14px; height: 14px; margin: -7px 0 0 -7px; border-radius: 50%; border: 2px solid var(--cur-stitch); pointer-events: none; animation: curRipple .45s cubic-bezier(.2, .7, .3, 1) forwards; }
+@keyframes curRipple { to { transform: scale(3.2); opacity: 0; } }
