@@ -2,7 +2,7 @@ import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT, SET_DRI
 import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } from './art.js';
 import { initPointer } from './ui.js';
 import { initScroll } from './scroll.js';
-import { initAfk } from './afk.js';
+import { initAfk, showOrder } from './afk.js';
 document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import { $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, plural, on, emit, cart, saveCart, setCart, addLine, unitPrice, lineName, lineSub, linePrep, isCoffeeLine, subtotal, count, toast, openOverlay, closeOverlay, tashkentNow, hhmm, ddmmyyyy, pad, isLang, itemPic, lineVisual, addSavedLines, } from './shared.js';
 import { initLab } from './lab.js';
@@ -915,6 +915,7 @@ async function sendOrder() {
         const prev = Number(store.get('vc-stamps')) || 0;
         store.set('vc-stamps', prev + coffees);
         store.set('vc-last', { at: Date.now(), n: count(), total: subtotal(), lines: cart.map(({ sig: _s, who: _w, ...l }) => l) });
+        const made = cart.map(l => ({ ...l }));
         setCart([]);
         $('#coForm').hidden = true;
         $('#coSteps').hidden = true;
@@ -923,7 +924,9 @@ async function sendOrder() {
         done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('cappuccino').art)}</div><h4>${t('done.title')}</h4>
       <p>${tf('done.text', { id, phone: '+998 ' + fmtPhone(order.phone) })}</p><p class="eta-big">${tf('done.eta', { t: due })}</p>
       ${coffees ? `<p class="stamp-plus">${tf('done.stamp', { n: coffees })}</p>` : ''}
+      <button type="button" class="watch-btn" data-watch><span class="wb-play" aria-hidden="true"></span><span><b>${t('afk.watch')}</b><small>${t('afk.watchSub')}</small></span></button>
       <button class="btn btn-acc" data-close>${t('done.close')}</button>`;
+        $('[data-watch]', done).addEventListener('click', () => showOrder(made, due));
         $('[data-close].btn', done).focus();
     }
     catch {

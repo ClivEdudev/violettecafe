@@ -1,12 +1,14 @@
-// Away screen: when the visitor leaves the site open and idle, a calm kitchen scene fades in over the page.
-// One cook, three acts on a loop: a latte, a burger (with a flip that goes a little too high) and a lavash
-// (rolled with a little too much confidence). Any touch, key, scroll or real mouse move brings the site back.
-// Try it fast with ?afk=5 (seconds). Off for reduced motion.
-import { $, clamp, reduced, state, t, money, addLine, toast, on } from './shared.js';
-import { ITEM } from './data.js';
-import { latteArt, LAYERS, bunTop, bunBottom } from './art.js';
+// Away screen and kitchen show. After 15 s without input a calm kitchen scene fades in over the page: one cook,
+// a latte, a burger (with a flip that goes a little too high) and a lavash (rolled with a little too much confidence).
+// When he serves a dish, Enter (or a tap on the button) puts it in the cart; anything else brings the site back.
+// After checkout the same cook can make the customer's exact order — every size, extra and custom recipe — on request.
+// Try it fast with ?afk=5 (seconds) and ?afkt=12 (jump into the loop). The idle show is off for reduced motion.
+import { $, clamp, reduced, finePointer, state, t, tf, money, addLine, toast, on } from './shared.js';
+import { ITEM, FILLINGS, LAB, EXTRAS, SIZES } from './data.js';
+import { latteArt, LAYERS, bunTop, bunBottom, inner } from './art.js';
+import { coffeeName, burgerName } from './recipes.js';
 const START_AT = Number(new URLSearchParams(location.search).get('afkt')) || 0; // jump into the loop (seconds), for previews
-const IDLE_MS = (() => { const v = Number(new URLSearchParams(location.search).get('afk')); return v > 0 ? v * 1000 : 50000; })();
+const IDLE_MS = (() => { const v = Number(new URLSearchParams(location.search).get('afk')); return v > 0 ? v * 1000 : 15000; })();
 const ease = (k) => (k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
 const win = (tm, a, b) => clamp((tm - a) / (b - a));
 const between = (tm, a, b) => tm >= a && tm < b;
@@ -26,12 +28,6 @@ function track(keys, tm) {
     const l = keys[keys.length - 1];
     return [l[1], l[2]];
 }
-const ACTS = [
-    { id: 'coffee', dur: 24, steps: [0, 4, 7, 12.6, 16, 19.8], cap: 'afk.s', title: 'afk.title', order: 'afk.order', item: 'latte', size: 'M' },
-    { id: 'burger', dur: 18.5, steps: [0, 4, 7.2, 10.3, 13.5, 15.6], cap: 'afk.b', title: 'afk.titleB', order: 'afk.orderB', item: 'classic-burger' },
-    { id: 'wrap', dur: 18.5, steps: [0, 3.4, 8, 10.1, 12.6, 15.6], cap: 'afk.w', title: 'afk.titleW', order: 'afk.orderW', item: 'lavash-chicken' },
-];
-const TOTAL = ACTS.reduce((a, x) => a + x.dur, 0);
 const MOUTH = {
     neutral: 'M691 276 q9 3 18 0', smile: 'M689 273 q11 10 22 0', smirk: 'M692 278 q8 1 13 -3 q3 -2 5 -5', o: 'M696 276 a4 4.6 0 1 0 8 0 a4 4.6 0 1 0 -8 0',
 };
@@ -166,6 +162,7 @@ const DEFS = `<defs>
   <radialGradient id="aCrema" cx=".45" cy=".4" r=".6"><stop offset="0" stop-color="#D8A06A"/><stop offset=".8" stop-color="#9A5A2E"/><stop offset="1" stop-color="#6B3A1C"/></radialGradient>
   <linearGradient id="aLav" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F8E6BE"/><stop offset=".6" stop-color="#E8C487"/><stop offset="1" stop-color="#C99A5A"/></linearGradient>
   <linearGradient id="aDoner" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5A2C14"/><stop offset=".35" stop-color="#B8642C"/><stop offset=".6" stop-color="#D9864A"/><stop offset="1" stop-color="#6A3418"/></linearGradient>
+  <linearGradient id="aDonerC" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7A4A1E"/><stop offset=".35" stop-color="#D99A4A"/><stop offset=".6" stop-color="#EDB872"/><stop offset="1" stop-color="#8A5422"/></linearGradient>
   <radialGradient id="aHeat" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FF8A3A" stop-opacity=".55"/><stop offset="1" stop-color="#FF5A1A" stop-opacity="0"/></radialGradient>
   <filter id="aBlur"><feGaussianBlur stdDeviation="6"/></filter>
   <filter id="aSoft" x="-20%" y="-20%" width="140%" height="160%"><feDropShadow dx="0" dy="6" stdDeviation="6" flood-color="#000" flood-opacity=".45"/></filter>
@@ -209,7 +206,7 @@ function sceneSVG() {
     <rect x="982" y="284" width="22" height="196" rx="6" fill="#2A2630"/><rect x="986" y="292" width="14" height="180" rx="4" fill="#FF7A3A" opacity=".75" class="ak-flicker"/>
     <ellipse cx="960" cy="380" rx="90" ry="130" fill="url(#aHeat)"/>
     <line x1="930" y1="232" x2="930" y2="500" stroke="url(#aSteel)" stroke-width="6"/><circle cx="930" cy="232" r="7" fill="url(#aSteel)"/>
-    <path d="M890 296 Q930 284 970 296 L952 468 Q930 476 908 468z" fill="url(#aDoner)"/>
+    <path id="akCone" d="M890 296 Q930 284 970 296 L952 468 Q930 476 908 468z" fill="url(#aDoner)"/>
     <g clip-path="url(#aCone)"><g class="ak-spin">${stripes}</g><rect x="880" y="280" width="30" height="200" fill="rgba(0,0,0,.25)"/></g>
     <ellipse cx="930" cy="296" rx="40" ry="8" fill="#C97A40"/>
   </g>
@@ -245,6 +242,10 @@ function sceneSVG() {
     <circle cx="830" cy="490" r="5" fill="url(#aSteel)"/><circle cx="960" cy="490" r="5" fill="url(#aSteel)"/>
   </g>
   <g id="stWrap" opacity="0">${board(410, 300)}<rect x="866" y="486" width="84" height="18" rx="4" fill="url(#aSteel)"/><rect x="872" y="482" width="72" height="8" rx="3" fill="#8A4A22"/></g>
+  <g id="stFryer" opacity="0">${board(410, 300)}
+    <rect x="812" y="300" width="182" height="150" rx="8" fill="url(#aChrome)" opacity=".35"/><rect x="826" y="314" width="154" height="10" rx="4" fill="#2A2630"/>
+    <ellipse cx="903" cy="452" rx="84" ry="7" fill="#C98A2C" opacity=".85"/><ellipse cx="903" cy="440" rx="90" ry="60" fill="url(#aHeat)" opacity=".5"/></g>
+  <g id="stPlain" opacity="0">${board(410, 300)}<rect x="830" y="456" width="150" height="48" rx="6" fill="url(#aChrome)" opacity=".55"/><rect x="840" y="462" width="130" height="6" rx="3" fill="rgba(255,255,255,.4)"/></g>
   <g id="akArms"></g>
   <g id="akProps"></g>
   <g id="akFx"></g>
@@ -256,237 +257,15 @@ function sceneSVG() {
   <g id="akInset" opacity="0"><circle cx="1010" cy="190" r="112" fill="#140B1A" stroke="#FFE2A8" stroke-opacity=".5" stroke-width="3"/>
     <g clip-path="url(#aInset)"><circle cx="1010" cy="190" r="104" fill="url(#aCup)"/><circle cx="1010" cy="190" r="84" fill="url(#aCrema)"/><g id="akArt"></g></g></g>`;
 }
-/* ===================== act 1: latte ===================== */
-const C_RIGHT = [[0, 775, 505], [.8, 898, 468], [3.2, 898, 468], [4, 818, 500], [4.3, 850, 505], [4.7, 770, 468], [5.2, 770, 488], [5.6, 770, 470], [6, 770, 488], [6.4, 770, 470], [6.9, 850, 505], [7.3, 818, 500], [7.9, 705, 470], [8.3, 775, 505],
-    [15.4, 775, 505], [16, 680, 505], [16.6, 716, 408], [19, 716, 408], [19.6, 680, 505], [20.2, 852, 258], [20.6, 884, 246], [21.0, 852, 258], [21.4, 884, 246], [21.8, 852, 258], [22.2, 860, 270], [22.8, 775, 505], [24, 775, 505]];
-const C_LEFT = [[0, 625, 505], [7.4, 625, 505], [7.9, 705, 470], [8.9, 428, 446], [9.3, 428, 446], [9.8, 560, 505], [10.4, 408, 505], [10.9, 600, 468], [12.6, 600, 468], [13, 600, 505], [13.5, 552, 470], [14, 552, 480], [14.5, 552, 470], [15, 552, 480],
-    [15.4, 680, 505], [15.9, 408, 505], [16.6, 650, 452], [19, 650, 452], [19.7, 700, 505], [20.2, 625, 505], [24, 625, 505]];
-const C_HEAD = [[0, 0, 0], [.8, 9, 4], [3.2, 9, 4], [4.4, 5, 8], [6.8, 5, 8], [8, -2, 2], [8.9, -12, 2], [12.6, -12, 4], [13.4, -10, 6], [15, -10, 6], [16.4, -2, 10], [19, -2, 10], [20, 0, 0], [24, 0, 0]];
-const C_LOOK = [[0, 0, 0], [.8, 7, 3], [3.2, 7, 3], [4.4, 5, 6], [6.8, 5, 6], [8, -4, 2], [8.9, -8, 2], [12.6, -8, 4], [15, -6, 5], [16.4, -2, 7], [19, -2, 7], [19.8, 0, 0], [24, 0, 0]];
+/* ===================== shared props =====================*/
 const portafilter = (gx, gy, rot = 0) => `<g transform="translate(${f1(gx)} ${f1(gy)}) rotate(${rot})"><rect x="-6" y="-6" width="52" height="12" rx="6" fill="#2A1A14"/><rect x="-62" y="-12" width="44" height="20" rx="6" fill="url(#aSteel)" transform="translate(14 0)"/><path d="M-48 8 h44 l-4 10 h-36z" fill="url(#aSteel)" transform="translate(14 0)"/></g>`;
 const tamper = (x, y) => `<g transform="translate(${f1(x)} ${f1(y)})"><rect x="-7" y="-34" width="14" height="30" rx="7" fill="#2A1A14"/><rect x="-20" y="-6" width="40" height="10" rx="3" fill="url(#aSteel)"/></g>`;
-function cup(cx, by, fill, rot = 0, scale = 1) {
-    const lvl = 34 * fill;
-    return `<g transform="translate(${f1(cx)} ${f1(by)}) rotate(${rot}) scale(${scale})" filter="url(#aSoft)"><path d="M18 -26 q18 2 14 14 q-3 9 -16 8" fill="none" stroke="#E7DFEA" stroke-width="6"/>
-    <path d="M-22 -40 h44 l-5 36 q-1 4 -6 4 h-22 q-5 0 -6 -4z" fill="url(#aCup)"/><rect x="-21" y="-30" width="42" height="5" fill="#7A4FB0" opacity=".9"/>
-    ${fill > 0 ? `<clipPath id="akCupClip"><path d="M-19 -38 h38 l-5 34 h-28z"/></clipPath><rect clip-path="url(#akCupClip)" x="-20" y="${-4 - lvl}" width="40" height="${lvl}" fill="${fill > .5 ? '#C99A6E' : '#6B3A1C'}"/><ellipse cx="0" cy="${-4 - lvl}" rx="${15 + fill * 4}" ry="3" fill="${fill > .5 ? '#F1E3CF' : '#C7864B'}"/>` : ''}
-    <ellipse cx="0" cy="0" rx="30" ry="5" fill="#EFE8F2"/></g>`;
-}
 const pitcher = (gx, gy, rot = 0) => `<g transform="translate(${f1(gx)} ${f1(gy)}) rotate(${rot})"><path d="M-6 -34 q14 2 12 16 q-2 10 -12 10" fill="none" stroke="url(#aSteel)" stroke-width="5"/><path d="M-50 -46 h40 l4 42 q0 4 -4 4 h-40 q-4 0 -4 -4z M-50 -46 l-10 -4 l6 8z" fill="url(#aSteel)" transform="translate(4 0)"/></g>`;
 const servedSteam = (x, y, tm) => Array.from({ length: 3 }, (_, i) => { const f = ((tm * .5 + i / 3) % 1); return `<path d="M${f1(x + (i - 1) * 16)} ${f1(y - f * 90)} q-10 -14 0 -28 q10 -14 0 -28" stroke="#fff" stroke-width="5" fill="none" opacity="${f1((1 - f) * .45)}" filter="url(#aBlur)"/>`; }).join('');
-function actCoffee(tm) {
-    const pose = { R: track(C_RIGHT, tm), L: track(C_LEFT, tm), head: track(C_HEAD, tm), look: track(C_LOOK, tm), brows: tm > 19.8 && tm < 23 ? 2 : 0, mouth: tm > 19.8 && tm < 23 ? 'smile' : 'neutral', wink: between(tm, 21.2, 21.6), lean: 0 };
-    const { R, L } = drawCook(pose, tm);
-    let props = '', fx = '', serve = '';
-    if (tm < 4)
-        props += portafilter(R.hx, R.hy);
-    else if (tm < 7.3)
-        props += portafilter(818, 500);
-    else if (tm < 7.9)
-        props += portafilter(R.hx, R.hy);
-    else if (tm < 8.9)
-        props += portafilter(L.hx, L.hy, -8 * win(tm, 8.4, 8.9));
-    else
-        props += portafilter(428, 446, -8 + 8 * win(tm, 8.9, 9.3));
-    props += between(tm, 4.3, 6.9) ? tamper(R.hx, R.hy) : tamper(850, 505);
-    if (between(tm, 12.6, 15))
-        props += pitcher(L.hx, L.hy);
-    else if (between(tm, 16, 19.6))
-        props += pitcher(R.hx, R.hy, -58 * ease(win(tm, 16.6, 17.4)) + 10 * win(tm, 18.8, 19.3));
-    else
-        props += pitcher(tm < 12.6 ? 600 : 680, 505);
-    const espresso = .45 * win(tm, 10.4, 12.6), milk = .45 * win(tm, 16.8, 18.8);
-    let cupX = 532, cupY = 505, cupRot = 0, cupScale = 1, served = false;
-    if (between(tm, 9.8, 10.4)) {
-        cupX = L.hx - 28;
-        cupY = L.hy;
-    }
-    else if (between(tm, 10.4, 15.9))
-        cupX = 380;
-    else if (between(tm, 15.9, 19.7)) {
-        cupX = L.hx - 28;
-        cupY = L.hy;
-        cupRot = -14 * ease(win(tm, 16.4, 16.8)) * (1 - win(tm, 18.8, 19.4));
-    }
-    else if (tm >= 19.7) {
-        const k = ease(win(tm, 20.2, 21.3));
-        cupX = 672 + 28 * k;
-        cupY = 505 + 70 * k;
-        cupScale = 1 + .55 * k;
-        served = k > 0;
-    }
-    const c = cup(cupX, cupY, espresso + milk, cupRot, cupScale);
-    if (served)
-        serve = c;
-    else
-        props += c;
-    if (between(tm, .9, 3.1)) {
-        for (let i = 0; i < 9; i++) {
-            const f = ((tm * 3 + i / 9) % 1);
-            fx += `<circle cx="${f1(850 + Math.sin(i * 7 + tm * 10) * 5)}" cy="${f1(442 + f * 22)}" r="2.2" fill="#3A2214"/>`;
-        }
-        $('#akGrinder').setAttribute('transform', `translate(${f1(Math.sin(tm * 90) * .8)} 0)`);
-    }
-    else
-        $('#akGrinder').removeAttribute('transform');
-    $('#akBeans').setAttribute('height', f1(38 - 8 * win(tm, .9, 3.1)));
-    $('#akBeans').setAttribute('y', f1(318 + 8 * win(tm, .9, 3.1)));
-    const brewing = between(tm, 10.4, 12.6);
-    $('#akLight').setAttribute('fill', brewing ? '#FFB45A' : '#5A3A1C');
-    $('#akNeedle').setAttribute('transform', `rotate(${brewing ? f1(60 + Math.sin(tm * 8) * 4) : tm > 12.6 && tm < 16 ? 30 : 0} 300 388)`);
-    if (brewing)
-        fx += `<path d="M374 446 Q373 ${f1(470 + Math.sin(tm * 20))} 376 ${f1(490 - 34 * espresso)}" stroke="#5A2E1A" stroke-width="3" fill="none"/><path d="M386 446 Q387 ${f1(470 + Math.cos(tm * 20))} 384 ${f1(490 - 34 * espresso)}" stroke="#5A2E1A" stroke-width="3" fill="none"/>`;
-    if (between(tm, 13.4, 15))
-        for (let i = 0; i < 6; i++) {
-            const f = ((tm * .9 + i / 6) % 1);
-            fx += `<circle cx="${f1(546 + Math.sin(i * 3 + tm * 2) * 14 * f)}" cy="${f1(452 - f * 120)}" r="${f1(10 + f * 26)}" fill="#fff" opacity="${f1((1 - f) * .35)}" filter="url(#aBlur)"/>`;
-        }
-    if (between(tm, 16.8, 18.8)) {
-        const sx = R.hx - 66, sy = R.hy - 30;
-        fx += `<path d="M${f1(sx)} ${f1(sy)} Q${f1(sx - 4)} ${f1((sy + L.hy - 40) / 2)} ${f1(L.hx - 30)} ${f1(L.hy - 42)}" stroke="#F4ECE1" stroke-width="5" fill="none" stroke-linecap="round"/>`;
-    }
-    if (tm > 20.6)
-        fx += servedSteam(700, 495, tm);
-    const ins = clamp(win(tm, 16.4, 16.9) - win(tm, 19.4, 19.9));
-    $('#akInset').setAttribute('opacity', f1(ins));
-    const art = win(tm, 17, 18.8);
-    $('#akArt').innerHTML = art > 0 ? `<g transform="translate(1010 196) scale(${(.4 + art * .6).toFixed(2)}) translate(-1010 -196)" opacity="${f1(Math.min(1, art * 2))}">${latteArt('heart', 1010, 196, 4.2, '#F7EEE2')}</g>` : '';
-    return { props, fx, serve };
-}
-/* ===================== act 2: burger ===================== */
-const BX = 520, BY = 488, S = .5;
-const STACK = ['bunB', 'beef', 'cheese', 'lettuce', 'tomato', 'ketchup', 'bunT'];
-const LAND = [-1, 6.2, 8.2, 9.2, 10.1, 13.1, 14.35];
-const layerOf = (id) => (id === 'bunB' ? bunBottom('classic') : id === 'bunT' ? bunTop('classic') : LAYERS[id]);
-const baseY = (i) => BY - STACK.slice(0, i).reduce((a, id) => a + (layerOf(id).h - 4) * S, 0);
-const TOP_Y = baseY(STACK.length);
-function part(id, x, y, rot = 0, sx = S, sy = S) {
-    const L = layerOf(id);
-    return `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(rot)}) scale(${sx.toFixed(3)} ${sy.toFixed(3)})">${L.svg(-L.h, 0, 240)}</g>`;
-}
-const squish = (tm, land) => { const f = win(tm, land, land + .3); return f > 0 && f < 1 ? .16 * Math.sin(Math.PI * f) * (1 - f) : 0; };
-const B_RIGHT = [[0, 775, 505], [.6, 880, 452], [1.3, 880, 460], [1.7, 880, 452], [2.3, 880, 460], [3.2, 880, 455], [3.6, 905, 470], [4.0, 880, 462], [4.25, 820, 400], [4.9, 775, 505],
-    [6.8, 720, 545], [7.1, 745, 470], [7.4, 690, 418], [7.8, 720, 545], [9.0, 720, 545], [9.4, 560, 420], [9.8, 528, 440], [10.05, 720, 545],
-    [10.5, 568, 372], [11.2, 568, 372], [11.25, 582, 372], [11.35, 554, 372], [11.45, 582, 372], [11.55, 554, 372], [11.65, 582, 372], [11.75, 554, 372], [11.85, 582, 372], [12.0, 568, 372],
-    [12.3, 548, 380], [12.6, 568, 388], [12.9, 590, 380], [13.1, 568, 372], [13.4, 720, 545], [14.7, 720, 545], [15.1, 524, TOP_Y - 26], [15.3, 524, TOP_Y - 22], [15.6, 775, 505], [18.5, 775, 505]];
-const B_LEFT = [[0, 640, 500], [8.0, 620, 545], [8.4, 530, 428], [8.85, 522, 448], [9.1, 640, 500], [13.4, 640, 500], [13.7, 618, 470], [14.0, 522, 250], [14.3, 560, 330], [14.8, 640, 500], [18.5, 640, 500]];
-const B_HEAD = [[0, 8, 6], [3.8, 8, 6], [4.6, -2, -16], [5.4, -6, -12], [6.1, -4, 6], [6.4, 0, 0], [7.3, 0, 0], [7.6, -6, 6], [10.6, -6, 2], [11.0, 2, 14], [11.3, 2, 14], [11.6, -4, 0], [13.2, -6, 2], [13.6, -4, -10], [14.4, -6, 6], [15.5, 0, 0], [18.5, 0, 0]];
-const B_LOOK = [[0, 7, 4], [3.8, 7, 4], [4.4, 2, -8], [5.4, -4, -6], [6.1, -6, 4], [6.4, 0, 0], [7.3, 0, 0], [7.6, -6, 4], [10.5, -4, -3], [10.9, -2, 8], [11.3, -2, 8], [11.6, -4, -4], [13.2, -4, 2], [13.6, -4, -8], [14.4, -6, 4], [15.5, 0, 0], [18.5, 0, 0]];
+const BX = 520, BY = 488;
 const spatula = (hx, hy) => `<g><line x1="${f1(hx + 2)}" y1="${f1(hy)}" x2="${f1(hx + 24)}" y2="${f1(hy - 24)}" stroke="#2A1A14" stroke-width="7" stroke-linecap="round"/><path d="M${f1(hx - 2)} ${f1(hy - 2)} L${f1(hx - 12)} ${f1(hy + 10)}" stroke="url(#aSteel)" stroke-width="4"/><rect x="${f1(hx - 58)}" y="${f1(hy + 8)}" width="50" height="5" rx="2" fill="url(#aSteel)"/></g>`;
 const bottle = (hx, hy) => `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(172)"><rect x="-13" y="-8" width="26" height="54" rx="9" fill="#C62828"/><rect x="-13" y="-8" width="9" height="54" rx="4" fill="rgba(255,255,255,.22)"/><rect x="-9" y="-20" width="18" height="14" rx="3" fill="#F4ECE1"/><path d="M-3 -20 l3 -10 l3 10z" fill="#F4ECE1"/><rect x="-10" y="10" width="20" height="16" rx="2" fill="#F4B731"/></g>`;
 const flag = (x, y) => `<g><line x1="${f1(x)}" y1="${f1(y + 26)}" x2="${f1(x)}" y2="${f1(y - 30)}" stroke="#E7D3B0" stroke-width="2.5"/><path d="M${f1(x)} ${f1(y - 30)} h22 l-5 7 l5 7 h-22z" fill="#7A4FB0"/><text x="${f1(x + 9)}" y="${f1(y - 19)}" class="ak-flag" text-anchor="middle">V</text></g>`;
-function actBurger(tm) {
-    const pose = { R: track(B_RIGHT, tm), L: track(B_LEFT, tm), head: track(B_HEAD, tm), look: track(B_LOOK, tm),
-        brows: between(tm, 6.3, 7.4) ? 6 : between(tm, 10.9, 11.6) ? -2 : tm > 15.5 ? 2 : between(tm, 4.4, 5.6) ? 4 : 0,
-        mouth: between(tm, 6.3, 7.4) ? 'smirk' : between(tm, 10.75, 11.0) ? 'o' : tm > 15.5 ? 'smile' : 'neutral', wink: between(tm, 6.7, 7.0), lean: 0 };
-    const { R, L } = drawCook(pose, tm);
-    let stack = '', props = '', fx = '', serveSvg = '';
-    STACK.forEach((id, i) => {
-        const land = LAND[i], by = baseY(i);
-        if (id === 'bunB') {
-            stack += part(id, BX, by);
-            return;
-        }
-        if (tm >= land) {
-            if (id === 'ketchup') {
-                stack += part(id, BX, by);
-                return;
-            }
-            const q = squish(tm, land);
-            if (id === 'bunT' && tm < land + .4) {
-                const f = win(tm, land, land + .4);
-                stack += part(id, BX, by - 16 * Math.sin(Math.PI * f) * (1 - f * .3), 0, S * (1 + q), S * (1 - q));
-            }
-            else
-                stack += part(id, BX, by, 0, S * (1 + q), S * (1 - q));
-            return;
-        }
-        if (id === 'ketchup') {
-            const kg = win(tm, 12.1, 13.1);
-            if (kg > 0)
-                stack += part(id, BX, by, 0, S * kg, S);
-            return;
-        }
-        if (id === 'beef') {
-            if (tm < 4.0) {
-                const press = between(tm, 1.3, 1.6) || between(tm, 2.3, 2.6) ? .1 : 0;
-                props += part(id, 880, 466, 0, S * (1 + press), S * (1 - press));
-            }
-            else {
-                const f = win(tm, 4.0, 6.2);
-                props += part(id, 880 + (BX - 880) * f, 466 + (by - 466) * f - 420 * 4 * f * (1 - f), 900 * f);
-            }
-        }
-        if (id === 'cheese') {
-            if (between(tm, 7.0, 7.4))
-                props += part(id, R.hx - 4, R.hy - 6, -18);
-            else if (tm >= 7.4) {
-                const f = win(tm, 7.4, 8.2);
-                props += part(id, 690 + (BX - 690) * f, 412 + (by - 412) * f - 70 * 4 * f * (1 - f), 360 * f - 18);
-            }
-        }
-        if (id === 'lettuce') {
-            if (between(tm, 8.3, 8.85))
-                props += part(id, L.hx, L.hy + 6);
-            else if (tm >= 8.85) {
-                const f = win(tm, 8.85, 9.2);
-                props += part(id, 522 + (BX - 522) * f, 454 + (by - 454) * f * f);
-            }
-        }
-        if (id === 'tomato') {
-            if (between(tm, 9.3, 9.8))
-                props += part(id, R.hx - 6, R.hy + 6);
-            else if (tm >= 9.8) {
-                const f = win(tm, 9.8, 10.1);
-                props += part(id, 522 + (BX - 522) * f, 446 + (by - 446) * f * f);
-            }
-        }
-        if (id === 'bunT') {
-            if (tm < 13.65)
-                props += part(id, 628, BY);
-            else if (tm < 14.0)
-                props += part(id, L.hx, L.hy + 20);
-            else {
-                const f = win(tm, 14.0, land);
-                const y0 = 272;
-                props += part(id, BX, y0 + (by - y0) * f * f);
-            }
-        }
-    });
-    // spatula, bottle, flag
-    props += tm < 4.6 ? spatula(R.hx, R.hy) : `<rect x="905" y="458" width="56" height="5" rx="2" fill="url(#aSteel)"/>`;
-    if (between(tm, 10.25, 13.35))
-        props += bottle(R.hx, R.hy);
-    if (between(tm, 14.75, 15.15))
-        props += flag(R.hx + 4, R.hy + 4);
-    if (tm >= 15.15)
-        stack += flag(BX + 4, TOP_Y - 4);
-    // the ketchup bottle's first attempt: a dry puff, three drops on the board, one on the apron
-    if (between(tm, 10.75, 11.25)) {
-        const f = win(tm, 10.75, 11.25);
-        fx += `<circle cx="${f1(R.hx - 4)}" cy="${f1(R.hy + 62)}" r="${f1(6 + f * 26)}" fill="#fff" opacity="${f1((1 - f) * .5)}" filter="url(#aBlur)"/>`;
-    }
-    if (tm > 10.85) {
-        const f = win(tm, 10.8, 10.95);
-        fx += [[488, 487], [602, 486], [560, 488]].map(([x, y]) => `<ellipse cx="${x}" cy="${f1(440 + (y - 440) * f)}" rx="${f > .99 ? 5 : 2.5}" ry="${f > .99 ? 1.8 : 2.5}" fill="#B71C1C"/>`).join('');
-        $('#akSplat').innerHTML = tm > 10.95 ? '<circle cx="692" cy="466" r="3.4" fill="#B71C1C"/><circle cx="696" cy="470" r="1.6" fill="#B71C1C"/>' : '';
-    }
-    else
-        $('#akSplat').innerHTML = '';
-    // grill smoke while the patty sizzles
-    if (tm < 4.2)
-        for (let i = 0; i < 5; i++) {
-            const f = ((tm * .7 + i / 5) % 1);
-            fx += `<circle cx="${f1(870 + Math.sin(i * 2.3 + tm * 1.5) * 16 * f)}" cy="${f1(448 - f * 110)}" r="${f1(8 + f * 22)}" fill="#fff" opacity="${f1((1 - f) * .28)}" filter="url(#aBlur)"/>`;
-        }
-    // serve: the burger slides to the viewer
-    const k = ease(win(tm, 15.6, 16.6));
-    if (k > 0) {
-        serveSvg = `<g transform="translate(${f1(BX + 90 * k)} ${f1(BY + 84 * k)}) scale(${(1 + .5 * k).toFixed(3)}) translate(${-BX} ${-BY})">${stack}</g>` + servedSteam(BX + 90 * k, TOP_Y + 40, tm);
-        stack = '';
-    }
-    return { props: stack + props, fx, serve: serveSvg };
-}
 /* ===================== act 3: lavash ===================== */
 const LX = 560;
 const W_RIGHT = [[0, 775, 505], [.4, 868, 330], [.8, 868, 440], [1.2, 868, 330], [1.6, 868, 440], [2.0, 868, 330], [2.4, 868, 440], [2.8, 868, 330], [3.2, 868, 440], [3.6, 775, 505],
@@ -513,18 +292,16 @@ const rollSide = (x, y, rot, paper) => `<g transform="translate(${f1(x)} ${f1(y)
   <rect x="-66" y="-17" width="132" height="34" rx="17" fill="url(#aLav)"/><path d="M-40 -14 l10 28 M-14 -14 l10 28 M12 -14 l10 28" stroke="#C99A5A" stroke-width="3" opacity=".6"/>
   <ellipse cx="-62" cy="0" rx="9" ry="16" fill="#E8C487"/><ellipse cx="-62" cy="0" rx="5" ry="9" fill="#A0552E"/><circle cx="-60" cy="-4" r="2.6" fill="#E2452F"/><circle cx="-63" cy="5" r="2" fill="#7CB342"/>
   ${paper > 0 ? `<rect x="${f1(66 - 80 * paper)}" y="-19" width="${f1(80 * paper)}" height="38" rx="6" fill="#7A4FB0"/><rect x="${f1(66 - 80 * paper)}" y="-19" width="${f1(80 * paper)}" height="8" rx="4" fill="rgba(255,255,255,.18)"/>${paper > .6 ? `<text x="30" y="7" text-anchor="middle" class="ak-flag" style="font-size:18px">V</text>` : ''}` : ''}</g>`;
-function actWrap(tm) {
-    const pose = { R: track(W_RIGHT, tm), L: track(W_LEFT, tm), head: track(W_HEAD, tm), look: track(W_LOOK, tm),
-        brows: between(tm, 10.4, 11.4) ? 8 : between(tm, 11.4, 12.4) ? 4 : tm > 15 ? 2 : 0,
-        mouth: between(tm, 10.4, 11.4) ? 'o' : between(tm, 11.5, 12.4) ? 'smirk' : tm > 14.8 ? 'smile' : 'neutral', wink: between(tm, 15.0, 15.35), lean: track(W_LEAN, tm)[0] };
-    const { R, L } = drawCook(pose, tm);
+/** The lavash timeline, drawn from the current recipe (WP): meat, sauce, fries or greens, cheese, jalapeño. */
+function wrapDraw(tm, h) {
+    const R = h.R, L = h.L, p = WP;
     let props = '', fx = '', serve = '';
     // knife on the spit, shavings fall into the tray
     if (tm < 3.55) {
         props += knife(R.hx, R.hy);
         for (let i = 0; i < 8; i++) {
             const f = ((tm * 1.6 + i / 8) % 1);
-            fx += `<rect x="${f1(900 + Math.sin(i * 3.1) * 14)}" y="${f1(330 + ((i * 37) % 110) + f * (480 - 330 - ((i * 37) % 110)))}" width="9" height="3.5" rx="1.5" fill="#8A4A22" transform="rotate(${(i * 47) % 90} ${f1(904)} ${f1(400)})" opacity="${f1(1 - f * .3)}"/>`;
+            fx += `<rect x="${f1(900 + Math.sin(i * 3.1) * 14)}" y="${f1(330 + ((i * 37) % 110) + f * (480 - 330 - ((i * 37) % 110)))}" width="9" height="3.5" rx="1.5" fill="${p.meatC}" transform="rotate(${(i * 47) % 90} ${f1(904)} ${f1(400)})" opacity="${f1(1 - f * .3)}"/>`;
         }
     }
     // the lavash and what goes on it (anything left of the roll is still flat)
@@ -535,27 +312,38 @@ function actWrap(tm) {
         const w = 210 * ease(win(tm, 3.4, 3.9)), right = Math.min(455 + w, rollX);
         let flat = `<rect x="455" y="481" width="${f1(Math.max(0, right - 455))}" height="7" rx="3.5" fill="url(#aLav)"/>`;
         const sx = 470 + 180 * win(tm, 4.5, 5.2);
+        const zig = (c, dy, sw) => { let d = `M470 ${481 + dy}`; for (let x = 482; x <= Math.min(sx, right - 4); x += 12)
+            d += ` L${x} ${((x / 12) % 2 ? 478 : 482) + dy}`; return `<path d="${d}" stroke="${c}" stroke-width="${sw}" fill="none" stroke-linejoin="round"/>`; };
         if (tm > 4.5) {
-            let d = 'M470 481';
-            for (let x = 482; x <= Math.min(sx, right - 4); x += 12)
-                d += ` L${x} ${(x / 12) % 2 ? 478 : 482}`;
-            flat += `<path d="${d}" stroke="#FFF8EC" stroke-width="3" fill="none" stroke-linejoin="round"/>`;
+            flat += zig('#FFF8EC', 0, p.extraSauce ? 4.5 : 3);
+            if (p.spicy)
+                flat += zig('#D84315', -2, 2.2);
         }
         const meat = [[480, 6.0], [505, 6.0], [530, 6.05], [585, 6.6], [612, 6.6], [640, 6.65]];
         meat.forEach(([x, at], i) => { if (tm > at && x < right - 6) {
             const f = win(tm, at, at + .2);
-            flat += `<rect x="${x - 9}" y="${f1(440 + (472 - 440) * f)}" width="18" height="7" rx="3" fill="#8A4A22" transform="rotate(${(i * 23) % 30 - 15} ${x} 476)"/>`;
+            flat += `<rect x="${x - 9}" y="${f1(440 + (472 - 440) * f)}" width="18" height="7" rx="3" fill="${p.meatC}" transform="rotate(${(i * 23) % 30 - 15} ${x} 476)"/>`;
         } });
-        [500, 528, 556, 590, 622].forEach((x, i) => { if (tm > 7.2 && x < right - 6)
-            flat += `<rect x="${x - 11}" y="${470 - (i % 2) * 3}" width="22" height="4" rx="2" fill="#F4C542" transform="rotate(${(i * 31) % 40 - 20} ${x} 472)"/>`; });
+        if (p.fries)
+            [500, 528, 556, 590, 622].forEach((x, i) => { if (tm > 7.2 && x < right - 6)
+                flat += `<rect x="${x - 11}" y="${470 - (i % 2) * 3}" width="22" height="4" rx="2" fill="#F4C542" transform="rotate(${(i * 31) % 40 - 20} ${x} 472)"/>`; });
+        else
+            [496, 530, 566, 604, 636].forEach((x, i) => { if (tm > 7.2 && x < right - 6)
+                flat += `<path d="M${x - 10} ${471 - (i % 2) * 2} q10 -8 20 0" stroke="#5E9E3A" stroke-width="4" fill="none" stroke-linecap="round"/>`; });
+        if (p.cheese)
+            [490, 540, 596, 630].forEach((x, i) => { if (tm > 7.5 && x < right - 6)
+                flat += `<path d="M${x - 12} ${466 + (i % 2)} h24 l-3 6 l-4 -2 l-5 4 l-4 -3 l-8 1z" fill="#F4B731"/>`; });
         [512, 548, 600, 632].forEach(x => { if (tm > 7.8 && x < right - 6)
             flat += `<circle cx="${x}" cy="469" r="5" fill="#E2452F"/>`; });
+        if (p.jalapeno)
+            [524, 576, 618].forEach(x => { if (tm > 7.9 && x < right - 6)
+                flat += `<circle cx="${x}" cy="466" r="4.5" fill="none" stroke="#3F8A2E" stroke-width="2.6"/>`; });
         props += flat;
     }
     if (between(tm, 4.4, 5.3))
         props += squeeze(R.hx, R.hy);
     if (between(tm, 5.6, 6.7))
-        props += `<rect x="${f1(R.hx - 9)}" y="${f1(R.hy + 8)}" width="18" height="7" rx="3" fill="#8A4A22"/>`;
+        props += `<rect x="${f1(R.hx - 9)}" y="${f1(R.hy + 8)}" width="18" height="7" rx="3" fill="${p.meatC}"/>`;
     // the roll: end view while rolling, then it keeps going on its own
     const ang = -(666 - rollX) * 3.2;
     if (between(tm, 8, 11.3))
@@ -581,39 +369,753 @@ function actWrap(tm) {
     }
     return { props, fx, serve };
 }
-/* ===================== overlay & idle detection ===================== */
-let el = null, raf = 0, t0 = 0, shownAt = 0, step = -1, act = -1, idleTimer = 0, lastMove = { x: -1, y: -1 };
+const REST_R = [775, 505], REST_L = [625, 505];
+function at(path, T) { let cur = null; for (const [tt, l] of path) {
+    if (T >= tt)
+        cur = l;
+    else
+        break;
+} return cur; }
+const merge = (...o) => ({ props: o.map(x => x?.props ?? '').join(''), fx: o.map(x => x?.fx ?? '').join(''), serve: o.map(x => x?.serve ?? '').join('') });
+function mkAct(a) {
+    let T = 0;
+    const segs = a.segs.map(s => { const x = { ...s, start: T }; T += s.dur; return x; });
+    return { ...a, segs, dur: T };
+}
+/** A builder helper: adds segments one after another and tells you when each starts. */
+class Seq {
+    constructor() {
+        this.segs = [];
+        this.T = 0;
+    }
+    add(s) { const st = this.T; this.segs.push(s); this.T += s.dur; return st; }
+}
+const servePose = (k, x0, y0, dx, dy, sc) => ({ x: x0 + dx * k, y: y0 + dy * k, s: 1 + sc * k });
+const wave = [[0, 775, 505], [.6, 852, 258], [1.0, 884, 246], [1.4, 852, 258], [1.8, 884, 246], [2.4, 775, 505]];
+const smileFace = (from) => (tm) => (tm > from ? { mouth: 'smile', brows: 2, wink: between(tm, from + .9, from + 1.25), look: [0, 0], head: [0, 0] } : {});
+const artAt = (a, x, by, s, extra = '') => `<g transform="translate(${f1(x)} ${f1(by)}) scale(${s.toFixed(3)}) translate(-200 -268)"${extra}>${inner(a)}</g>`;
+function drawCup(kind, x, by, layers, o) {
+    const sc = (o.scale ?? 1) * (kind === 'small' ? .74 : 1);
+    const tot = layers.reduce((a, l) => a + l.a, 0);
+    if (kind === 'iced') {
+        const H = 74;
+        let y = -4, liquid = '';
+        layers.forEach(l => { const h = H * l.a; y -= h; if (h > .2)
+            liquid += `<rect x="-24" y="${f1(y)}" width="48" height="${f1(h + .6)}" fill="${l.c}"/>`; });
+        const ice = o.ice ?? 0;
+        const cubes = ice > 0 ? [[-10, -26], [8, -38], [-6, -52], [10, -60]].slice(0, Math.ceil(ice * 4)).map(([cx, cy], i) => `<rect x="${cx - 9}" y="${cy - 9}" width="18" height="17" rx="4" fill="rgba(255,255,255,.45)" stroke="rgba(255,255,255,.85)" stroke-width="1.4" transform="rotate(${i * 23 - 20} ${cx} ${cy})"/>`).join('') : '';
+        const cream = o.tops?.find(t => t.k === 'cream');
+        return `<g transform="translate(${f1(x)} ${f1(by)}) rotate(${o.rot ?? 0}) scale(${sc.toFixed(3)})" filter="url(#aSoft)">
+      <clipPath id="${o.clipId}"><path d="M-21 -80 h42 l-4 76 h-34z"/></clipPath>
+      <path d="M-23 -82 h46 l-5 78 q0 4 -4 4 h-28 q-4 0 -4 -4z" fill="rgba(255,255,255,.22)"/>
+      <g clip-path="url(#${o.clipId})">${liquid}${cubes}</g>
+      <path d="M-23 -82 h46 l-5 78 q0 4 -4 4 h-28 q-4 0 -4 -4z" fill="none" stroke="rgba(255,255,255,.85)" stroke-width="2"/>
+      <path d="M-17 -74 l3 64" stroke="#fff" stroke-width="4" opacity=".45" stroke-linecap="round"/>
+      ${cream && cream.v > 0 ? `<g transform="translate(0 -82) scale(${f1(cream.v)})"><path d="M-24 2 q-6 -18 12 -22 q2 -18 18 -14 q16 -6 18 12 q14 6 0 24z" fill="url(#g-cream)"/></g>` : ''}
+      ${o.straw ? `<path d="M6 -10 L20 -110" stroke="url(#g-straw)" stroke-width="7" stroke-linecap="round"/>` : ''}
+      ${(o.tops ?? []).filter(t => t.k === 'cocoa' || t.k === 'cinnamon').map(t => Array.from({ length: Math.round(16 * t.v) }, (_, i) => `<circle cx="${-14 + ((i * 37) % 28)}" cy="${-86 - ((i * 13) % 8)}" r="1.4" fill="${t.k === 'cocoa' ? '#3A1F14' : '#8A4B1F'}"/>`).join('')).join('')}</g>`;
+    }
+    const lvl = 34 * Math.min(1, tot);
+    let y = -4, liquid = '';
+    layers.forEach(l => { const h = 34 * l.a; y -= h; if (h > .2)
+        liquid += `<rect x="-20" y="${f1(y)}" width="40" height="${f1(h + .6)}" fill="${l.c}"/>`; });
+    const topC = o.foam ? '#F3E6D6' : layers.filter(l => l.a > .01).slice(-1)[0]?.c ?? '#fff';
+    const tops = o.tops ?? [];
+    const cream = tops.find(t => t.k === 'cream'), mallow = tops.find(t => t.k === 'mallow');
+    return `<g transform="translate(${f1(x)} ${f1(by)}) rotate(${o.rot ?? 0}) scale(${sc.toFixed(3)})" filter="url(#aSoft)"><path d="M18 -26 q18 2 14 14 q-3 9 -16 8" fill="none" stroke="#E7DFEA" stroke-width="6"/>
+    <path d="M-22 -40 h44 l-5 36 q-1 4 -6 4 h-22 q-5 0 -6 -4z" fill="url(#aCup)"/><rect x="-21" y="-30" width="42" height="5" fill="#7A4FB0" opacity=".9"/>
+    ${tot > .005 ? `<clipPath id="${o.clipId}"><path d="M-19 -38 h38 l-5 34 h-28z"/></clipPath><g clip-path="url(#${o.clipId})">${liquid}</g><ellipse cx="0" cy="${f1(-4 - lvl)}" rx="${f1(15 + Math.min(1, tot) * 4)}" ry="3" fill="${topC}"/>` : ''}
+    ${cream && cream.v > 0 ? `<g transform="translate(0 ${f1(-4 - lvl)}) scale(${f1(cream.v)})"><path d="M-20 2 q-5 -14 10 -18 q2 -14 14 -11 q14 -4 15 10 q12 6 0 19z" fill="url(#g-cream)"/></g>` : ''}
+    ${mallow ? [[-8, 0], [5, -3], [12, 1]].slice(0, Math.ceil(mallow.v * 3)).map(([mx, my]) => `<rect x="${mx - 5}" y="${f1(-8 - lvl + my)}" width="10" height="8" rx="2.5" fill="#FFF4F8" stroke="#E9D6E0"/>`).join('') : ''}
+    ${tops.filter(t => t.k === 'cocoa' || t.k === 'cinnamon').map(t => Array.from({ length: Math.round(14 * t.v) }, (_, i) => `<circle cx="${-12 + ((i * 37) % 24)}" cy="${f1(-5 - lvl - (cream ? 14 : 0) + ((i * 13) % 4))}" r="1.3" fill="${t.k === 'cocoa' ? '#3A1F14' : '#8A4B1F'}"/>`).join('')).join('')}
+    <ellipse cx="0" cy="0" rx="30" ry="5" fill="#EFE8F2"/></g>`;
+}
+const pumpBottle = (hx, hy, c, press) => `<g transform="translate(${f1(hx)} ${f1(hy)})"><rect x="-12" y="${f1(-4 + press)}" width="24" height="6" rx="2" fill="#2A2630"/><rect x="-3" y="${f1(2 + press)}" width="6" height="14" fill="#3A3640"/><path d="M3 ${f1(8 + press)} h16 v4 h-12z" fill="#3A3640"/><rect x="-16" y="16" width="32" height="64" rx="8" fill="${c}" opacity=".92"/><rect x="-16" y="16" width="10" height="64" rx="5" fill="rgba(255,255,255,.25)"/><rect x="-12" y="36" width="24" height="18" rx="3" fill="#F4ECE1"/></g>`;
+const carton = (hx, hy, rot) => `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(${f1(rot)})"><rect x="-48" y="-30" width="40" height="64" rx="4" fill="#FBF8F2"/><path d="M-48 -30 l20 -16 l20 16z" fill="#EEE6DA"/><rect x="-48" y="0" width="40" height="14" fill="#7A4FB0"/></g>`;
+const kettle = (hx, hy, rot) => `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(${f1(rot)})"><path d="M-14 -6 q4 -14 -6 -18" fill="none" stroke="#2A1A14" stroke-width="6" stroke-linecap="round"/><path d="M-70 -30 h50 l4 32 q0 6 -6 6 h-46 q-6 0 -6 -6z" fill="url(#aSteel)"/><path d="M-70 -18 q-20 -6 -30 -24" fill="none" stroke="url(#aSteel)" stroke-width="5" stroke-linecap="round"/></g>`;
+const creamCan = (hx, hy) => `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(180)"><rect x="-11" y="-10" width="22" height="58" rx="6" fill="url(#aSteel)"/><path d="M-4 -10 l4 -14 l4 14z" fill="#2A2630"/><rect x="-11" y="20" width="22" height="10" fill="#7A4FB0"/></g>`;
+const shaker = (hx, hy, c) => `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(170)"><rect x="-12" y="-6" width="24" height="40" rx="6" fill="#F4ECE1"/><rect x="-13" y="-12" width="26" height="9" rx="3" fill="url(#aSteel)"/><rect x="-12" y="8" width="24" height="12" fill="${c}"/></g>`;
+function coffeeAct(p, qty = 1, order) {
+    const q = new Seq();
+    const espresso = p.base === 'espresso';
+    const cupPath = [], pfPath = [], pitPath = p.milk === 'steam' ? [[0, [600, 505]]] : [];
+    const fills = [];
+    const tilts = [];
+    const tops = [];
+    let iceT = Infinity, strawT = Infinity, foamT = Infinity, grindT = -1, serveT = Infinity;
+    if (espresso) {
+        grindT = q.add({ dur: 4.2, cap: () => t('k.grind'), R: [[0, 775, 505], [.8, 898, 468], [3.2, 898, 468], [4.2, 818, 500]],
+            draw: (tm) => { let fx = ''; if (between(tm, .9, 3.1)) {
+                for (let i = 0; i < 9; i++) {
+                    const f = ((tm * 3 + i / 9) % 1);
+                    fx += `<circle cx="${f1(850 + Math.sin(i * 7 + tm * 10) * 5)}" cy="${f1(442 + f * 22)}" r="2.2" fill="#3A2214"/>`;
+                }
+                $('#akGrinder').setAttribute('transform', `translate(${f1(Math.sin(tm * 90) * .8)} 0)`);
+            } return { fx }; } });
+        pfPath.push([0, 'R']);
+        const tampT = q.add({ dur: 3.4, cap: () => t('k.tamp'), R: [[0, 818, 500], [.3, 850, 505], [.7, 770, 468], [1.2, 770, 488], [1.6, 770, 470], [2.0, 770, 488], [2.4, 770, 470], [2.9, 850, 505], [3.4, 818, 500]],
+            draw: (tm, h) => ({ props: between(tm, .3, 2.9) ? tamper(h.R.hx, h.R.hy) : '' }) });
+        pfPath.push([tampT, [818, 500]]);
+        const lockT = q.add({ dur: 3.6, cap: () => t('k.lock'), R: [[0, 818, 500], [.5, 705, 470], [.9, 775, 505]], L: [[0, 625, 505], [.5, 705, 470], [1.5, 428, 446], [1.9, 428, 446], [2.4, 560, 545], [3.0, 408, 505], [3.6, 625, 505]] });
+        pfPath.push([lockT, 'R'], [lockT + .5, 'L'], [lockT + 1.5, [428, 446]]);
+        cupPath.push([lockT + 2.5, 'L'], [lockT + 3.0, [380, 505]]);
+    }
+    else {
+        pfPath.push([0, [428, 446]]);
+        const c = p.base === 'matcha' ? '#7FA54A' : '#5A2A18';
+        const bT = q.add({ dur: 3.4, cap: () => t('k.base.' + p.base), L: [[0, 625, 505], [.5, 600, 545], [1.0, 408, 505], [1.3, 625, 505]], R: [[0, 775, 505], [1.3, 775, 505], [1.7, 440, 396], [2.9, 440, 396], [3.4, 775, 505]],
+            draw: (tm, h) => { const pour = between(tm, 1.9, 2.8); return { props: between(tm, 1.4, 3.1) ? `<g transform="translate(${f1(h.R.hx)} ${f1(h.R.hy)}) rotate(${f1(-50 * ease(win(tm, 1.7, 2.0)) * (1 - win(tm, 2.8, 3.0)))})"><path d="M-40 -26 h30 l3 30 q0 4 -4 4 h-28 q-4 0 -4 -4z M-40 -26 l-8 -2 l5 6z" fill="url(#aSteel)"/></g>` : '', fx: pour ? `<path d="M${f1(h.R.hx - 46)} ${f1(h.R.hy - 14)} Q${f1(h.R.hx - 54)} ${f1(h.R.hy + 40)} 384 ${p.cup === 'iced' ? 420 : 470}" stroke="${c}" stroke-width="5" fill="none"/>` : '' }; } });
+        cupPath.push([bT + .5, 'L'], [bT + 1.0, [380, 505]]);
+        fills.push({ c, a: .3, t0: bT + 1.9, t1: bT + 2.8 });
+    }
+    if (p.syrup) {
+        const sy = p.syrup;
+        const sT = q.add({ dur: 2.4, cap: () => tf('k.syrup', { s: sy.n() }), R: [[0, 775, 505], [.6, 430, 300], [.9, 430, 300], [1.2, 430, 300], [1.5, 430, 300], [1.8, 430, 300], [2.4, 775, 505]],
+            draw: (tm, h) => { const press = (between(tm, .9, 1.1) || between(tm, 1.5, 1.7)) ? 8 : 0; const show = between(tm, .4, 2.1); return { props: show ? pumpBottle(h.R.hx, h.R.hy, sy.c, press) : '', fx: press ? `<path d="M${f1(h.R.hx + 17)} ${f1(h.R.hy + 14)} Q${f1(h.R.hx + 12)} ${f1(h.R.hy + 80)} 384 ${p.cup === 'iced' ? 430 : 472}" stroke="${sy.c}" stroke-width="3" fill="none"/>` : '' }; } });
+        fills.unshift({ c: sy.c, a: .08, t0: sT + .9, t1: sT + 1.8 });
+    }
+    if (p.cup === 'iced') {
+        const iT = q.add({ dur: 2.0, cap: () => t('k.ice'), R: [[0, 775, 505], [.5, 720, 545], [.95, 400, 380], [1.25, 400, 380], [2.0, 775, 505]],
+            draw: (tm, h) => { let props = ''; if (between(tm, .55, 1.25))
+                props += [[-8, 0], [8, -4], [0, -12]].map(([dx, dy]) => `<rect x="${f1(h.R.hx + dx - 8)}" y="${f1(h.R.hy + dy + 6)}" width="16" height="15" rx="4" fill="rgba(255,255,255,.55)" stroke="#fff"/>`).join(''); if (between(tm, 1.25, 1.55)) {
+                const f = win(tm, 1.25, 1.55);
+                props += [[-8, 0], [8, -4], [0, -12]].map(([dx, dy]) => `<rect x="${f1(380 + dx - 8)}" y="${f1(386 + dy + f * 60)}" width="16" height="15" rx="4" fill="rgba(255,255,255,.55)" stroke="#fff"/>`).join('');
+            } return { props }; } });
+        iceT = iT + 1.5;
+    }
+    if (espresso) {
+        const dur = 2.6 + .9 * (p.shots - 1);
+        const shotA = p.cup === 'small' ? .32 + .14 * (p.shots - 1) : p.milk === 'water' ? .22 : .13 + .06 * (p.shots - 1);
+        const brT = q.add({ dur, cap: () => t('k.brew' + Math.min(3, p.shots)), face: () => ({ look: [-8, 3], head: [-10, 4] }),
+            draw: (tm) => {
+                const on = between(tm, .3, dur - .2);
+                $('#akLight').setAttribute('fill', on ? '#FFB45A' : '#5A3A1C');
+                $('#akNeedle').setAttribute('transform', `rotate(${on ? f1(60 + Math.sin(tm * 8) * 4) : 0} 300 388)`);
+                const top = p.cup === 'iced' ? 430 : 486;
+                return { fx: on ? `<path d="M374 446 Q373 ${f1(462 + Math.sin(tm * 20))} 376 ${top}" stroke="#5A2E1A" stroke-width="3" fill="none"/><path d="M386 446 Q387 ${f1(462 + Math.cos(tm * 20))} 384 ${top}" stroke="#5A2E1A" stroke-width="3" fill="none"/>` : '' };
+            } });
+        fills.push({ c: '#4A2414', a: shotA, t0: brT + .3, t1: brT + dur - .2 });
+    }
+    let home = [380, 505];
+    const pourSeg = (cap, tool, color, amount, withArt) => {
+        const st = q.add({ dur: withArt ? 4.4 : 3.8, cap, L: [[0, 625, 505], [.5, 408, 505], [1.2, 650, 452], [withArt ? 3.6 : 3.0, 650, 452], [withArt ? 4.2 : 3.6, 700, 505], [withArt ? 4.4 : 3.8, 625, 505]],
+            R: [[0, 775, 505], [.6, tool === 'pitcher' ? 605 : 720, tool === 'pitcher' ? 505 : 545], [1.2, 716, 408], [withArt ? 3.6 : 3.0, 716, 408], [withArt ? 4.0 : 3.4, tool === 'pitcher' ? 600 : 720, tool === 'pitcher' ? 505 : 545], [withArt ? 4.4 : 3.8, 775, 505]],
+            face: (tm) => (between(tm, 1.2, 3.4) ? { look: [-2, 7], head: [-2, 10] } : {}),
+            draw: (tm, h) => {
+                const tip = -58 * ease(win(tm, 1.3, 1.9)) * (1 - win(tm, withArt ? 3.4 : 2.8, withArt ? 3.7 : 3.1));
+                let props = '', fx = '';
+                if (tool !== 'pitcher' && between(tm, .7, withArt ? 3.9 : 3.3))
+                    props += tool === 'carton' ? carton(h.R.hx, h.R.hy, tip) : kettle(h.R.hx, h.R.hy, tip);
+                if (between(tm, 1.6, withArt ? 3.4 : 2.8)) {
+                    const sx = h.R.hx - (tool === 'kettle' ? 96 : 64), sy = h.R.hy - (tool === 'kettle' ? 46 : 30);
+                    fx += `<path d="M${f1(sx)} ${f1(sy)} Q${f1(sx - 4)} ${f1((sy + h.L.hy - 40) / 2)} ${f1(h.L.hx - 30)} ${f1(h.L.hy - (p.cup === 'iced' ? 82 : 42))}" stroke="${color}" stroke-width="${tool === 'kettle' ? 3 : 5}" fill="none" stroke-linecap="round" opacity="${tool === 'kettle' ? .6 : 1}"/>`;
+                }
+                if (withArt && p.art) {
+                    const ins = clamp(win(tm, 1.0, 1.5) - win(tm, 3.8, 4.3));
+                    $('#akInset').setAttribute('opacity', f1(ins));
+                    const art = win(tm, 1.6, 3.4);
+                    $('#akArt').innerHTML = art > 0 ? `<g transform="translate(1010 196) scale(${(.4 + art * .6).toFixed(2)}) translate(-1010 -196)" opacity="${f1(Math.min(1, art * 2))}">${latteArt(p.art, 1010, 196, 4.2, '#F7EEE2')}</g>` : '';
+                }
+                return { props, fx };
+            } });
+        if (tool === 'pitcher')
+            pitPath.push([st + .6, 'R'], [st + (withArt ? 4.0 : 3.4), [600, 505]]);
+        cupPath.push([st + .5, 'L'], [st + (withArt ? 4.2 : 3.6), [700, 505]]);
+        tilts.push([st + 1.2, st + (withArt ? 3.6 : 3.0)]);
+        fills.push({ c: color, a: amount, t0: st + 1.6, t1: st + (withArt ? 3.4 : 2.8) });
+        home = [700, 505];
+        return st;
+    };
+    if (p.milk === 'steam') {
+        const stT = q.add({ dur: 2.8, cap: () => tf('k.steam', { m: p.milkN() }), L: [[0, 625, 505], [.4, 600, 505], [.8, 552, 470], [1.3, 552, 480], [1.8, 552, 470], [2.3, 552, 480], [2.8, 600, 505]], face: () => ({ look: [-6, 4], head: [-8, 6] }),
+            draw: (tm) => { let fx = ''; if (between(tm, .9, 2.4))
+                for (let i = 0; i < 6; i++) {
+                    const f = ((tm * .9 + i / 6) % 1);
+                    fx += `<circle cx="${f1(546 + Math.sin(i * 3 + tm * 2) * 14 * f)}" cy="${f1(452 - f * 120)}" r="${f1(10 + f * 26)}" fill="#fff" opacity="${f1((1 - f) * .35)}" filter="url(#aBlur)"/>`;
+                } return { fx }; } });
+        pitPath.push([stT + .4, 'L'], [stT + 2.8, [600, 505]]);
+        const aT = pourSeg(() => (p.art ? t('k.art.' + p.art) : t('k.foam')), 'pitcher', p.milkC, p.cup === 'small' ? .3 : .5, true);
+        foamT = aT + 3.0;
+    }
+    else if (p.milk === 'cold')
+        pourSeg(() => tf('k.cold', { m: p.milkN() }), 'carton', p.milkC, .42, false);
+    else if (p.milk === 'water')
+        pourSeg(() => t('k.water'), 'kettle', '#6B3A1C', .55, false);
+    if (home[0] === 380) {
+        const pT = q.add({ dur: 1.4, cap: () => t('k.present'), L: [[0, 625, 505], [.5, 408, 505], [1.1, 700, 505], [1.4, 625, 505]] });
+        cupPath.push([pT + .5, 'L'], [pT + 1.1, [700, 505]]);
+    }
+    for (const k of p.tops) {
+        const dur = k === 'cream' ? 1.9 : 1.7, topY = p.cup === 'iced' ? 330 : 400;
+        const tT = q.add({ dur, cap: () => t('k.top.' + k), R: [[0, 775, 505], [.3, 720, 545], [.7, 708, topY], [dur - .5, 714, topY], [dur, 775, 505]], face: () => ({ look: [0, 7], head: [0, 10] }),
+            draw: (tm, h) => {
+                let props = '', fx = '';
+                if (between(tm, .35, dur - .3))
+                    props += k === 'cream' ? creamCan(h.R.hx, h.R.hy) : k === 'mallow' ? [0, 1, 2].filter(i => tm < .8 + i * .25).map(i => `<rect x="${f1(h.R.hx - 6 + i * 4)}" y="${f1(h.R.hy + 8)}" width="10" height="8" rx="2.5" fill="#FFF4F8" stroke="#E9D6E0"/>`).join('') : shaker(h.R.hx, h.R.hy, k === 'cocoa' ? '#3A1F14' : '#8A4B1F');
+                if ((k === 'cocoa' || k === 'cinnamon') && between(tm, .7, dur - .4))
+                    for (let i = 0; i < 8; i++) {
+                        const f = ((tm * 2 + i / 8) % 1);
+                        fx += `<circle cx="${f1(h.R.hx + Math.sin(i * 2.7) * 8)}" cy="${f1(h.R.hy + 40 + f * 40)}" r="1.4" fill="${k === 'cocoa' ? '#3A1F14' : '#8A4B1F'}"/>`;
+                    }
+                return { props, fx };
+            } });
+        tops.push({ k, t0: tT + .7, t1: tT + dur - .4 });
+    }
+    if (p.cup === 'iced')
+        strawT = q.T + .2;
+    serveT = q.add({ dur: 4.4, cap: () => tf('k.serve', { name: p.name() }), R: wave.map(([tt, x, y]) => [tt + .9, x, y]), face: smileFace(.8) });
+    cupPath.push([serveT + .4, 'S']);
+    const act = mkAct({ station: 'coffee', name: p.name, qty, segs: q.segs, order,
+        draw: (T, h) => {
+            $('#akLight').setAttribute('fill', '#5A3A1C');
+            $('#akNeedle').setAttribute('transform', 'rotate(0 300 388)');
+            $('#akGrinder').removeAttribute('transform');
+            $('#akInset').setAttribute('opacity', '0');
+            const g = grindT >= 0 ? win(T, grindT + .9, grindT + 3.1) : 0;
+            $('#akBeans').setAttribute('height', f1(38 - 8 * g));
+            $('#akBeans').setAttribute('y', f1(318 + 8 * g));
+            let props = '', serve = '', fx = '';
+            const pf = at(pfPath, T);
+            if (pf === 'R')
+                props += portafilter(h.R.hx, h.R.hy);
+            else if (pf === 'L')
+                props += portafilter(h.L.hx, h.L.hy, -8);
+            else if (Array.isArray(pf))
+                props += portafilter(pf[0], pf[1]);
+            const pit = at(pitPath, T);
+            if (pit === 'R') {
+                const s = act.segs.find(s => T >= s.start && T < s.start + s.dur);
+                const tm = T - s.start;
+                props += pitcher(h.R.hx, h.R.hy, -58 * ease(win(tm, 1.3, 1.9)) * (1 - win(tm, 3.4, 3.7)));
+            }
+            else if (pit === 'L')
+                props += pitcher(h.L.hx, h.L.hy);
+            else if (Array.isArray(pit))
+                props += pitcher(pit[0], pit[1]);
+            const layers = fills.map(f => ({ c: f.c, a: f.a * win(T, f.t0, f.t1) }));
+            const topv = tops.map(x => ({ k: x.k, v: win(T, x.t0, x.t1) }));
+            const tilt = tilts.reduce((a, [a0, a1]) => a + (between(T, a0 - .4, a1 + .6) ? -14 * ease(win(T, a0 - .4, a0)) * (1 - win(T, a1, a1 + .6)) : 0), 0);
+            const opt = { foam: T > foamT, ice: T > iceT ? 1 : 0, straw: T > strawT, tops: topv, clipId: 'akCupClip', scale: p.size };
+            const cl = at(cupPath, T);
+            if (cl === 'L')
+                props += drawCup(p.cup, h.L.hx - 28, h.L.hy, layers, { ...opt, rot: tilt });
+            else if (cl === 'S') {
+                const k = ease(win(T, serveT + .4, serveT + 1.5));
+                const sp = servePose(k, 700, 505, 28, 70, .55);
+                serve += drawCup(p.cup, sp.x, sp.y, layers, { ...opt, scale: p.size * sp.s });
+                if (p.cup !== 'iced' && T > serveT + 1.2)
+                    fx += servedSteam(sp.x, sp.y - 70, T);
+            }
+            else if (Array.isArray(cl))
+                props += drawCup(p.cup, cl[0], cl[1], layers, opt);
+            return { props, serve, fx };
+        } });
+    return act;
+}
+const MEAT = ['beef', 'chicken'];
+function burgerAct(p, qty = 1, order) {
+    const stackIds = ['bunB', ...p.layers, 'bunT'];
+    const L = (id) => (id === 'bunB' ? bunBottom(p.bun) : id === 'bunT' ? bunTop(p.bun) : LAYERS[id]);
+    const totalH = stackIds.reduce((a, id) => a + L(id).h - 4, 0);
+    const S = clamp(118 / totalH, .34, .5);
+    const base = (i) => BY - stackIds.slice(0, i).reduce((a, id) => a + (L(id).h - 4) * S, 0);
+    const TOP = base(stackIds.length);
+    const prt = (id, x, y, rot = 0, sx = S, sy = S) => { const l = L(id); return `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(rot)}) scale(${sx.toFixed(3)} ${sy.toFixed(3)})">${l.svg(-l.h, 0, 240)}</g>`; };
+    const slots = [846, 934, 890], GS = Math.min(S, .36);
+    const meatIdx = stackIds.map((id, i) => (MEAT.includes(id) ? i : -1)).filter(i => i >= 0);
+    const slotOf = (i) => slots[meatIdx.indexOf(i) % slots.length];
+    const land = stackIds.map(() => Infinity);
+    land[0] = -1;
+    const pick = stackIds.map(() => Infinity);
+    const grow = {};
+    const q = new Seq();
+    let splatT = Infinity, flagT = Infinity;
+    if (meatIdx.length) {
+        const s0 = slotOf(meatIdx[0]);
+        q.add({ dur: 4.2, cap: () => t(meatIdx.length > 1 ? 'k.grillN' : 'k.grill1').replace('{n}', String(meatIdx.length)), R: [[0, 775, 505], [.6, s0, 452], [1.3, s0, 460], [1.7, s0, 452], [2.3, s0, 460], [3.2, s0, 455], [4.2, 775, 505]],
+            face: () => ({ look: [7, 4], head: [8, 6] }), draw: (tm, h) => ({ props: tm < 3.9 ? spatula(h.R.hx, h.R.hy) : '' }) });
+    }
+    let firstMeat = true, firstCheese = true, firstKetchup = true, hand = 0;
+    stackIds.forEach((id, i) => {
+        if (i === 0 || id === 'bunT')
+            return;
+        const by = base(i);
+        if (MEAT.includes(id)) {
+            const sx = slotOf(i);
+            if (firstMeat) {
+                firstMeat = false;
+                const st = q.add({ dur: 3.6, cap: () => t('k.flip'), R: [[0, 775, 505], [.4, sx + 25, 470], [.8, sx, 462], [1.05, sx - 60, 400], [1.7, 775, 505], [3.6, 775, 505]],
+                    face: (tm) => (between(tm, .9, 2.4) ? { head: [-4, -16], look: [2, -8], brows: 4 } : between(tm, 2.4, 3.0) ? { look: [-6, 4] } : tm >= 3.0 ? { look: [0, 0], head: [0, 0], brows: 6, mouth: 'smirk', wink: between(tm, 3.15, 3.45) } : {}),
+                    draw: (tm, h) => { let props = tm < 1.6 ? spatula(h.R.hx, h.R.hy) : ''; if (between(tm, .8, 3.0)) {
+                        const f = win(tm, .8, 3.0);
+                        props += prt(id, sx + (BX - sx) * f, 466 + (by - 466) * f - 420 * 4 * f * (1 - f), 900 * f);
+                    } return { props }; } });
+                pick[i] = st + .8;
+                land[i] = st + 3.0;
+            }
+            else {
+                const st = q.add({ dur: 1.7, cap: () => tf('k.meat2', { x: fillName(id) }), R: [[0, 775, 505], [.45, sx + 22, 464], [1.0, BX + 54, TOP - 26], [1.25, BX + 44, TOP - 20], [1.7, 775, 505]],
+                    draw: (tm, h) => { let props = tm < 1.5 ? spatula(h.R.hx, h.R.hy) : ''; if (between(tm, .45, 1.15))
+                        props += prt(id, h.R.hx - 32, h.R.hy + 8); if (between(tm, 1.15, 1.4)) {
+                        const f = win(tm, 1.15, 1.4);
+                        props += prt(id, BX + 12 * (1 - f), TOP - 12 + (by - TOP + 12) * f * f);
+                    } return { props }; } });
+                pick[i] = st + .45;
+                land[i] = st + 1.4;
+            }
+            return;
+        }
+        if (id === 'cheese' && firstCheese) {
+            firstCheese = false;
+            const st = q.add({ dur: 1.4, cap: () => t('k.toss'), R: [[0, 775, 505], [.3, 720, 545], [.6, 745, 470], [.9, 690, 418], [1.4, 775, 505]],
+                draw: (tm, h) => { let props = ''; if (between(tm, .45, .9))
+                    props += prt(id, h.R.hx - 4, h.R.hy - 6, -18); if (between(tm, .9, 1.35)) {
+                    const f = win(tm, .9, 1.35);
+                    props += prt(id, 690 + (BX - 690) * f, 412 + (by - 412) * f - 70 * 4 * f * (1 - f), 360 * f - 18);
+                } return { props }; } });
+            land[i] = st + 1.35;
+            return;
+        }
+        if (id === 'ketchup' && firstKetchup) {
+            firstKetchup = false;
+            const kx = BX + 48;
+            const st = q.add({ dur: 3.3, cap: () => t('k.ketchup'), R: [[0, 775, 505], [.3, 720, 545], [.75, kx, 372], [1.15, kx, 372], [1.2, kx + 14, 372], [1.3, kx - 14, 372], [1.4, kx + 14, 372], [1.5, kx - 14, 372], [1.6, kx + 14, 372], [1.7, kx - 14, 372], [1.8, kx + 14, 372], [1.95, kx, 372], [2.25, kx - 20, 380], [2.55, kx, 388], [2.85, kx + 22, 380], [3.05, kx, 372], [3.3, 775, 505]],
+                face: (tm) => (between(tm, .7, .95) ? { mouth: 'o', look: [-4, -3] } : between(tm, .95, 1.3) ? { look: [-2, 8], head: [2, 14], brows: -2 } : { look: [-4, 0] }),
+                draw: (tm, h) => { let fx = ''; if (between(tm, .7, 1.2)) {
+                    const f = win(tm, .7, 1.2);
+                    fx += `<circle cx="${f1(h.R.hx - 4)}" cy="${f1(h.R.hy + 62)}" r="${f1(6 + f * 26)}" fill="#fff" opacity="${f1((1 - f) * .5)}" filter="url(#aBlur)"/>`;
+                } return { props: between(tm, .2, 3.25) ? bottle(h.R.hx, h.R.hy) : '', fx }; } });
+            splatT = st + .85;
+            grow[i] = [st + 2.05, st + 3.05];
+            land[i] = st + 2.05;
+            return;
+        }
+        // everything else: fetched from under the counter and laid on, alternating hands
+        const useR = hand++ % 2 === 0, side = useR ? 'R' : 'L';
+        const rest = useR ? REST_R : REST_L, under = useR ? [720, 545] : [620, 545];
+        const sauce = id === 'sauce' || id === 'ketchup';
+        const st = q.add({ dur: sauce ? 1.6 : 1.2, cap: () => tf(sauce ? 'k.sauce' : 'k.place', { x: fillName(id) }),
+            [side]: sauce ? [[0, ...rest], [.3, ...under], [.6, BX + (useR ? 40 : -40), TOP - 70], [1.3, BX + (useR ? 40 : -40), TOP - 70], [1.6, ...rest]] : [[0, ...rest], [.3, ...under], [.65, BX + (useR ? 4 : -4), TOP - 44], [.8, BX + (useR ? 4 : -4), TOP - 40], [1.2, ...rest]],
+            draw: (tm, h) => { const hh = useR ? h.R : h.L; if (sauce)
+                return { props: between(tm, .25, 1.45) ? (id === 'ketchup' ? bottle(hh.hx, hh.hy) : squeeze(hh.hx, hh.hy)) : '' }; let props = ''; if (between(tm, .35, .78))
+                props += prt(id, hh.hx, hh.hy + 12); if (between(tm, .78, 1.0)) {
+                const f = win(tm, .78, 1.0);
+                props += prt(id, BX, TOP - 26 + (by - TOP + 26) * f * f);
+            } return { props }; } });
+        if (sauce) {
+            grow[i] = [st + .6, st + 1.3];
+            land[i] = st + .6;
+        }
+        else
+            land[i] = st + 1.0;
+    });
+    const ti = stackIds.length - 1, tb = base(ti);
+    const topT = q.add({ dur: 2.0, cap: () => t('k.bunTop'), L: [[0, 625, 505], [.3, 618, 470], [.65, BX + 2, TOP - 130], [.72, BX + 2, TOP - 130], [1.2, 600, 470], [2.0, 625, 505]], face: (tm) => (between(tm, .5, 1.1) ? { look: [-4, -8], head: [-4, -10] } : {}),
+        draw: (tm, h) => { let props = ''; if (between(tm, .3, .72))
+            props += prt('bunT', h.L.hx, h.L.hy + 20); if (between(tm, .72, 1.05)) {
+            const f = win(tm, .72, 1.05);
+            const y0 = TOP - 110;
+            props += prt('bunT', BX, y0 + (tb - y0) * f * f);
+        } return { props }; } });
+    pick[ti] = topT + .3;
+    land[ti] = topT + 1.05;
+    flagT = q.add({ dur: 1.0, cap: () => t('k.flag'), R: [[0, 775, 505], [.3, 720, 545], [.6, BX + 4, TOP - 22], [.75, BX + 4, TOP - 18], [1.0, 775, 505]], draw: (tm, h) => ({ props: between(tm, .35, .62) ? flag(h.R.hx + 4, h.R.hy + 4) : '' }) }) + .62;
+    const serveT = q.add({ dur: 3.4, cap: () => tf('k.serve', { name: p.name() }), face: smileFace(.6) });
+    return mkAct({ station: 'grill', name: p.name, qty, segs: q.segs, order,
+        draw: (T) => {
+            let stack = '', props = '', fx = '';
+            stackIds.forEach((id, i) => {
+                const by = base(i);
+                if (T >= land[i]) {
+                    if (grow[i]) {
+                        const g = win(T, grow[i][0], grow[i][1]);
+                        if (g > 0)
+                            stack += prt(id, BX, by, 0, S * g, S);
+                        return;
+                    }
+                    const sq = (() => { const f = win(T, land[i], land[i] + .3); return f > 0 && f < 1 ? .16 * Math.sin(Math.PI * f) * (1 - f) : 0; })();
+                    if (id === 'bunT' && T < land[i] + .4) {
+                        const f = win(T, land[i], land[i] + .4);
+                        stack += prt(id, BX, by - 16 * Math.sin(Math.PI * f) * (1 - f * .3), 0, S * (1 + sq), S * (1 - sq));
+                    }
+                    else
+                        stack += prt(id, BX, by, 0, S * (1 + sq), S * (1 - sq));
+                }
+                else if (MEAT.includes(id) && T < pick[i])
+                    props += prt(id, slotOf(i), 466, 0, GS * (1 + (between(T % 1, .3, .4) ? .03 : 0)), GS);
+                else if (id === 'bunT' && T < pick[i])
+                    props += prt(id, 628, BY);
+            });
+            if (T >= flagT)
+                stack += flag(BX + 4, TOP - 4);
+            if (meatIdx.some(i => T < pick[i]))
+                for (let i = 0; i < 5; i++) {
+                    const f = ((T * .7 + i / 5) % 1);
+                    fx += `<circle cx="${f1(880 + Math.sin(i * 2.3 + T * 1.5) * 20 * f)}" cy="${f1(448 - f * 110)}" r="${f1(8 + f * 22)}" fill="#fff" opacity="${f1((1 - f) * .26)}" filter="url(#aBlur)"/>`;
+                }
+            if (T > splatT) {
+                const f = win(T, splatT - .05, splatT + .1);
+                fx += [[488, 487], [602, 486], [560, 488]].map(([x, y]) => `<ellipse cx="${x}" cy="${f1(440 + (y - 440) * f)}" rx="${f > .99 ? 5 : 2.5}" ry="${f > .99 ? 1.8 : 2.5}" fill="#B71C1C"/>`).join('');
+            }
+            $('#akSplat').innerHTML = T > splatT + .1 ? '<circle cx="692" cy="466" r="3.4" fill="#B71C1C"/><circle cx="696" cy="470" r="1.6" fill="#B71C1C"/>' : '';
+            const k = ease(win(T, serveT + .2, serveT + 1.2));
+            if (k > 0)
+                return { props, fx: fx + servedSteam(BX + 90 * k, TOP + 30, T), serve: `<g transform="translate(${f1(BX + 90 * k)} ${f1(BY + 84 * k)}) scale(${(1 + .5 * k).toFixed(3)}) translate(${-BX} ${-BY})">${stack}</g>` };
+            return { props: stack + props, fx };
+        } });
+}
+const fillName = (id) => (FILLINGS.find(f => f.id === id)?.name[state.lang] ?? id).toLowerCase();
+let WP;
+function wrapAct(p, qty = 1, order) {
+    const caps = ['w1', 'w2', 'w3', 'w4', 'w5'];
+    const durs = [3.4, 4.6, 2.1, 2.5, 3.0, 2.9];
+    return mkAct({ station: 'wrap', name: p.name, qty, order, setup: () => { WP = p; $('#akCone')?.setAttribute('fill', `url(#${p.doner})`); },
+        segs: durs.map((d, i) => ({ dur: d, cap: () => (i < 5 ? t('afk.' + caps[i]) : tf('k.serve', { name: p.name() })) })),
+        pose: (T) => ({ R: track(W_RIGHT, T), L: track(W_LEFT, T), head: track(W_HEAD, T), look: track(W_LOOK, T), lean: track(W_LEAN, T)[0],
+            brows: between(T, 10.4, 11.4) ? 8 : between(T, 11.4, 12.4) ? 4 : T > 15 ? 2 : 0, mouth: between(T, 10.4, 11.4) ? 'o' : between(T, 11.5, 12.4) ? 'smirk' : T > 14.8 ? 'smile' : 'neutral', wink: between(T, 15.0, 15.35) }),
+        draw: (T, h) => wrapDraw(T, h) });
+}
+/* ---------- fryer: fries, cheese fries, nuggets ---------- */
+function fryerAct(id, qty = 1, order) {
+    const it = ITEM(id), cheese = id === 'cheese-fries', nug = id === 'nuggets';
+    const plain = cheese ? ITEM('fries').art : it.art;
+    const R = [[0, 775, 505], [.6, 905, 418], [1.2, 905, 440], [4.2, 905, 440], [4.8, 905, 396], [4.9, 920, 396], [5.0, 890, 396], [5.1, 920, 396], [5.2, 890, 396], [5.3, 920, 396], [5.4, 890, 396], [5.6, 905, 396], [6.4, 640, 396], [7.4, 640, 396], [7.8, 775, 505]];
+    if (cheese)
+        R.push([8.2, 720, 545], [8.6, 600, 392], [9.6, 600, 392], [10.0, 775, 505]);
+    const tail = cheese ? 10.0 : 7.8, serveT = tail + .2, dur = serveT + 3.2;
+    const segs = [{ dur: 4.2, cap: () => tf('k.fry1', { name: it.name[state.lang] }) }, { dur: 1.6, cap: () => t('k.fry2') }, { dur: 2.0, cap: () => t(nug ? 'k.fry3n' : 'k.fry3') }];
+    if (cheese)
+        segs.push({ dur: 2.2, cap: () => t('k.fryCheese') });
+    segs.push({ dur: dur - segs.reduce((a, s) => a + s.dur, 0), cap: () => tf('k.serve', { name: it.name[state.lang] }) });
+    const box = (x, y, s, reveal, art = plain) => `<clipPath id="akBoxClip"><rect x="-210" y="${f1(270 - 280 * reveal)}" width="420" height="${f1(280 * reveal + 4)}"/></clipPath>${artAt(art, x, y, s, reveal < 1 ? ` clip-path="url(#akBoxClip)"` : '')}`;
+    return mkAct({ station: 'fryer', name: () => it.name[state.lang], qty, order, segs,
+        pose: (T) => ({ R: track(R, T), L: REST_L, ...(T > serveT ? smileFace(.3)(T - serveT) : between(T, 1.2, 4.2) ? { look: [7, 6], head: [8, 8] } : {}) }),
+        draw: (T, h) => {
+            let props = '', fx = '', serve = '';
+            const inHand = T < 7.8, tip = -55 * ease(win(T, 6.5, 7.0)) * (1 - win(T, 7.3, 7.6));
+            const done = T > 4.2, contents = done ? (nug ? '#C98A3C' : '#F2C14E') : (nug ? '#E9D3B0' : '#F6E7B8');
+            const basket = (x, y, rot, full) => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(rot)})"><line x1="0" y1="0" x2="-46" y2="18" stroke="#2A2630" stroke-width="6" stroke-linecap="round"/>
+        ${full ? (nug ? [[-80, 26], [-64, 24], [-72, 16], [-56, 30]].map(([a, b]) => `<ellipse cx="${a}" cy="${b}" rx="9" ry="6.5" fill="${contents}"/>`).join('') : Array.from({ length: 9 }, (_, i) => `<rect x="${-96 + i * 6}" y="${12 + (i % 3) * 3}" width="4" height="22" rx="2" fill="${contents}" transform="rotate(${(i % 2 ? 1 : -1) * 12} ${-94 + i * 6} 24)"/>`).join('')) : ''}
+        <path d="M-104 16 h62 v24 q0 4 -4 4 h-54 q-4 0 -4 -4z" fill="none" stroke="url(#aSteel)" stroke-width="3"/><path d="M-104 24 h62 M-104 32 h62 M-88 16 v28 M-72 16 v28 M-56 16 v28" stroke="rgba(200,200,210,.7)" stroke-width="1.2"/></g>`;
+            if (inHand)
+                props += basket(h.R.hx, h.R.hy, tip, T < 6.9);
+            else
+                props += basket(950, 420, 0, false);
+            const reveal = win(T, 6.6, 7.3);
+            if (T > 6.6 && T < serveT + .2)
+                props += box(560, 488, .42, reveal, cheese && T > 8.6 ? (T > 9.6 ? it.art : plain) : plain);
+            if (between(T, 6.6, 7.3))
+                for (let i = 0; i < 6; i++) {
+                    const f = ((T * 3 + i / 6) % 1);
+                    fx += `<rect x="${f1(560 + Math.sin(i * 2) * 14)}" y="${f1(420 + f * 50)}" width="4" height="14" rx="2" fill="${contents}"/>`;
+                }
+            if (cheese && between(T, 8.8, 9.6))
+                fx += `<path d="M${f1(h.R.hx - 40)} ${f1(h.R.hy - 10)} Q${f1(h.R.hx - 46)} ${f1(h.R.hy + 30)} 560 446" stroke="#F4B731" stroke-width="6" fill="none"/>`;
+            if (cheese && between(T, 8.4, 9.9))
+                props += `<g transform="translate(${f1(h.R.hx)} ${f1(h.R.hy)}) rotate(${f1(-50 * ease(win(T, 8.6, 8.9)))})"><path d="M-40 -26 h30 l3 30 q0 4 -4 4 h-28 q-4 0 -4 -4z M-40 -26 l-8 -2 l5 6z" fill="url(#aSteel)"/></g>`;
+            // oil: bubbles while frying, the front of the fryer hides the lowered basket
+            if (between(T, 1.2, 4.4))
+                for (let i = 0; i < 10; i++) {
+                    const f = ((T * 1.4 + i / 10) % 1);
+                    fx += `<circle cx="${f1(840 + ((i * 53) % 130))}" cy="${f1(452 - f * 6)}" r="${f1(2 + (i % 3))}" fill="#FFE7A0" opacity="${f1(1 - f)}"/>`;
+                }
+            if (between(T, 1.2, 4.6))
+                for (let i = 0; i < 4; i++) {
+                    const f = ((T * .6 + i / 4) % 1);
+                    fx += `<circle cx="${f1(880 + Math.sin(i * 2 + T) * 20 * f)}" cy="${f1(440 - f * 120)}" r="${f1(10 + f * 24)}" fill="#fff" opacity="${f1((1 - f) * .25)}" filter="url(#aBlur)"/>`;
+                }
+            fx += `<rect x="818" y="452" width="170" height="52" rx="4" fill="#3A3640"/><rect x="818" y="448" width="170" height="7" rx="3" fill="url(#aSteel)"/><rect x="832" y="470" width="140" height="18" rx="3" fill="rgba(255,255,255,.06)"/><circle cx="960" cy="480" r="5" fill="#FF7A3A" class="ak-flicker"/>`;
+            const k = ease(win(T, serveT + .2, serveT + 1.2));
+            if (k > 0) {
+                const sp = servePose(k, 560, 488, 90, 84, .5);
+                serve = artAt(it.art, sp.x, sp.y, .42 * sp.s) + servedSteam(sp.x, sp.y - 120 * sp.s, T);
+            }
+            return { props, fx, serve };
+        } });
+}
+const GARNISH = { hotdog: 'ketchupMustard', 'french-hotdog': 'frenchSauce', club: 'picks', 'pizza-slice': 'herbs', croissant: 'sugar', 'almond-croissant': 'sugar', cheesecake: 'berries', tiramisu: 'cocoa', medovik: 'honey' };
+function plateAct(id, qty = 1, order) {
+    const it = ITEM(id), g = GARNISH[id] ?? 'sugar', S = .4, PX = 560, PY = 486;
+    const R = [[0, 775, 505], [.4, 720, 545], [1.0, 600, 430], [1.5, 572, 462], [1.8, 775, 505], [2.0, 720, 545], [2.4, 520, 410], [3.4, 610, 410], [3.8, 775, 505]];
+    const serveT = 4.2, dur = 7.2;
+    return mkAct({ station: 'plain', name: () => it.name[state.lang], qty, order,
+        segs: [{ dur: 1.9, cap: () => tf('k.plate', { name: it.name[state.lang] }) }, { dur: 2.3, cap: () => t('k.g.' + g) }, { dur: dur - 4.2, cap: () => tf('k.serve', { name: it.name[state.lang] }) }],
+        pose: (T) => ({ R: track(R, T), L: REST_L, ...(T > serveT ? smileFace(.3)(T - serveT) : between(T, 2.2, 3.6) ? { look: [-2, 7], head: [-2, 10] } : {}) }),
+        draw: (T, h) => {
+            let props = `<ellipse cx="${PX}" cy="${PY + 2}" rx="70" ry="9" fill="url(#g-plate)"/><ellipse cx="${PX}" cy="${PY}" rx="52" ry="6" fill="url(#g-plate-well)"/>`, fx = '', serve = '';
+            let food = '';
+            if (between(T, .45, 1.5))
+                food = artAt(it.art, h.R.hx - 20, h.R.hy + 30, S);
+            else if (T >= 1.5)
+                food = artAt(it.art, PX, PY + 4, S);
+            // garnish appears where the hand passes
+            const gk = win(T, 2.4, 3.4);
+            let gar = '';
+            if (gk > 0) {
+                const x0 = PX - 50, w = 100 * gk;
+                if (g === 'ketchupMustard') {
+                    let d1 = `M${x0} 448`, d2 = `M${x0 + 6} 452`;
+                    for (let x = x0; x < x0 + w; x += 10) {
+                        d1 += ` L${x + 5} ${(x / 10) % 2 ? 444 : 452}`;
+                        d2 += ` L${x + 9} ${(x / 10) % 2 ? 456 : 448}`;
+                    }
+                    gar = `<path d="${d1}" stroke="#C62828" stroke-width="3.5" fill="none" stroke-linejoin="round"/><path d="${d2}" stroke="#F4B731" stroke-width="3" fill="none" stroke-linejoin="round"/>`;
+                }
+                else if (g === 'frenchSauce')
+                    gar = `<ellipse cx="${PX + 44}" cy="460" rx="${f1(6 * gk)}" ry="${f1(4 * gk)}" fill="#F1E0C7"/>`;
+                else if (g === 'picks')
+                    gar = [PX - 22, PX + 22].filter((_, i) => gk > i * .5).map(x => flag(x, 432)).join('');
+                else if (g === 'herbs')
+                    gar = Array.from({ length: Math.round(14 * gk) }, (_, i) => `<path d="M${x0 + 10 + ((i * 37) % 80)} ${452 + ((i * 13) % 14)} l4 -3 l4 3" stroke="#3F7D3A" stroke-width="2.5" fill="none"/>`).join('');
+                else if (g === 'sugar' || g === 'cocoa')
+                    gar = Array.from({ length: Math.round(30 * gk) }, (_, i) => `<circle cx="${x0 + 8 + ((i * 37) % 84)}" cy="${448 + ((i * 13) % 16)}" r="1.5" fill="${g === 'sugar' ? '#FFFFFF' : '#3A1F14'}" opacity=".9"/>`).join('');
+                else if (g === 'berries')
+                    gar = [[-16, 438], [4, 434], [22, 440]].slice(0, Math.ceil(gk * 3)).map(([dx, y], i) => `<circle cx="${PX + dx}" cy="${y}" r="6.5" fill="${i % 2 ? '#6A1B9A' : '#C2185B'}" stroke="#2A1440" stroke-width="1"/>`).join('');
+                else if (g === 'honey')
+                    gar = `<path d="M${x0 + 10} 444 q12 8 24 0 t24 0 t24 0" stroke="#E0A42A" stroke-width="4" fill="none" stroke-dasharray="${f1(w * 1.2)} 400"/>`;
+            }
+            if (between(T, 2.3, 3.5) && (g === 'sugar' || g === 'cocoa' || g === 'herbs'))
+                for (let i = 0; i < 6; i++) {
+                    const f = ((T * 2.2 + i / 6) % 1);
+                    fx += `<circle cx="${f1(h.R.hx + Math.sin(i * 2.7) * 8)}" cy="${f1(h.R.hy + 30 + f * 30)}" r="1.5" fill="${g === 'cocoa' ? '#3A1F14' : g === 'herbs' ? '#3F7D3A' : '#fff'}"/>`;
+                }
+            if (between(T, 2.2, 3.6))
+                props += g === 'ketchupMustard' ? bottle(h.R.hx, h.R.hy) : g === 'frenchSauce' || g === 'honey' ? squeeze(h.R.hx, h.R.hy) : g === 'picks' || g === 'berries' ? '' : shaker(h.R.hx, h.R.hy, g === 'cocoa' ? '#3A1F14' : g === 'herbs' ? '#3F7D3A' : '#FFFFFF');
+            const k = ease(win(T, serveT + .2, serveT + 1.2));
+            if (k > 0) {
+                const sp = servePose(k, PX, PY, 90, 84, .5);
+                serve = `<g transform="translate(${f1(sp.x)} ${f1(sp.y)}) scale(${sp.s.toFixed(3)}) translate(${-PX} ${-PY})">${props}${food}${gar}</g>`;
+                return { serve, fx };
+            }
+            return { props: props + food + gar, fx };
+        } });
+}
+/* ---------- cold drinks: lemonade, soda ---------- */
+function coldAct(id, qty = 1, order) {
+    const it = ITEM(id), soda = id === 'soda', c = soda ? '#3A1A10' : id === 'berry-lemonade' ? '#E05A8A' : '#F4E06A';
+    const GX = 560, GY = 488;
+    const R = [[0, 775, 505], [.4, 720, 545], [.95, GX, 380], [1.25, GX, 380], [1.6, 775, 505], [4.4, 775, 505], [4.7, 720, 545], [5.0, GX + 6, 392], [5.3, GX + 6, 392], [5.6, 775, 505]];
+    const L = [[0, 625, 505], [1.6, 625, 505], [2.0, 600, 545], [2.4, 500, 370], [4.0, 500, 370], [4.4, 625, 505]];
+    const serveT = 5.8, dur = 9.0;
+    return mkAct({ station: 'plain', name: () => it.name[state.lang], qty, order,
+        segs: [{ dur: 1.7, cap: () => t('k.ice') }, { dur: 2.8, cap: () => tf('k.pour', { name: it.name[state.lang] }) }, { dur: 1.3, cap: () => t(soda ? 'k.straw' : id === 'berry-lemonade' ? 'k.berry' : 'k.garnish') }, { dur: dur - 5.8, cap: () => tf('k.serve', { name: it.name[state.lang] }) }],
+        pose: (T) => ({ R: track(R, T), L: track(L, T), ...(T > serveT ? smileFace(.3)(T - serveT) : between(T, 2.4, 4.0) ? { look: [-4, 5], head: [-4, 8] } : {}) }),
+        draw: (T, h) => {
+            let props = '', fx = '', serve = '';
+            const fill = .78 * win(T, 2.6, 3.9), tip = -70 * ease(win(T, 2.4, 2.7)) * (1 - win(T, 3.9, 4.2));
+            if (between(T, .5, 1.25))
+                props += [[-8, 0], [8, -4], [0, -12]].map(([dx, dy]) => `<rect x="${f1(h.R.hx + dx - 8)}" y="${f1(h.R.hy + dy + 6)}" width="16" height="15" rx="4" fill="rgba(255,255,255,.55)" stroke="#fff"/>`).join('');
+            if (between(T, 1.25, 1.55)) {
+                const f = win(T, 1.25, 1.55);
+                props += [[-8, 0], [8, -4], [0, -12]].map(([dx, dy]) => `<rect x="${f1(GX + dx - 8)}" y="${f1(386 + dy + f * 50)}" width="16" height="15" rx="4" fill="rgba(255,255,255,.55)" stroke="#fff"/>`).join('');
+            }
+            if (between(T, 2.0, 4.3))
+                props += soda ? `<g transform="translate(${f1(h.L.hx)} ${f1(h.L.hy)}) rotate(${f1(tip * 1.6)})"><rect x="-12" y="-36" width="24" height="44" rx="5" fill="#C62828"/><rect x="-12" y="-36" width="24" height="5" rx="2" fill="url(#aSteel)"/><rect x="-12" y="-10" width="24" height="8" fill="#fff" opacity=".8"/></g>`
+                    : `<g transform="translate(${f1(h.L.hx)} ${f1(h.L.hy)}) rotate(${f1(-tip)})"><path d="M10 -40 h40 l-4 46 q0 4 -4 4 h-24 q-4 0 -4 -4z" fill="rgba(255,255,255,.25)" stroke="rgba(255,255,255,.8)" stroke-width="2"/><rect x="14" y="-20" width="32" height="26" fill="${c}" opacity=".85"/><path d="M50 -36 q12 4 6 22" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="3"/></g>`;
+            if (between(T, 2.6, 3.9))
+                fx += `<path d="M${f1(h.L.hx + (soda ? 14 : 12))} ${f1(h.L.hy - (soda ? 30 : 36))} Q${f1(GX - 30)} 380 ${GX} ${f1(GY - 10 - 74 * fill)}" stroke="${c}" stroke-width="5" fill="none" opacity=".9"/>`;
+            const gl = (x, y, s) => `${drawCup('iced', x, y, [{ c, a: fill }], { ice: T > 1.5 ? 1 : 0, straw: T > 5.3, clipId: 'akGlassClip', scale: s })}${!soda && T > 5.0 ? (id === 'berry-lemonade' ? `<circle cx="${f1(x - 18 * s)}" cy="${f1(y - 84 * s)}" r="${f1(7 * s)}" fill="#C2185B" stroke="#2A1440"/>` : `<circle cx="${f1(x - 22 * s)}" cy="${f1(y - 82 * s)}" r="${f1(11 * s)}" fill="#F7D94C" stroke="#C9A52A"/><circle cx="${f1(x - 22 * s)}" cy="${f1(y - 82 * s)}" r="${f1(7 * s)}" fill="#FCEB8E"/>`) : ''}`;
+            const k = ease(win(T, serveT + .2, serveT + 1.2));
+            if (k > 0) {
+                const sp = servePose(k, GX, GY, 90, 84, .55);
+                serve = gl(sp.x, sp.y, sp.s);
+            }
+            else
+                props += gl(GX, GY, 1);
+            return { props, fx, serve };
+        } });
+}
+/* ---------- tea, poured the Uzbek way ---------- */
+function teaAct(id, qty = 1, order) {
+    const it = ITEM(id), black = id === 'black-tea', c = black ? '#9A4A1C' : '#C9B44C';
+    const R = [[0, 775, 505], [.5, 540, 452], [1.0, 600, 388], [2.0, 600, 388], [2.4, 540, 470], [2.6, 775, 505], [4.2, 775, 505], [4.6, 540, 452], [5.0, 600, 388], [6.0, 600, 388], [6.4, 540, 470], [6.6, 775, 505]];
+    const L = [[0, 625, 505], [2.6, 625, 505], [2.9, 640, 476], [3.3, 560, 404], [3.9, 560, 404], [4.2, 625, 505], [6.7, 625, 505], [7.0, 620, 545], [7.4, 650, 440], [7.6, 650, 446], [7.9, 625, 505]];
+    const serveT = black ? 8.0 : 6.8, dur = serveT + 3.0;
+    const potX = 500, cupX = 640;
+    const segs = [{ dur: 2.6, cap: () => tf('k.tea1', { name: it.name[state.lang] }) }, { dur: 1.6, cap: () => t('k.tea2') }, { dur: 2.4, cap: () => t('k.tea3') }];
+    if (black)
+        segs.push({ dur: 1.4, cap: () => t('k.lemon') });
+    segs.push({ dur: dur - segs.reduce((a, s) => a + s.dur, 0), cap: () => tf('k.serve', { name: it.name[state.lang] }) });
+    const pot = (x, y, rot) => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(rot)})"><path d="M-58 -10 c-18 -2 -22 -20 -28 -26" fill="none" stroke="#3E6FB8" stroke-width="6" stroke-linecap="round"/><path d="M-50 -34 h52 c4 30 -4 46 -26 46 c-22 0 -30 -16 -26 -46z" fill="#3E6FB8"/><path d="M-46 -12 q22 12 44 0" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/><ellipse cx="-24" cy="-34" rx="26" ry="5" fill="#5C8BD0"/><circle cx="-24" cy="-42" r="5" fill="#F4B731"/><path d="M2 -26 q18 2 14 22" fill="none" stroke="#2A4F8A" stroke-width="5"/></g>`;
+    const piyola = (x, y, fill, rot = 0, s = 1) => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(rot)}) scale(${s.toFixed(3)})"><path d="M-24 -26 h48 c-2 16 -10 26 -24 26 c-14 0 -22 -10 -24 -26z" fill="#FBF8FD"/><path d="M-20 -14 q20 8 40 0" fill="none" stroke="#3E6FB8" stroke-width="3"/>${fill > 0 ? `<ellipse cx="0" cy="${f1(-24 + 6 * (1 - fill))}" rx="${f1(20 - 4 * (1 - fill))}" ry="3.5" fill="${c}"/>` : ''}${black && T_ > 7.6 ? `<path d="M-6 -27 a7 4 0 0 1 14 0z" fill="#F7D94C"/>` : ''}</g>`;
+    let T_ = 0;
+    return mkAct({ station: 'plain', name: () => it.name[state.lang], qty, order, segs,
+        pose: (T) => ({ R: track(R, T), L: track(L, T), ...(T > serveT ? smileFace(.3)(T - serveT) : between(T, 2.6, 4.2) ? { look: [-2, 2], mouth: 'smirk' } : {}) }),
+        draw: (T, h) => {
+            T_ = T;
+            let props = '', fx = '', serve = '';
+            const pouring = (a, b) => -48 * ease(win(T, a, a + .3)) * (1 - win(T, b - .2, b + .1));
+            const holdPot = between(T, .5, 2.4) || between(T, 4.6, 6.4);
+            const potRot = between(T, .5, 2.4) ? pouring(1.0, 2.0) : pouring(5.0, 6.0);
+            props += holdPot ? pot(h.R.hx + 30, h.R.hy + 34, potRot) : pot(potX, 488, 0);
+            const cupFill = win(T, 1.2, 2.0) * (1 - win(T, 3.3, 3.9)) + win(T, 5.2, 6.0);
+            const cupHeld = between(T, 2.9, 4.1);
+            if (!cupHeld && T < serveT + .2)
+                props += piyola(cupX, 488, cupFill);
+            if (cupHeld)
+                props += piyola(h.L.hx + 18, h.L.hy + 24, cupFill, between(T, 3.3, 3.9) ? -60 : 0);
+            if (between(T, 1.2, 2.0) || between(T, 5.2, 6.0))
+                fx += `<path d="M${f1(h.R.hx - 58)} ${f1(h.R.hy + 4)} Q${f1(h.R.hx - 30)} ${f1(h.R.hy + 50)} ${cupX} 466" stroke="${c}" stroke-width="3.5" fill="none" opacity=".85"/>`;
+            if (between(T, 3.4, 3.9))
+                fx += `<path d="M${f1(h.L.hx + 2)} ${f1(h.L.hy + 4)} Q${f1(h.L.hx - 20)} ${f1(h.L.hy + 40)} ${potX - 24} 452" stroke="${c}" stroke-width="3.5" fill="none" opacity=".85"/>`;
+            if (black && between(T, 7.0, 7.6))
+                props += `<path d="M${f1(h.L.hx - 7)} ${f1(h.L.hy + 10)} a7 4 0 0 1 14 0z" fill="#F7D94C"/>`;
+            const k = ease(win(T, serveT + .2, serveT + 1.2));
+            if (k > 0) {
+                const sp = servePose(k, cupX, 488, 40, 84, .9);
+                serve = piyola(sp.x, sp.y, 1, 0, sp.s) + servedSteam(sp.x, sp.y - 40 * sp.s, T);
+            }
+            else if (T > 2.2)
+                fx += servedSteam(cupX, 450, T);
+            return { props, fx, serve };
+        } });
+}
+/* ---------- from a menu item / cart line to acts ---------- */
+const MILK_C = { cow: '#F5EDF6', oat: '#EFE2CC', coconut: '#FAF7F2' };
+const sizeScale = (s) => (s === 'S' ? .88 : s === 'L' ? 1.14 : 1);
+const withSize = (n, size, extras) => () => `${n()}${size ? ' ' + size : ''}${extras?.length ? ' + ' + extras.map(e => EXTRAS[e].name[state.lang].toLowerCase()).join(', ') : ''}`;
+function coffeeFromItem(id, size, extras = [], qty = 1) {
+    const it = ITEM(id);
+    const syr = (k) => ({ c: LAB.syrupC[k] ?? '#B79AD8', n: () => t('syrup.' + k).toLowerCase() });
+    const base = { name: withSize(() => it.name[state.lang], it.sized ? size : undefined, extras), cup: 'hot', size: sizeScale(size), base: 'espresso', shots: 1, milk: 'steam', milkC: MILK_C.cow, milkN: () => t('milk.cow').toLowerCase(), tops: [] };
+    const P = {
+        espresso: { cup: 'small', milk: 'none' }, americano: { milk: 'water' }, cappuccino: { art: 'heart' }, latte: { art: 'rosetta' }, 'violette-latte': { syrup: syr('lavender'), art: 'heart' },
+        'flat-white': { shots: 2, art: 'rosetta' }, raf: { syrup: syr('vanilla'), art: 'tulip' }, mocha: { syrup: { c: '#5A2A18', n: () => t('k.choc') }, tops: ['cream', 'cocoa'] },
+        'iced-violette': { cup: 'iced', syrup: syr('lavender'), milk: 'cold' }, 'iced-latte': { cup: 'iced', milk: 'cold' }, frappe: { cup: 'iced', syrup: syr('caramel'), milk: 'cold', tops: ['cream'] },
+        matcha: { cup: 'iced', base: 'matcha', milk: 'cold' }, cocoa: { base: 'choc', tops: ['mallow'] },
+    };
+    const p = { ...base, ...(P[id] ?? {}) };
+    if (extras.includes('shot'))
+        p.shots += 1;
+    if (extras.includes('oat')) {
+        p.milkC = MILK_C.oat;
+        p.milkN = () => t('milk.oat').toLowerCase();
+    }
+    if (extras.includes('syrup') && !p.syrup)
+        p.syrup = syr('vanilla');
+    if (extras.includes('cream') && !p.tops.includes('cream'))
+        p.tops = ['cream', ...p.tops];
+    return coffeeAct(p, qty, { item: id, size });
+}
+function coffeeFromSpec(c, qty = 1) {
+    const p = { name: () => `${coffeeName(c, state.lang)} ${c.size}`, cup: c.temp === 'iced' ? 'iced' : c.milk === 'none' && c.size === 'S' ? 'small' : 'hot', size: sizeScale(c.size), base: 'espresso', shots: c.shots,
+        syrup: c.syrup !== 'none' ? { c: LAB.syrupC[c.syrup] ?? '#B79AD8', n: () => t('syrup.' + c.syrup).toLowerCase() } : undefined,
+        milk: c.milk === 'none' ? (c.size === 'S' ? 'none' : 'water') : c.temp === 'iced' ? 'cold' : 'steam', milkC: MILK_C[c.milk] ?? MILK_C.cow, milkN: () => t('milk.' + (c.milk === 'none' ? 'cow' : c.milk)).toLowerCase(),
+        art: c.foam === 'thick' ? 'heart' : c.foam === 'thin' ? 'rosetta' : undefined, tops: c.topping !== 'none' ? [c.topping] : [] };
+    return coffeeAct(p, qty);
+}
+function burgerFromItem(id, extras = [], qty = 1) {
+    const it = ITEM(id), art = it.art;
+    const bun = art.layers.find(l => l.startsWith('bun:'))?.slice(4) ?? 'classic';
+    const layers = art.layers.filter(l => !l.startsWith('bun:'));
+    const firstMeat = layers.findIndex(l => MEAT.includes(l));
+    if (extras.includes('patty'))
+        layers.splice(firstMeat + 1, 0, 'beef');
+    if (extras.includes('cheese'))
+        layers.splice(Math.max(0, firstMeat) + 1, 0, 'cheese');
+    if (extras.includes('jalapeno'))
+        layers.splice(Math.max(1, layers.length - 1), 0, 'jalapeno');
+    if (extras.includes('sauce'))
+        layers.push('sauce');
+    return burgerAct({ name: withSize(() => it.name[state.lang], undefined, extras), bun, layers }, qty, { item: id });
+}
+function wrapFromItem(id, extras = [], qty = 1) {
+    const it = ITEM(id), beef = id === 'lavash-beef' || id === 'shaurma-pita';
+    return wrapAct({ name: withSize(() => it.name[state.lang], undefined, extras), meatC: beef ? '#7A3E1E' : '#B8743A', doner: beef ? 'aDoner' : 'aDonerC', fries: id !== 'shaurma-pita',
+        cheese: id === 'lavash-cheese' || extras.includes('cheese'), jalapeno: id === 'lavash-spicy' || extras.includes('jalapeno'), spicy: id === 'lavash-spicy', extraSauce: extras.includes('sauce') }, qty, { item: id });
+}
+function actsForItem(id, size, extras = [], qty = 1) {
+    const it = ITEM(id);
+    if (!it)
+        return [];
+    if (it.id === 'combo-lunch')
+        return [burgerAct({ name: () => ITEM('cheeseburger').name[state.lang], bun: 'classic', layers: ['beef', 'cheese', 'lettuce'] }, qty), fryerAct('fries', qty), coldAct('soda', qty)];
+    if (it.id === 'combo-friends')
+        return [wrapFromItem('lavash-chicken', [], qty), wrapFromItem('lavash-beef', [], qty), fryerAct('fries', qty), coldAct('lemonade', 2 * qty)];
+    if (it.id === 'combo-morning')
+        return [plateAct('croissant', qty), coffeeFromItem('cappuccino', 'M', [], qty)];
+    if (['coffee'].includes(it.cat) || ['iced-violette', 'iced-latte', 'frappe', 'matcha', 'cocoa'].includes(id))
+        return [coffeeFromItem(id, size, extras, qty)];
+    if (['lemonade', 'berry-lemonade', 'soda'].includes(id))
+        return [coldAct(id, qty, { item: id, size })];
+    if (['green-tea', 'black-tea'].includes(id))
+        return [teaAct(id, qty, { item: id })];
+    if (it.cat === 'burger')
+        return [burgerFromItem(id, extras, qty)];
+    if (it.cat === 'lavash')
+        return [wrapFromItem(id, extras, qty)];
+    if (['fries', 'cheese-fries', 'nuggets'].includes(id))
+        return [fryerAct(id, qty, { item: id })];
+    return [plateAct(id, qty, { item: id })];
+}
+export function actsForLines(lines) {
+    const out = [];
+    for (const l of lines) {
+        if (l.kind === 'item')
+            out.push(...actsForItem(l.item, l.size, l.extras ?? [], l.qty));
+        else if (l.kind === 'burger' && l.burger)
+            out.push(burgerAct({ name: () => burgerName(l.burger, state.lang), bun: l.burger.bun, layers: [...l.burger.fill] }, l.qty));
+        else if (l.kind === 'coffee' && l.coffee)
+            out.push(coffeeFromSpec(l.coffee, l.qty));
+        else if (l.kind === 'set' && l.set)
+            out.push(...actsForItem(l.set.drink, 'M', [], l.qty), ...actsForItem(l.set.burger, undefined, [], l.qty));
+    }
+    return out.slice(0, 10);
+}
+const idleActs = () => [coffeeFromItem('latte', 'M'), burgerFromItem('classic-burger'), wrapFromItem('lavash-chicken')];
+let el = null, raf = 0, t0 = 0, shownAt = 0, segI = -1, actI = -1, idleTimer = 0, lastMove = { x: -1, y: -1 };
+let mode = 'idle', ACTS = [], TOTAL = 1, orderEta = '';
+const smooth = { look: [0, 0], head: [0, 0] };
+const STATIONS = { coffee: ['#stCoffee'], grill: ['#stGrill'], wrap: ['#stWrap', '#stWrapBack'], fryer: ['#stFryer'], plain: ['#stPlain'] };
+const ALL_ST = ['#stCoffee', '#stGrill', '#stWrap', '#stWrapBack', '#stFryer', '#stPlain'];
+function setActs(list) { ACTS = list.length ? list : idleActs(); TOTAL = ACTS.reduce((a, x) => a + x.dur, 0); actI = -1; segI = -1; }
+const nameOf = (a) => a.name() + (a.qty > 1 ? ` ×${a.qty}` : '');
+const trunc = (s, n = 24) => (s.length > n ? s.slice(0, n - 1) + '…' : s);
+function priceOf(a) { const it = ITEM(a.order.item); return it.price + (it.sized ? (SIZES.find(s => s.id === (a.order.size ?? 'M'))?.add ?? 0) : 0); }
 function build() {
     el = document.createElement('div');
     el.className = 'afk';
     el.setAttribute('role', 'dialog');
     el.setAttribute('aria-modal', 'true');
     el.setAttribute('aria-labelledby', 'akTitle');
-    el.innerHTML = `<div class="ak-top"><span class="ak-logo">Violette</span><p id="akTitle"></p><span class="ak-clock" id="akClock"></span></div>
+    el.innerHTML = `<div class="ak-top"><span class="ak-logo">Violette</span><p id="akTitle"></p><span class="ak-clock" id="akClock"></span><button type="button" class="ak-close" id="akClose"><span aria-hidden="true">×</span></button></div>
     <svg class="ak-scene" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${sceneSVG()}</svg>
-    <div class="ak-bottom"><div class="ak-steps" id="akSteps">${Array.from({ length: 6 }, (_, i) => `<i data-i="${i}"></i>`).join('')}</div><p class="ak-caption" id="akCaption" aria-live="polite"></p>
-      <button type="button" class="btn btn-acc ak-order" id="akOrder"></button><p class="ak-hint" id="akHint"></p></div>`;
+    <div class="ak-bottom"><div class="ak-steps" id="akSteps"></div><p class="ak-caption" id="akCaption" aria-live="polite"></p>
+      <button type="button" class="btn btn-acc ak-order" id="akOrder"><span id="akOrderT"></span><kbd>Enter</kbd></button><p class="ak-hint" id="akHint"></p></div>`;
     document.body.appendChild(el);
-    $('#akOrder', el).addEventListener('click', e => {
-        e.stopPropagation();
-        const a = ACTS[Math.max(0, act)], it = ITEM(a.item);
-        addLine({ kind: 'item', item: it.id, size: a.size, extras: [] }, 1);
-        hide();
-        toast(`${it.name[state.lang]} — ${t('card.added').toLowerCase()}`);
-    });
-    texts();
+    $('#akOrder', el).addEventListener('click', e => { e.stopPropagation(); addServed(); });
+    $('#akClose', el).addEventListener('click', e => { e.stopPropagation(); hide(); });
+}
+/** Idle mode: the dish he just served goes into the cart (button tap, or Enter on a keyboard). */
+function addServed() {
+    const a = ACTS[actI];
+    if (mode !== 'idle' || !a?.order || !el?.classList.contains('serving'))
+        return;
+    const it = ITEM(a.order.item);
+    addLine({ kind: 'item', item: it.id, size: it.sized ? a.order.size ?? 'M' : undefined, extras: [] }, 1);
+    hide();
+    toast(`${a.name()} — ${t('card.added').toLowerCase()}`);
 }
 function texts() {
-    if (!el)
+    if (!el || actI < 0)
         return;
-    const a = ACTS[Math.max(0, act)], it = ITEM(a.item);
-    $('#akTitle', el).textContent = t(a.title);
-    $('#akHint', el).textContent = t('afk.hint');
-    $('#akOrder', el).textContent = `${t(a.order)} · ${money(it.price + (a.size ? 4000 : 0))}`;
-    const pair = a.id === 'coffee' ? ['latte', 'cappuccino'] : a.id === 'burger' ? ['classic-burger', 'cheeseburger'] : ['lavash-chicken', 'lavash-beef'];
-    pair.forEach((id, i) => { const x = ITEM(id); $('#akBoardN' + (i + 1), el).textContent = x.name[state.lang]; $('#akBoardP' + (i + 1), el).textContent = money(x.price); });
-    if (step >= 0)
-        $('#akCaption', el).textContent = t(a.cap + (step + 1));
+    const a = ACTS[actI];
+    el.classList.toggle('order', mode === 'order');
+    $('#akTitle', el).textContent = mode === 'idle' ? tf('afk.making', { name: a.name() }) : tf('afk.yours', { name: nameOf(a), i: actI + 1, n: ACTS.length });
+    $('#akHint', el).textContent = mode === 'idle' ? t(finePointer ? 'afk.hint' : 'afk.hintTouch') : t('afk.hintOrder');
+    $('#akClose', el).setAttribute('aria-label', t('afk.close'));
+    if (a.order)
+        $('#akOrderT', el).textContent = `${tf('afk.add', { name: a.name() })} · ${money(priceOf(a))}`;
+    let rows;
+    if (mode === 'order')
+        rows = [[trunc(nameOf(a)), `${actI + 1}/${ACTS.length}`], [t('afk.eta'), orderEta]];
+    else {
+        const pair = a.station === 'coffee' ? ['latte', 'cappuccino'] : a.station === 'grill' ? ['classic-burger', 'cheeseburger'] : ['lavash-chicken', 'lavash-beef'];
+        rows = pair.map(id => { const x = ITEM(id); return [trunc(x.name[state.lang]), money(x.price)]; });
+    }
+    rows.forEach(([n, p], i) => { $('#akBoardN' + (i + 1), el).textContent = n; $('#akBoardP' + (i + 1), el).textContent = p; });
+    if (segI >= 0)
+        $('#akCaption', el).textContent = a.segs[segI].cap();
 }
 function fit() {
     const svg = el?.querySelector('.ak-scene');
@@ -629,71 +1131,126 @@ function frame(now) {
     if (!el)
         return;
     let T = ((now - t0) / 1000) % TOTAL, ai = 0;
-    while (T >= ACTS[ai].dur) {
+    while (ai < ACTS.length - 1 && T >= ACTS[ai].dur) {
         T -= ACTS[ai].dur;
         ai++;
     }
-    const a = ACTS[ai], tm = T;
-    if (ai !== act) {
-        act = ai;
-        step = -1;
-        texts();
-        el.dataset.act = a.id;
-    }
-    const fade = (id) => (a.id === id ? clamp(Math.min(tm / .5, (a.dur - tm) / .5)) : 0);
-    $('#stCoffee', el).setAttribute('opacity', f1(fade('coffee')));
-    $('#stGrill', el).setAttribute('opacity', f1(fade('burger')));
-    $('#stWrap', el).setAttribute('opacity', f1(fade('wrap')));
-    $('#stWrapBack', el).setAttribute('opacity', f1(fade('wrap')));
-    if (a.id !== 'coffee')
-        $('#akInset', el).setAttribute('opacity', '0');
-    if (a.id !== 'burger')
+    const a = ACTS[ai];
+    if (ai !== actI) {
+        actI = ai;
+        segI = -1;
+        a.setup?.();
         $('#akSplat', el).innerHTML = '';
-    const out = a.id === 'coffee' ? actCoffee(tm) : a.id === 'burger' ? actBurger(tm) : actWrap(tm);
+        $('#akInset', el).setAttribute('opacity', '0');
+        $('#akArt', el).innerHTML = '';
+        $('#akSteps', el).innerHTML = a.segs.map((_, i) => `<i data-i="${i}"></i>`).join('');
+        el.dataset.station = a.station;
+        texts();
+    }
+    // stations cross-fade only when the next dish needs a different one
+    const prev = ACTS[(ai - 1 + ACTS.length) % ACTS.length], next = ACTS[(ai + 1) % ACTS.length];
+    const fin = prev.station === a.station ? 1 : clamp(T / .5), fout = next.station === a.station ? 1 : clamp((a.dur - T) / .5);
+    ALL_ST.forEach(id => $(id, el).setAttribute('opacity', STATIONS[a.station].includes(id) ? f1(Math.min(fin, fout)) : '0'));
+    const si = a.segs.reduce((acc, s, i) => (T >= s.start ? i : acc), 0), s = a.segs[si], tm = T - s.start;
+    let pose;
+    if (a.pose) {
+        const p = a.pose(T);
+        pose = { R: p.R, L: p.L, head: p.head ?? [0, 0], look: p.look ?? [0, 0], brows: p.brows ?? 0, mouth: p.mouth ?? 'neutral', wink: !!p.wink, lean: p.lean ?? 0 };
+    }
+    else {
+        const R = s.R ? track(s.R, tm) : REST_R, L = s.L ? track(s.L, tm) : REST_L;
+        const f = s.face?.(tm) ?? {};
+        // the eyes follow whichever hand is busy, unless the segment says otherwise
+        const dR = Math.hypot(R[0] - REST_R[0], R[1] - REST_R[1]), dL = Math.hypot(L[0] - REST_L[0], L[1] - REST_L[1]);
+        const tgt = dR < 14 && dL < 14 ? null : dR >= dL ? R : L;
+        const auto = tgt ? [clamp((tgt[0] - 700) / 22, -8, 8), clamp((tgt[1] - 260) / 24, -8, 8)] : [0, 0];
+        const look = f.look ?? auto, head = f.head ?? [look[0] * 1.2, look[1] * 1.3];
+        smooth.look = [smooth.look[0] + (look[0] - smooth.look[0]) * .15, smooth.look[1] + (look[1] - smooth.look[1]) * .15];
+        smooth.head = [smooth.head[0] + (head[0] - smooth.head[0]) * .12, smooth.head[1] + (head[1] - smooth.head[1]) * .12];
+        pose = { R, L, head: smooth.head, look: smooth.look, brows: f.brows ?? 0, mouth: f.mouth ?? 'neutral', wink: !!f.wink, lean: f.lean ?? 0 };
+    }
+    const h = drawCook(pose, T);
+    const out = merge(a.draw?.(T, h), s.draw?.(tm, h, T));
     const g = $('#akProps', el), fxg = $('#akFx', el), sv = $('#akServe', el);
-    const op = f1(clamp(Math.min(tm / .4, (a.dur - tm) / .4)));
+    const op = f1(clamp(Math.min(T / .4, (a.dur - T) / .4)));
     g.innerHTML = out.props;
     fxg.innerHTML = out.fx;
     sv.innerHTML = out.serve;
     [g, fxg, sv].forEach(x => x.setAttribute('opacity', op));
-    const s = a.steps.reduce((acc, st, i) => (tm >= st ? i : acc), 0);
-    if (s !== step) {
-        step = s;
-        $('#akCaption', el).textContent = t(a.cap + (s + 1));
-        $('#akCaption', el).animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 500, easing: 'ease-out' });
-        el.querySelectorAll('#akSteps i').forEach((d, i) => d.classList.toggle('on', i <= s));
-        el.classList.toggle('serving', s === a.steps.length - 1);
+    if (si !== segI) {
+        segI = si;
+        const cap = $('#akCaption', el);
+        cap.textContent = s.cap();
+        cap.animate([{ opacity: 0, transform: 'translateY(8px)' }, { opacity: 1, transform: 'none' }], { duration: 500, easing: 'ease-out' });
+        el.querySelectorAll('#akSteps i').forEach((d, i) => d.classList.toggle('on', i <= si));
+        el.classList.toggle('serving', mode === 'idle' && !!a.order && si === a.segs.length - 1);
     }
     const d = new Date(Date.now() + (new Date().getTimezoneOffset() + 300) * 60000);
     $('#akClock', el).textContent = `${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
     raf = requestAnimationFrame(frame);
 }
-function show() {
-    if (el?.classList.contains('on') || document.hidden)
-        return;
+function open() {
     if (!el)
         build();
-    step = -1;
-    act = -1;
     t0 = performance.now() - START_AT * 1000;
     shownAt = Date.now();
+    el.classList.remove('serving');
     el.hidden = false;
     fit();
     requestAnimationFrame(() => el.classList.add('on'));
     document.documentElement.classList.add('afk-on');
+    cancelAnimationFrame(raf);
     raf = requestAnimationFrame(frame);
+}
+function show() {
+    if (el?.classList.contains('on') || document.hidden || mode !== 'idle')
+        return;
+    setActs(idleActs());
+    open();
+}
+/** The order-confirmation screen's "watch it being made": the customer's exact order, dish by dish, until they close it. */
+export function showOrder(lines, eta = '') {
+    clearTimeout(idleTimer);
+    mode = 'order';
+    orderEta = eta;
+    setActs(actsForLines(lines));
+    open();
+    setTimeout(() => $('#akClose', el).focus({ preventScroll: true }), 80);
 }
 function hide() {
     if (!el || !el.classList.contains('on'))
         return;
-    el.classList.remove('on');
+    el.classList.remove('on', 'serving');
     document.documentElement.classList.remove('afk-on');
     cancelAnimationFrame(raf);
+    const was = mode;
+    mode = 'idle';
     setTimeout(() => { if (el && !el.classList.contains('on'))
         el.hidden = true; }, 600);
+    if (was === 'order')
+        document.querySelector('#coDone [data-watch]')?.focus({ preventScroll: true });
+    clearTimeout(idleTimer);
+    if (!reduced)
+        idleTimer = window.setTimeout(show, IDLE_MS);
 }
 function activity(e) {
     if (el?.classList.contains('on')) {
+        const target = e.target;
+        if (mode === 'order') {
+            // the order show stays until it's closed on purpose
+            if (e.type === 'keydown' && e.key === 'Escape') {
+                e.preventDefault();
+                e.stopPropagation();
+                hide();
+            }
+            return;
+        }
+        if (e.type === 'keydown' && e.key === 'Enter' && el.classList.contains('serving')) {
+            e.preventDefault();
+            e.stopPropagation();
+            addServed();
+            return;
+        }
         if (Date.now() - shownAt < 700)
             return; // ignore the jitter right after it appears
         if (e.type === 'pointermove') {
@@ -705,24 +1262,32 @@ function activity(e) {
             if (Math.hypot(p.clientX - lastMove.x, p.clientY - lastMove.y) < 24)
                 return; // a nudged desk isn't "back"
         }
-        if (e.type === 'pointerdown' && e.target.closest?.('#akOrder'))
+        if (target?.closest?.('#akOrder, #akClose'))
             return;
+        if (e.type === 'keydown') {
+            e.preventDefault();
+            e.stopPropagation();
+        }
         hide();
+        return;
     }
+    if (mode === 'order' || reduced)
+        return;
     lastMove = { x: -1, y: -1 };
     clearTimeout(idleTimer);
     idleTimer = window.setTimeout(show, IDLE_MS);
 }
 export function initAfk() {
+    ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(ev => addEventListener(ev, activity, { passive: ev !== 'keydown', capture: true }));
+    on('lang', texts);
     if (reduced)
-        return;
-    ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(ev => addEventListener(ev, activity, { passive: true, capture: true }));
+        return; // the idle show is off for reduced motion; the order show still opens when asked for
     document.addEventListener('visibilitychange', () => { if (document.hidden) {
-        hide();
+        if (mode === 'idle')
+            hide();
         clearTimeout(idleTimer);
     }
     else
         activity(new Event('visible')); });
     idleTimer = window.setTimeout(show, IDLE_MS);
-    on('lang', texts);
 }
