@@ -35,20 +35,37 @@ const TOTAL = ACTS.reduce((a, x) => a + x.dur, 0);
 const MOUTH = {
     neutral: 'M691 276 q9 3 18 0', smile: 'M689 273 q11 10 22 0', smirk: 'M692 278 q8 1 13 -3 q3 -2 5 -5', o: 'M696 276 a4 4.6 0 1 0 8 0 a4 4.6 0 1 0 -8 0',
 };
-const UPPER = 112, FORE = 104;
+/* Proportions (head is 64 wide, 90 tall): shoulders ~2.6 heads wide, upper arm ~1.3 heads, forearm ~1.2, hand ~0.4.
+   Elbows always pick the natural bend (down and outward); if a hand can't reach, the body leans and bends toward it
+   instead of the arm stretching. */
+const UPPER = 118, FORE = 112, SHOULDER_Y = 334, SHOULDER_X = 72;
 function ik(sx, sy, tx, ty, side) {
     let dx = tx - sx, dy = ty - sy;
-    let d = Math.hypot(dx, dy);
-    const max = UPPER + FORE - 1;
+    let d = Math.hypot(dx, dy) || 1;
+    const max = UPPER + FORE - 2, min = Math.abs(UPPER - FORE) + 30;
     if (d > max) {
         dx *= max / d;
         dy *= max / d;
         d = max;
     }
+    if (d < min) {
+        dx *= min / d;
+        dy *= min / d;
+        d = min;
+    }
     const base = Math.atan2(dy, dx);
     const a = Math.acos(clamp((UPPER * UPPER + d * d - FORE * FORE) / (2 * UPPER * d), -1, 1));
-    const ang = base + a * side;
-    return { ex: sx + Math.cos(ang) * UPPER, ey: sy + Math.sin(ang) * UPPER, hx: sx + dx, hy: sy + dy };
+    const out = side === 'L' ? -1 : 1;
+    const cand = [base + a, base - a].map(ang => ({ ex: sx + Math.cos(ang) * UPPER, ey: sy + Math.sin(ang) * UPPER }));
+    // a real elbow hangs down and points away from the body
+    const score = (e) => e.ey + .7 * out * (e.ex - sx);
+    const e = score(cand[0]) >= score(cand[1]) ? cand[0] : cand[1];
+    // When the hand is close to the shoulder on screen, a real arm is reaching toward the viewer, not bending sideways:
+    // the elbow then sits near the shoulder-hand line (foreshortened) instead of sticking out like hands on hips.
+    const depth = clamp((max - d) / (max * .55)) * (ty > sy - 20 ? .8 : .35);
+    const k = UPPER / (UPPER + FORE);
+    const lx = sx + dx * k + out * 9, ly = sy + dy * k + 8;
+    return { ex: e.ex + (lx - e.ex) * depth, ey: e.ey + (ly - e.ey) * depth, hx: sx + dx, hy: sy + dy };
 }
 /** Tapered limb segment (a quad with round ends). */
 function seg(x1, y1, w1, x2, y2, w2, fill) {
@@ -56,30 +73,58 @@ function seg(x1, y1, w1, x2, y2, w2, fill) {
     const p = [[x1 + nx * w1 / 2, y1 + ny * w1 / 2], [x2 + nx * w2 / 2, y2 + ny * w2 / 2], [x2 - nx * w2 / 2, y2 - ny * w2 / 2], [x1 - nx * w1 / 2, y1 - ny * w1 / 2]];
     return `<polygon points="${p.map(q => q.map(f1).join(',')).join(' ')}" fill="${fill}"/><circle cx="${f1(x1)}" cy="${f1(y1)}" r="${w1 / 2}" fill="${fill}"/><circle cx="${f1(x2)}" cy="${f1(y2)}" r="${w2 / 2}" fill="${fill}"/>`;
 }
+/** A hand drawn along the forearm direction: palm, four curled fingers in a loose grip, and the thumb on the inner side. */
+function hand(hx, hy, deg, side) {
+    const th = side === 'L' ? 1 : -1;
+    return `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(${f1(deg)})">
+    <path d="M-16 -9 Q-4 -12 8 -10 Q14 -9 14 0 Q14 9 8 10 Q-4 12 -16 9z" fill="url(#aSkin)"/>
+    ${[-6.5, -2.2, 2.2, 6.5].map((y, i) => `<rect x="9" y="${f1(y - 2.4)}" width="${12 - Math.abs(i - 1.5) * 1.6}" height="4.8" rx="2.4" fill="#D9A27C"/>`).join('')}
+    <path d="M9 -8 v16" stroke="rgba(110,60,35,.25)" stroke-width="1.3"/>
+    <path d="M-8 ${10 * th} Q2 ${15 * th} 9 ${9 * th}" stroke="#CF9670" stroke-width="6.5" fill="none" stroke-linecap="round"/>
+    <path d="M-12 ${-6 * th} Q-2 ${-9 * th} 6 ${-7 * th}" stroke="rgba(255,235,215,.45)" stroke-width="2" fill="none" stroke-linecap="round"/></g>`;
+}
 function arm(sx, sy, tx, ty, side) {
     const { ex, ey, hx, hy } = ik(sx, sy, tx, ty, side);
     const fa = Math.atan2(hy - ey, hx - ex), ua = Math.atan2(ey - sy, ex - sx);
-    const ox = -Math.sin(ua) * side * 6, oy = Math.cos(ua) * side * 6;
-    const fox = -Math.sin(fa) * side * 4, foy = Math.cos(fa) * side * 4;
-    const deg = fa * 180 / Math.PI;
-    let s = `<circle cx="${f1(sx)}" cy="${f1(sy)}" r="25" fill="#E4D9CB"/>`;
-    s += seg(sx, sy, 44, ex, ey, 33, '#EAE0D3');
-    s += `<line x1="${f1(sx + ox)}" y1="${f1(sy + oy)}" x2="${f1(ex + ox)}" y2="${f1(ey + oy)}" stroke="rgba(255,255,255,.45)" stroke-width="6" stroke-linecap="round"/>`;
-    s += `<line x1="${f1(sx - ox * 2.4)}" y1="${f1(sy - oy * 2.4)}" x2="${f1(ex - ox * 2)}" y2="${f1(ey - oy * 2)}" stroke="rgba(60,40,30,.12)" stroke-width="6" stroke-linecap="round"/>`;
-    s += seg(ex, ey, 25, hx - Math.cos(fa) * 8, hy - Math.sin(fa) * 8, 17, '#D49A74');
-    s += `<line x1="${f1(ex + fox)}" y1="${f1(ey + foy)}" x2="${f1(hx - Math.cos(fa) * 12 + fox)}" y2="${f1(hy - Math.sin(fa) * 12 + foy)}" stroke="rgba(255,230,210,.35)" stroke-width="4" stroke-linecap="round"/>`;
-    s += `<circle cx="${f1(ex)}" cy="${f1(ey)}" r="18" fill="#DCCFBF"/><path d="M${f1(ex - 15)} ${f1(ey)} a15 15 0 0 0 30 0" fill="none" stroke="#C8BAA6" stroke-width="2.5"/>`;
-    s += `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(${f1(deg)})"><ellipse cx="0" cy="0" rx="13.5" ry="10.5" fill="url(#aSkin)"/><ellipse cx="2" cy="${-8 * side}" rx="6.5" ry="3.8" fill="#D49A74" transform="rotate(${-25 * side})"/><path d="M6 -6 q4 6 0 12" fill="none" stroke="rgba(90,50,30,.25)" stroke-width="1.6"/></g>`;
+    const cuffX = ex + Math.cos(fa) * 20, cuffY = ey + Math.sin(fa) * 20;
+    const wx = hx - Math.cos(fa) * 12, wy = hy - Math.sin(fa) * 12;
+    const lit = side === 'L' ? 1 : -1; // light comes from the upper left
+    const ox = -Math.sin(ua) * lit * 7, oy = Math.cos(ua) * lit * 7;
+    let s = `<circle cx="${f1(sx)}" cy="${f1(sy)}" r="21" fill="#E4D9CB"/>`;
+    s += seg(sx, sy, 38, ex, ey, 31, '#EAE0D3');
+    s += `<line x1="${f1(sx - ox)}" y1="${f1(sy - oy)}" x2="${f1(ex - ox)}" y2="${f1(ey - oy)}" stroke="rgba(255,255,255,.4)" stroke-width="5" stroke-linecap="round"/>`;
+    s += `<line x1="${f1(sx + ox * 1.6)}" y1="${f1(sy + oy * 1.6)}" x2="${f1(ex + ox * 1.4)}" y2="${f1(ey + oy * 1.4)}" stroke="rgba(70,45,30,.13)" stroke-width="6" stroke-linecap="round"/>`;
+    s += seg(ex, ey, 31, cuffX, cuffY, 29, '#EAE0D3');
+    s += seg(cuffX, cuffY, 25, wx, wy, 17, '#D49A74');
+    s += `<line x1="${f1(cuffX - ox * .5)}" y1="${f1(cuffY - oy * .5)}" x2="${f1(wx - ox * .4)}" y2="${f1(wy - oy * .4)}" stroke="rgba(255,228,205,.35)" stroke-width="4" stroke-linecap="round"/>`;
+    s += `<g transform="translate(${f1(cuffX)} ${f1(cuffY)}) rotate(${f1(fa * 180 / Math.PI)})"><rect x="-7" y="-16" width="14" height="32" rx="7" fill="#DCCFBF"/><line x1="0" y1="-15" x2="0" y2="15" stroke="#C8BAA6" stroke-width="1.6"/></g>`;
+    s += hand(hx, hy, fa * 180 / Math.PI, side);
     return { hx, hy, svg: s };
 }
 function rotAround(x, y, cx, cy, deg) {
     const a = deg * Math.PI / 180, dx = x - cx, dy = y - cy;
     return [cx + dx * Math.cos(a) - dy * Math.sin(a), cy + dx * Math.sin(a) + dy * Math.cos(a)];
 }
+const reach = { x: 0, y: 0 };
 function drawCook(p, tm) {
-    const tilt = p.lean * .06;
-    $('#akBody').setAttribute('transform', `translate(${f1(p.lean)} 0) rotate(${f1(tilt)} 700 640)`);
-    $('#akHead').setAttribute('transform', `rotate(${f1(p.head[0] * .5)} 700 300) translate(${f1(p.head[0] * .25)} ${f1(p.head[1] * .35)})`);
+    // how far each hand is beyond comfortable reach from the resting shoulders → the body leans/bends to help
+    const max = UPPER + FORE - 14;
+    let wantX = 0, wantY = 0;
+    ['L', 'R'].forEach(sd => {
+        const sx = 700 + p.lean + (sd === 'L' ? -SHOULDER_X : SHOULDER_X), [tx, ty] = sd === 'L' ? p.L : p.R;
+        const dx = tx - sx, dy = ty - SHOULDER_Y, d = Math.hypot(dx, dy);
+        if (d > max) {
+            const k = (d - max) / d;
+            if (Math.abs(dx * k) > Math.abs(wantX))
+                wantX = dx * k;
+            wantY = Math.max(wantY, dy * k);
+        }
+    });
+    reach.x += (clamp(wantX, -64, 64) - reach.x) * .35;
+    reach.y += (clamp(wantY, 0, 34) - reach.y) * .35;
+    const lean = p.lean + reach.x, bend = reach.y, tilt = lean * .06;
+    $('#akBody').setAttribute('transform', `translate(${f1(lean)} ${f1(bend * .9)}) rotate(${f1(tilt)} 700 640)`);
+    $('#akHead').setAttribute('transform', `rotate(${f1(p.head[0] * .5)} 700 300) translate(${f1(p.head[0] * .25)} ${f1(p.head[1] * .35 + bend * .25)})`);
     const blink = (tm % 4.3) > 4.16 ? .12 : 1;
     const lx = clamp(p.look[0], -8, 8) * .38, ly = clamp(p.look[1], -8, 8) * .3;
     ['L', 'R'].forEach(sd => {
@@ -93,8 +138,14 @@ function drawCook(p, tm) {
     const m = $('#akMouth');
     m.setAttribute('d', MOUTH[p.mouth]);
     m.setAttribute('fill', p.mouth === 'o' ? '#5A2A22' : 'none');
-    const sR = rotAround(792 + p.lean, 326, 700 + p.lean, 640, tilt), sL = rotAround(608 + p.lean, 326, 700 + p.lean, 640, tilt);
-    const R = arm(sR[0], sR[1], p.R[0], p.R[1], -1), L = arm(sL[0], sL[1], p.L[0], p.L[1], 1);
+    // shoulders follow the body, and lift a little toward a raised hand
+    const sh = (sd) => {
+        const [x, y] = rotAround(700 + lean + (sd === 'L' ? -SHOULDER_X : SHOULDER_X), SHOULDER_Y + bend * .9, 700 + lean, 640, tilt);
+        const [tx, ty] = sd === 'L' ? p.L : p.R;
+        return [x + clamp((tx - x) * .04, -6, 6), y + clamp((ty - y) * .05, -9, 3)];
+    };
+    const sR = sh('R'), sL = sh('L');
+    const R = arm(sR[0], sR[1], p.R[0], p.R[1], 'R'), L = arm(sL[0], sL[1], p.L[0], p.L[1], 'L');
     $('#akArms').innerHTML = L.svg + R.svg;
     return { R, L };
 }
@@ -163,14 +214,15 @@ function sceneSVG() {
     <ellipse cx="930" cy="296" rx="40" ry="8" fill="#C97A40"/>
   </g>
   <g id="akBody">
-    <path d="M596 362 Q598 322 646 312 L754 312 Q802 322 804 362 L816 640 H584z" fill="url(#aShirt)"/>
-    <path d="M684 276 L716 276 L718 318 Q700 328 682 318z" fill="#C98E68"/><path d="M684 290 Q700 300 716 290 L716 300 Q700 308 684 300z" fill="rgba(90,50,30,.18)"/>
-    <path d="M674 314 L700 342 L726 314 L714 304 L700 324 L686 304z" fill="#F7F1E8" stroke="#D8CDBE" stroke-width="1.5"/>
-    <path d="M638 354 Q700 342 762 354 L772 640 H628z" fill="url(#aApron)"/>
-    <path d="M650 356 L670 312 M750 356 L730 312" stroke="#2C1A3C" stroke-width="7" stroke-linecap="round"/>
-    <rect x="676" y="440" width="48" height="34" rx="4" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2"/><line x1="712" y1="430" x2="714" y2="450" stroke="#C9B2E8" stroke-width="3" stroke-linecap="round"/>
-    <text x="700" y="412" text-anchor="middle" class="ak-badge">V</text>
-    <rect x="726" y="370" width="38" height="14" rx="3" fill="#F4ECE1"/><text x="745" y="380.5" text-anchor="middle" class="ak-tag">Sardor</text>
+    <path d="M626 334 Q628 318 656 312 L744 312 Q772 318 774 334 Q786 356 780 392 L772 640 H628 L620 392 Q614 356 626 334z" fill="url(#aShirt)"/>
+    <path d="M640 396 Q700 410 760 396" fill="none" stroke="rgba(70,45,30,.08)" stroke-width="10"/>
+    <path d="M687 276 L713 276 L715 316 Q700 324 685 316z" fill="#C98E68"/><path d="M687 288 Q700 298 713 288 L713 298 Q700 306 687 298z" fill="rgba(90,50,30,.2)"/>
+    <path d="M676 314 L700 340 L724 314 L713 304 L700 322 L687 304z" fill="#F7F1E8" stroke="#D8CDBE" stroke-width="1.5"/>
+    <path d="M652 354 Q700 345 748 354 L756 640 H644z" fill="url(#aApron)"/>
+    <path d="M662 356 L678 314 M738 356 L722 314" stroke="#2C1A3C" stroke-width="6" stroke-linecap="round"/>
+    <rect x="681" y="442" width="40" height="30" rx="4" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2"/><line x1="712" y1="432" x2="714" y2="450" stroke="#C9B2E8" stroke-width="3" stroke-linecap="round"/>
+    <text x="700" y="414" text-anchor="middle" class="ak-badge">V</text>
+    <rect x="716" y="368" width="34" height="13" rx="3" fill="#F4ECE1"/><text x="733" y="377.8" text-anchor="middle" class="ak-tag">Sardor</text>
     <g id="akSplat"></g>
     <g id="akHead">
       <ellipse cx="667" cy="250" rx="6" ry="10" fill="#C98E68"/><ellipse cx="733" cy="250" rx="6" ry="10" fill="#C98E68"/>
@@ -417,7 +469,7 @@ function actBurger(tm) {
     if (tm > 10.85) {
         const f = win(tm, 10.8, 10.95);
         fx += [[488, 487], [602, 486], [560, 488]].map(([x, y]) => `<ellipse cx="${x}" cy="${f1(440 + (y - 440) * f)}" rx="${f > .99 ? 5 : 2.5}" ry="${f > .99 ? 1.8 : 2.5}" fill="#B71C1C"/>`).join('');
-        $('#akSplat').innerHTML = tm > 10.95 ? '<circle cx="690" cy="468" r="3.4" fill="#B71C1C"/><circle cx="694" cy="472" r="1.6" fill="#B71C1C"/>' : '';
+        $('#akSplat').innerHTML = tm > 10.95 ? '<circle cx="692" cy="466" r="3.4" fill="#B71C1C"/><circle cx="696" cy="470" r="1.6" fill="#B71C1C"/>' : '';
     }
     else
         $('#akSplat').innerHTML = '';
