@@ -37,7 +37,8 @@ export function openTrack() { if (tr && running(tr)) { build(); render(); panel!
 function closeTrack() {
   if (!panel || panel.hidden) return;
   panel.classList.remove('open'); document.documentElement.classList.remove('locked');
-  setTimeout(() => { if (panel && !panel.classList.contains('open')) panel.hidden = true; }, reduced ? 0 : 350);
+  if (document.hidden || reduced) panel.hidden = true;
+  else setTimeout(() => { if (panel && !panel.classList.contains('open')) panel.hidden = true; }, 350);
   pill?.focus({ preventScroll: true });
   tick();
 }
@@ -160,6 +161,7 @@ export function initTrack() {
       lines: [{ sig: 'd1', kind: 'item', item: 'violette-burger', extras: [], qty: 1, who: -1 }, { sig: 'd2', kind: 'item', item: 'fries', extras: [], qty: 1, who: -1 }, { sig: 'd3', kind: 'item', item: 'iced-violette', size: 'M', extras: [], qty: 1, who: -1 }] };
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) tick(); });
+  addEventListener('pageshow', () => { if (panel && !panel.classList.contains('open')) panel.hidden = true; tick(); });
   addEventListener('storage', e => { if (e.key === 'vc-track') { tr = null; tick(); } });
   tick();
 }

@@ -65,6 +65,7 @@ export function initScroll() {
     // menu cards are re-rendered when filters change: pick them up again
     new MutationObserver(() => { collect(); frame(); }).observe($('#grid'), { childList: true });
     addEventListener('scroll', kick, { passive: true });
+    addEventListener('pageshow', () => { collect(); frame(); });
     addEventListener('resize', () => { collect(); kick(); });
     new ResizeObserver(() => { collect(); frame(); }).observe(document.body);
     frame();

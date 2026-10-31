@@ -950,7 +950,10 @@ function hide() {
   document.documentElement.classList.remove('afk-on');
   cancelAnimationFrame(raf);
   const was = mode; mode = 'idle';
-  setTimeout(() => { if (el && !el.classList.contains('on')) el.hidden = true; }, 600);
+  // when the page is being left (tab switch, app switch, back/forward cache) hide at once: iOS Safari freezes the
+  // fade and the timer, and the half-faded overlay would come back over the page
+  if (document.hidden || reduced) el.hidden = true;
+  else setTimeout(() => { if (el && !el.classList.contains('on')) el.hidden = true; }, 600);
   if (was === 'order') (document.querySelector('#coDone [data-watch]') as HTMLElement | null)?.focus({ preventScroll: true });
   clearTimeout(idleTimer); if (!reduced) idleTimer = window.setTimeout(show, IDLE_MS);
 }
@@ -983,6 +986,9 @@ function activity(e: Event) {
 export function initAfk() {
   ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(ev => addEventListener(ev, activity, { passive: ev !== 'keydown', capture: true }));
   on('lang', texts);
+  const settle = () => { if (el && mode === 'idle') { if (el.classList.contains('on')) hide(); el.hidden = true; el.classList.remove('on', 'serving'); document.documentElement.classList.remove('afk-on'); } };
+  addEventListener('pagehide', settle);
+  addEventListener('pageshow', e => { settle(); if ((e as PageTransitionEvent).persisted && !reduced) { clearTimeout(idleTimer); idleTimer = window.setTimeout(show, IDLE_MS); } });
   if (reduced) return; // the idle show is off for reduced motion; the order show still opens when asked for
   document.addEventListener('visibilitychange', () => { if (document.hidden) { if (mode === 'idle') hide(); clearTimeout(idleTimer); } else activity(new Event('visible')); });
   idleTimer = window.setTimeout(show, IDLE_MS);

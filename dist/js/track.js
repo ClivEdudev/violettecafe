@@ -49,8 +49,11 @@ function closeTrack() {
         return;
     panel.classList.remove('open');
     document.documentElement.classList.remove('locked');
-    setTimeout(() => { if (panel && !panel.classList.contains('open'))
-        panel.hidden = true; }, reduced ? 0 : 350);
+    if (document.hidden || reduced)
+        panel.hidden = true;
+    else
+        setTimeout(() => { if (panel && !panel.classList.contains('open'))
+            panel.hidden = true; }, 350);
     pill?.focus({ preventScroll: true });
     tick();
 }
@@ -201,6 +204,8 @@ export function initTrack() {
     }
     document.addEventListener('visibilitychange', () => { if (!document.hidden)
         tick(); });
+    addEventListener('pageshow', () => { if (panel && !panel.classList.contains('open'))
+        panel.hidden = true; tick(); });
     addEventListener('storage', e => { if (e.key === 'vc-track') {
         tr = null;
         tick();

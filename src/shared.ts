@@ -203,6 +203,11 @@ export function closeOverlay(el: HTMLElement) {
   emit('overlay');
 }
 export const topOverlay = () => stack[stack.length - 1];
+addEventListener('pageshow', () => {
+  document.querySelectorAll<HTMLElement>('.modal, .drawer').forEach(m => { if (!stack.includes(m)) { m.classList.remove('open'); m.hidden = true; } });
+  if (!stack.length) document.documentElement.classList.remove('locked');
+  document.getElementById('wipe')?.classList.remove('on');
+});
 document.addEventListener('keydown', e => {
   const top = topOverlay(); if (!top) return;
   if (e.key === 'Escape') { e.preventDefault(); closeOverlay(top); }

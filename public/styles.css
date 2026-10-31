@@ -890,3 +890,5 @@ main, .foot { overflow-x: clip; }
 .tk-done-btn { width: 100%; margin-top: 14px; }
 @media (max-width: 640px) { .tk-pill { left: 12px; right: 12px; justify-content: flex-start; } .tk-sheet { padding: 22px 16px 18px; } }
 @media (prefers-reduced-motion: reduce) { .tk-pill, .tk-dot, .tk-pulse { animation: none; } }
+/* never let a faded-out kitchen overlay catch taps or sit over the page */
+.afk:not(.on) { pointer-events: none; }
