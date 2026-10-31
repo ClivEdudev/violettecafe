@@ -1,4 +1,4 @@
-import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT } from './data.js';
+import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT, SET_DRINKS, SET_BURGERS, SET_DISCOUNTS, setFull, setPrice } from './data.js';
 import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } from './art.js';
 import { initPointer } from './ui.js';
 import { initScroll } from './scroll.js';
@@ -76,11 +76,28 @@ function renderStatus() {
     $('#hoursV').textContent = tf('visit.hoursV', { o: `${pad(CAFE.open)}:00`, c: `${pad(CAFE.close)}:00` });
 }
 setInterval(renderStatus, 60000);
-/* =============== HERO: scroll-driven latte + burger (drawn to look real) =============== */
+/* =============== HERO: a random drink + burger pair, poured and stacked as you scroll =============== */
 const scene = $('#scene');
-const HL = ITEM('violette-latte'), HB = ITEM('violette-burger');
+const RECIPES = {
+    'violette-latte': { layers: [{ c: '#B08CDB', f: .12 }, { c: '#F5EDF6', f: .5 }, { c: '#9A6A45', f: .2 }], foam: .09, art: 'heart', artC: '#B07FD8' },
+    latte: { layers: [{ c: '#F6EFE6', f: .52 }, { c: '#B8865C', f: .16 }, { c: '#8E5E3C', f: .12 }], foam: .1, art: 'rosetta', artC: '#B07A50' },
+    cappuccino: { layers: [{ c: '#F3E7D8', f: .3 }, { c: '#9A6A45', f: .22 }], foam: .3, art: 'heart', artC: '#A8744C' },
+    mocha: { layers: [{ c: '#4A2616', f: .16 }, { c: '#C9A27E', f: .34 }, { c: '#6B3E24', f: .26 }], foam: 0, cream: true, dust: '#3A1F14' },
+    raf: { layers: [{ c: '#F1DFC2', f: .5 }, { c: '#D9B98F', f: .26 }], foam: .1, art: 'tulip', artC: '#C49A6C' },
+    'iced-latte': { layers: [{ c: '#F6EFE6', f: .5 }, { c: '#B8865C', f: .14 }, { c: '#5A3220', f: .2 }], foam: 0, ice: true },
+    'iced-violette': { layers: [{ c: '#B08CDB', f: .16 }, { c: '#EFE4F8', f: .44 }, { c: '#9A6A45', f: .22 }], foam: 0, ice: true },
+    matcha: { layers: [{ c: '#F6EFE6', f: .44 }, { c: '#A9C76F', f: .14 }, { c: '#7FA54A', f: .24 }], foam: 0, ice: true },
+};
+const pick = (a) => a[Math.floor(Math.random() * a.length)];
+const PAIR = { drink: pick(SET_DRINKS), burger: pick(SET_BURGERS), pct: pick(SET_DISCOUNTS) };
+const HL = ITEM(PAIR.drink), HB = ITEM(PAIR.burger), REC = RECIPES[PAIR.drink];
 const GLASS = { cx: 330, top: 300, bot: 650, wt: 214, wb: 178 };
-const BURGER = { cx: 712, base: 646, w: 300, layers: ['bottom', 'sauce', 'beef', 'cheese', 'onion', 'lettuce', 'tomato', 'top'] };
+const BURGER = { cx: 712, base: 646, w: 300, layers: [], bun: 'classic' };
+{
+    const art = HB.art;
+    BURGER.bun = art.layers.find(l => l.startsWith('bun:'))?.slice(4) ?? 'classic';
+    BURGER.layers = ['bottom', ...art.layers.filter(l => !l.startsWith('bun:')), 'top'];
+}
 let burgerY = [];
 function buildScene() {
     const { cx, top, bot, wt, wb } = GLASS;
@@ -94,17 +111,21 @@ function buildScene() {
     }
     let layersSvg = '', y = BURGER.base;
     burgerY = [];
+    const scale = Math.min(1, 300 / BURGER.layers.reduce((a, id) => a + (id === 'bottom' ? 28 : id === 'top' ? 66 : (LAYERS[id]?.h ?? 10) - 4), 0));
     BURGER.layers.forEach((id, i) => {
-        const Ly = id === 'bottom' ? bunBottom('violet') : id === 'top' ? bunTop('violet') : LAYERS[id];
+        const Ly = id === 'bottom' ? bunBottom(BURGER.bun) : id === 'top' ? bunTop(BURGER.bun) : LAYERS[id];
         y -= Ly.h - 4;
         burgerY.push(y);
         layersSvg += `<g class="bl" data-i="${i}"><g class="bl-in">${Ly.svg(y, BURGER.cx, BURGER.w)}</g></g>`;
     });
+    const ice = REC.ice ? [[-50, .3], [20, .38], [-14, .55], [44, .62], [-44, .74]].map(([x, f], i) => { const yy = top + (bot - top) * f, ix = cx + x; return `<g class="hice" data-f="${f}" transform="rotate(${i * 21 - 30} ${ix} ${yy + 22})"><rect x="${ix - 27}" y="${yy}" width="54" height="50" rx="12" fill="rgba(255,255,255,.3)" stroke="rgba(255,255,255,.85)" stroke-width="2"/><rect x="${ix - 18}" y="${yy + 8}" width="24" height="15" rx="5" fill="rgba(255,255,255,.55)"/></g>`; }).join('') : '';
+    const drops = REC.ice ? Array.from({ length: 22 }, (_, i) => { const f = ((i * 37) % 100) / 100, yy = top + 50 + ((i * 53) % 100) / 100 * (bot - top - 90); const k = (yy - top) / (bot - top); const left = L + (bl - L) * k, width = wt + (wb - wt) * k; const x = left + 10 + f * (width - 20), r = 1.8 + (i % 4); return `<circle cx="${x}" cy="${yy}" r="${r}" fill="rgba(255,255,255,.55)"/><circle cx="${x - r * .3}" cy="${yy - r * .3}" r="${r * .35}" fill="#fff"/>`; }).join('') : '';
     scene.innerHTML = `
     <defs>
       <clipPath id="glassClip"><path d="${gp}"/></clipPath>
       <radialGradient id="discG" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="var(--disc-a)"/><stop offset="1" stop-color="var(--disc-b)"/></radialGradient>
       <linearGradient id="g-stream" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".25"/><stop offset=".35" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
+      <radialGradient id="g-sticker" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#FF8A70"/><stop offset=".6" stop-color="#E2452F"/><stop offset="1" stop-color="#B02A1C"/></radialGradient>
     </defs>
     <g class="sky">${stars}</g>
     <circle id="disc" cx="520" cy="440" r="330" fill="url(#discG)"/>
@@ -113,18 +134,15 @@ function buildScene() {
     <ellipse cx="${cx}" cy="${bot + 12}" rx="${wb * .72}" ry="14" fill="#1a0a24" opacity=".28" filter="url(#fx-steam)"/>
     ${plateSVG(BURGER.cx, BURGER.base + 10, 206)}
     <g id="pour"><rect id="stream" x="${cx - 7}" y="-20" width="14" height="0" rx="7"/><rect id="streamHi" x="${cx - 7}" y="-20" width="14" height="0" rx="7" fill="url(#g-stream)"/></g>
-    <path d="${hp}" fill="none" stroke="rgba(42,20,64,.22)" stroke-width="26" stroke-linecap="round"/>
+    ${REC.ice ? '' : `<path d="${hp}" fill="none" stroke="rgba(42,20,64,.22)" stroke-width="26" stroke-linecap="round"/>
     <path d="${hp}" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="22" stroke-linecap="round"/>
-    <path d="${hp}" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".9" transform="translate(-4 -4)"/>
+    <path d="${hp}" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".9" transform="translate(-4 -4)"/>`}
     <path d="${gp}" fill="rgba(255,255,255,.2)"/>
     <g clip-path="url(#glassClip)">
-      <g filter="url(#fx-mix)">
-        <rect id="lqSyrup" x="${L - 20}" width="${wt + 40}" fill="#B08CDB"/>
-        <rect id="lqMilk" x="${L - 20}" width="${wt + 40}" fill="#F5EDF6"/>
-        <rect id="lqCoffee" x="${L - 20}" width="${wt + 40}" fill="#9A6A45"/>
-      </g>
+      <g filter="url(#fx-mix)">${REC.layers.map((_, i) => `<rect id="lq${i}" x="${L - 20}" width="${wt + 40}" fill="${REC.layers[i].c}"/>`).join('')}</g>
       <rect id="lqFoam" x="${L - 20}" width="${wt + 40}" fill="url(#g-foam)" filter="url(#fx-foam)"/>
       <rect id="lqShade" x="${bl - 20}" width="${wt + 40}" fill="url(#g-shade)"/>
+      <g id="iceG">${ice}</g>
       <g id="splash"></g>
     </g>
     <g id="surfaceTop"></g>
@@ -136,13 +154,22 @@ function buildScene() {
     <path d="M${R - 20} ${top + 60} L${br - 14} ${bot - 70}" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".28"/>
     <ellipse cx="${cx}" cy="${bot - 7}" rx="${wb / 2 - 5}" ry="10" fill="rgba(255,255,255,.38)"/>
     <text x="${cx}" y="${top + 205}" text-anchor="middle" class="glass-print">Violette</text>
+    ${drops}
+    <g id="creamTop" opacity="0"></g>
     <ellipse cx="${cx}" cy="${top}" rx="${wt / 2}" ry="11" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="3.5"/>
     <ellipse cx="${cx}" cy="${top}" rx="${wt / 2}" ry="11" fill="none" stroke="rgba(42,20,64,.22)" stroke-width="1.4" transform="translate(0 2.5)"/>
-    <g id="heroSteam" opacity="0" filter="url(#fx-steam)">${steam(cx, top - 30, 1.6).replace(/stroke="#9D7BD1"/, 'stroke="#FFFFFF"')}</g>
+    ${REC.ice ? `<g id="straw" opacity="0"><path d="M${cx + 22} ${bot - 60} L${cx + 70} ${top - 120}" stroke="url(#g-straw)" stroke-width="16" stroke-linecap="round"/><path d="M${cx + 22} ${bot - 60} L${cx + 70} ${top - 120}" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-dasharray="10 14" opacity=".55"/></g>` : ''}
+    <g id="heroSteam" opacity="0" filter="url(#fx-steam)">${REC.ice ? '' : steam(cx, top - 30, 1.6).replace(/stroke="#9D7BD1"/, 'stroke="#FFFFFF"')}</g>
     <g id="burger">${layersSvg}</g>
-    <g class="sparkle" id="sparkles" opacity="0">${[[900, 380], [560, 400], [920, 520], [560, 280]].map(([x, yy], i) => `<path style="--d:${i * .3}s" d="M${x} ${yy - 14} l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4z" fill="#F4B731"/>`).join('')}</g>`;
+    <g class="sparkle" id="sparkles" opacity="0">${[[900, 380], [560, 400], [920, 520], [560, 280]].map(([x, yy], i) => `<path style="--d:${i * .3}s" d="M${x} ${yy - 14} l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4z" fill="#F4B731"/>`).join('')}</g>
+    <g id="sticker" opacity="0" transform="translate(500 405)"><g class="st-in">
+      <path d="${Array.from({ length: 24 }, (_, i) => { const a = (i / 24) * Math.PI * 2, r = i % 2 ? 62 : 70; return `${i ? 'L' : 'M'}${(Math.cos(a) * r).toFixed(1)} ${(Math.sin(a) * r).toFixed(1)}`; }).join(' ')}z" fill="url(#g-sticker)" filter="url(#fx-soft)"/>
+      <circle r="52" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="4 5" opacity=".7"/>
+      <text class="st-pct" y="10" text-anchor="middle">−${PAIR.pct}%</text><text class="st-lbl" y="34" text-anchor="middle" id="stLbl"></text></g></g>`;
+    if (scale < 1)
+        $('#burger', scene).setAttribute('transform', `translate(${BURGER.cx} ${BURGER.base}) scale(${scale}) translate(${-BURGER.cx} ${-BURGER.base})`);
 }
-function fitScene() { scene.setAttribute('viewBox', innerWidth <= 960 ? '160 150 780 560' : '0 0 1200 800'); }
+function fitScene() { scene.setAttribute('viewBox', innerWidth <= 960 ? '160 150 840 560' : '0 0 1200 800'); }
 const stageKeys = ['hero.s0', 'hero.s1', 'hero.s2', 'hero.s3', 'hero.s4', 'hero.s5', 'hero.s6'];
 let stageIdx = -1, heroP = -1;
 function setAttrs(el, a) { for (const k in a)
@@ -154,37 +181,57 @@ function updateHero(p) {
     const { cx, top, bot, wt, wb } = GLASS;
     const floor = bot + 6, inner = bot - top - 24;
     const pour = clamp((p - .03) / .3);
-    const syrupH = inner * .12 * clamp(pour / .22), milkH = inner * .5 * clamp((pour - .22) / .43), coffeeH = inner * .2 * clamp((pour - .65) / .35);
-    const foamH = inner * .09 * ease(clamp((p - .33) / .05));
-    let yy = floor;
-    const lay = (id, h) => { yy -= h; setAttrs($('#' + id, scene), { y: yy, height: Math.max(0, h + (h > 0 ? 2 : 0)) }); };
-    lay('lqSyrup', syrupH);
-    lay('lqMilk', milkH);
-    lay('lqCoffee', coffeeH);
-    lay('lqFoam', foamH);
+    // each layer pours in turn, in proportion to its share of the glass
+    const total = REC.layers.reduce((a, l) => a + l.f, 0);
+    let acc = 0, yy = floor, curC = REC.layers[0].c;
+    REC.layers.forEach((l, i) => {
+        const s0 = acc / total, s1 = (acc + l.f) / total;
+        acc += l.f;
+        const k = clamp((pour - s0) / (s1 - s0));
+        if (k > 0 && k < 1)
+            curC = l.c;
+        const h = inner * l.f * k;
+        yy -= h;
+        setAttrs($('#lq' + i, scene), { y: yy, height: Math.max(0, h + (h > 0 ? 2 : 0)) });
+    });
+    const foamH = inner * REC.foam * ease(clamp((p - .33) / .05));
+    yy -= foamH;
+    setAttrs($('#lqFoam', scene), { y: yy, height: Math.max(0, foamH + (foamH > 0 ? 2 : 0)) });
     const surface = yy;
     setAttrs($('#lqShade', scene), { y: surface, height: Math.max(0, floor - surface) });
     const filled = surface < floor - 3;
     const rx = (wb + (wt - wb) * ((bot - surface) / (bot - top))) / 2 - 5, ry = Math.max(4, rx * .13);
     const foamy = foamH > 1;
-    const topCol = foamy ? '#F7ECE0' : coffeeH > 1 ? '#A87650' : milkH > 1 ? '#F7F0F8' : '#B892DE';
+    const topLayer = REC.layers[REC.layers.length - 1];
+    const topCol = foamy ? '#F7ECE0' : pour < 1 ? curC : topLayer.c;
     const hk = ease(clamp((p - .35) / .05));
     const wob = pour > 0 && pour < 1 ? Math.sin(p * 120) * 2 : 0;
-    $('#surfaceTop', scene).innerHTML = filled ? `<ellipse cx="${cx}" cy="${surface + wob}" rx="${rx}" ry="${ry}" fill="${topCol}"${foamy ? ' filter="url(#fx-foam)"' : ''}/>
+    $('#surfaceTop', scene).innerHTML = filled && !REC.ice ? `<ellipse cx="${cx}" cy="${surface + wob}" rx="${rx}" ry="${ry}" fill="${topCol}"${foamy ? ' filter="url(#fx-foam)"' : ''}/>
     <ellipse cx="${cx}" cy="${surface + wob}" rx="${rx}" ry="${ry}" fill="none" stroke="#6B4630" stroke-opacity=".25" stroke-width="2.5"/>
-    ${hk > 0 ? `<g opacity="${hk}" transform="translate(0 ${surface}) scale(1 ${.3 * hk}) translate(0 ${-surface})">${latteArt('heart', cx, surface, 2.6, '#B07FD8')}</g>` : ''}
+    ${hk > 0 && REC.art ? `<g opacity="${hk}" transform="translate(0 ${surface}) scale(1 ${.3 * hk}) translate(0 ${-surface})">${latteArt(REC.art, cx, surface, 2.6, REC.artC ?? '#B07A50')}</g>` : ''}
     <ellipse cx="${cx - rx * .4}" cy="${surface - ry * .3}" rx="${rx * .28}" ry="${ry * .25}" fill="#fff" opacity=".4"/>` : '';
+    if (REC.ice) {
+        $$('.hice', scene).forEach((g, i) => { const k = ease(clamp((p - .3 - i * .012) / .05)); g.setAttribute('opacity', String(k)); g.style.translate = `0 ${(1 - k) * -360}px`; });
+        $('#straw', scene)?.setAttribute('opacity', String(ease(clamp((p - .36) / .04))));
+    }
+    const cr = $('#creamTop', scene);
+    if (REC.cream) {
+        const k = ease(clamp((p - .33) / .06));
+        cr.setAttribute('opacity', String(k));
+        cr.innerHTML = `<g transform="translate(0 ${(1 - k) * -40})"><g filter="url(#fx-soft)"><path d="M${cx - 86} ${surface + 6} q-12 -34 28 -44 q2 -40 46 -34 q24 -28 46 0 q44 -6 46 34 q40 10 28 44z" fill="url(#g-cream)"/></g>
+      <path d="M${cx - 58} ${surface - 16} q34 -16 70 -4 M${cx - 34} ${surface - 42} q26 -12 52 0" fill="none" stroke="#E2CDB0" stroke-width="2.6" stroke-linecap="round"/>
+      ${REC.dust ? Array.from({ length: 30 }, (_, i) => `<circle cx="${cx - 70 + ((i * 37) % 140)}" cy="${surface - 30 + ((i * 13) % 34)}" r="${1 + (i % 3) * .6}" fill="${REC.dust}"/>`).join('') : ''}</g>`;
+    }
     const streaming = pour > 0 && pour < 1;
-    const sCol = pour < .22 ? '#B08CDB' : pour < .65 ? '#F5EDF6' : '#7A4B30';
     const sw = streaming ? 13 + Math.sin(p * 90) * 1.5 : 0;
-    setAttrs($('#stream', scene), { height: streaming ? Math.max(0, surface + 4) : 0, fill: sCol, width: sw, x: cx - sw / 2 });
+    setAttrs($('#stream', scene), { height: streaming ? Math.max(0, surface + 4) : 0, fill: curC, width: sw, x: cx - sw / 2 });
     setAttrs($('#streamHi', scene), { height: streaming ? Math.max(0, surface + 4) : 0, width: sw, x: cx - sw / 2 });
-    $('#splash', scene).innerHTML = streaming ? [-34, -14, 12, 32].map((d, i) => `<circle cx="${cx + d + Math.sin(p * 90 + i) * 6}" cy="${surface - 4 - Math.abs(Math.sin(p * 70 + i * 2)) * 16}" r="${3 + (i % 2) * 2}" fill="${sCol}" opacity=".9"/>`).join('') : '';
+    $('#splash', scene).innerHTML = streaming ? [-34, -14, 12, 32].map((d, i) => `<circle cx="${cx + d + Math.sin(p * 90 + i) * 6}" cy="${surface - 4 - Math.abs(Math.sin(p * 70 + i * 2)) * 16}" r="${3 + (i % 2) * 2}" fill="${curC}" opacity=".9"/>`).join('') : '';
     $('#heroSteam', scene).setAttribute('opacity', String(clamp((p - .36) / .06) * .85));
     // burger: each layer drops in with a soft landing
-    const n = BURGER.layers.length;
+    const n = BURGER.layers.length, gap = .3 / n;
     $$('.bl', scene).forEach((g, i) => {
-        const start = .4 + i * .038, k = clamp((p - start) / .075);
+        const start = .4 + i * gap, k = clamp((p - start) / .075);
         let dy, sq = 1;
         if (k < .72) {
             const f = k / .72;
@@ -202,8 +249,12 @@ function updateHero(p) {
         g.firstElementChild.setAttribute('transform', `translate(${BURGER.cx} ${yb}) scale(${2 - sq} ${sq}) translate(${-BURGER.cx} ${-yb})`);
         g.setAttribute('opacity', k <= 0 ? '0' : '1');
     });
-    const done = clamp((p - (.4 + (n - 1) * .038 + .075)) / .04);
+    const done = clamp((p - (.4 + (n - 1) * gap + .075)) / .04);
     $('#sparkles', scene).setAttribute('opacity', String(done));
+    const sk = clamp((p - .74) / .06);
+    const stk = $('#sticker', scene);
+    stk.setAttribute('opacity', String(Math.min(1, sk * 2)));
+    $('.st-in', stk).setAttribute('transform', `scale(${sk <= 0 ? .2 : .2 + .8 * easeBackOut(sk)}) rotate(${(1 - sk) * -40 - 12})`);
     $('#disc', scene).setAttribute('r', String(330 + p * 30));
     $('#discRing', scene).setAttribute('transform', `rotate(${p * 90} 520 440)`);
     // receipt
@@ -212,33 +263,40 @@ function updateHero(p) {
     paper.style.setProperty('--k', String(rk));
     $('#receipt').classList.toggle('on', rk > 0);
     $$('.rc-row', paper).forEach((r, i, arr) => r.classList.toggle('in', rk > (i + 1) / (arr.length + 1)));
-    const st = p < .03 ? 0 : pour < .22 ? 1 : pour < 1 ? 2 : p < .4 ? 3 : p < .74 ? 4 : p < .94 ? 5 : 6;
+    const st = p < .03 ? 0 : pour < .2 ? 1 : pour < 1 ? 2 : p < .4 ? 3 : p < .74 ? 4 : p < .94 ? 5 : 6;
     if (st !== stageIdx) {
         stageIdx = st;
-        $('#heroStage').textContent = t(stageKeys[st]);
+        $('#heroStage').textContent = st === 1 ? tf('hero.s1', { d: HL.name[state.lang] }) : t(stageKeys[st]);
     }
 }
+function easeBackOut(t) { const c = 1.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); }
 function renderReceipt() {
     const now = tashkentNow();
-    const total = HL.price + HB.price;
+    const full = setFull(PAIR.drink, PAIR.burger), price = setPrice(PAIR.drink, PAIR.burger, PAIR.pct);
+    const dPrice = HL.price + (HL.sized ? SIZES[1].add : 0);
     $('#rcPaper').innerHTML = `
     <div class="rc-row rc-title">${t('rc.title')}</div>
     <div class="rc-row rc-meta"><span>${ddmmyyyy(now)}</span><span>${hhmm(now)}</span></div>
-    <div class="rc-row"><span>${esc(HL.name[state.lang])} M</span><span>${money(HL.price + SIZES[1].add)}</span></div>
+    <div class="rc-row"><span>${esc(HL.name[state.lang])}${HL.sized ? ' M' : ''}</span><span>${money(dPrice)}</span></div>
     <div class="rc-row"><span>${esc(HB.name[state.lang])}</span><span>${money(HB.price)}</span></div>
-    <div class="rc-row rc-total"><span>${t('rc.total')}</span><span>${money(total + SIZES[1].add)}</span></div>
+    <div class="rc-row rc-disc"><span>${tf('rc.disc', { p: PAIR.pct })}</span><span>−${money(full - price)}</span></div>
+    <div class="rc-row rc-total"><span>${t('rc.total')}</span><span>${money(price)}</span></div>
     <div class="rc-row rc-bar" aria-hidden="true">${Array.from({ length: 34 }, (_, i) => `<i style="width:${1 + ((i * 7) % 4)}px"></i>`).join('')}</div>
     <div class="rc-row rc-thanks">${t('rc.thanks')}</div>`;
-    $('#heroComboPrice').textContent = money(total + SIZES[1].add);
+    $('#heroComboPrice').innerHTML = `<s>${money(full)}</s> ${money(price)}`;
+    $('#heroPairName').textContent = `${HL.name[state.lang]} + ${HB.name[state.lang]}`;
+    const lbl = $('#stLbl', scene);
+    if (lbl)
+        lbl.textContent = t('hero.badge');
+    scene.setAttribute('aria-label', `${HL.name[state.lang]} + ${HB.name[state.lang]}`);
     stageIdx = -1;
     const p = heroP;
     heroP = -1;
     updateHero(Math.max(0, p));
 }
 $('#heroCombo').addEventListener('click', e => {
-    addLine({ kind: 'item', item: HL.id, size: 'M', extras: [] }, 1, e.currentTarget);
-    addLine({ kind: 'item', item: HB.id, extras: [] }, 1);
-    toast(t('card.added'));
+    addLine({ kind: 'set', set: { ...PAIR } }, 1, e.currentTarget);
+    toast(`${t('set.name')}: ${HL.name[state.lang]} + ${HB.name[state.lang]} — ${t('card.added').toLowerCase()}`);
 });
 const hero = $('#top');
 function heroProgress() {

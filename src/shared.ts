@@ -1,6 +1,6 @@
 // Small shared core: DOM helpers, storage, language, cart, overlays, toasts.
 import { DICT } from './i18n.js';
-import { ITEM, EXTRAS, SIZES, photoURL, type Lang, type ExtraId, type Item } from './data.js';
+import { ITEM, EXTRAS, SIZES, photoURL, SET_DISCOUNTS, SET_DRINKS, SET_BURGERS, setPrice, type Lang, type ExtraId, type Item } from './data.js';
 import { burgerPrice, burgerName, burgerArt, burgerPrep, coffeePrice, coffeeName, coffeeArt, coffeePrep, sanitizeBurger, sanitizeCoffee, type BurgerSpec, type CoffeeSpec } from './recipes.js';
 import { svg, type ArtSpec } from './art.js';
 
@@ -44,13 +44,14 @@ export const emit = (ev: string, d?: unknown) => (bus.get(ev) ?? []).forEach(h =
 /* ---------- cart ---------- */
 export type Size = 'S' | 'M' | 'L';
 export interface Line {
-  sig: string; kind: 'item' | 'burger' | 'coffee'; item?: string; size?: Size; extras?: ExtraId[];
-  burger?: BurgerSpec; coffee?: CoffeeSpec; qty: number; who: number;
+  sig: string; kind: 'item' | 'burger' | 'coffee' | 'set'; item?: string; size?: Size; extras?: ExtraId[];
+  burger?: BurgerSpec; coffee?: CoffeeSpec; set?: { drink: string; burger: string; pct: number }; qty: number; who: number;
 }
 export const MAX_QTY = 30, MAX_LINES = 40;
 const sigOf = (l: Omit<Line, 'sig' | 'qty' | 'who'>) => {
   if (l.kind === 'item') return `i:${l.item}:${l.size ?? ''}:${(l.extras ?? []).slice().sort().join(',')}`;
   if (l.kind === 'burger') return `b:${l.burger!.bun}:${l.burger!.fill.join(',')}`;
+  if (l.kind === 'set') return `s:${l.set!.drink}:${l.set!.burger}:${l.set!.pct}`;
   const c = l.coffee!; return `c:${[c.temp, c.size, c.shots, c.milk, c.milkAmt, c.foam, c.syrup, c.topping].join(',')}`;
 };
 function sanitize(raw: unknown): Line[] {
@@ -69,6 +70,10 @@ function sanitize(raw: unknown): Line[] {
       base = { kind: 'item', item: it.id, size, extras };
     } else if (o.kind === 'burger') { const b = sanitizeBurger(o.burger); if (b && b.fill.length) base = { kind: 'burger', burger: b }; }
     else if (o.kind === 'coffee') { const c = sanitizeCoffee(o.coffee); if (c) base = { kind: 'coffee', coffee: c }; }
+    else if (o.kind === 'set' && o.set && typeof o.set === 'object') {
+      const st = o.set as Record<string, unknown>;
+      if (SET_DRINKS.includes(st.drink as string) && SET_BURGERS.includes(st.burger as string) && SET_DISCOUNTS.includes(Number(st.pct))) base = { kind: 'set', set: { drink: String(st.drink), burger: String(st.burger), pct: Number(st.pct) } };
+    }
     if (base) out.push({ ...base, sig: sigOf(base), qty, who });
   }
   return out;
@@ -76,17 +81,20 @@ function sanitize(raw: unknown): Line[] {
 export let cart: Line[] = sanitize(store.get('vc-cart'));
 export const saveCart = () => { store.set('vc-cart', cart); emit('cart'); };
 export function unitPrice(l: Line): number {
+  if (l.kind === 'set') return setPrice(l.set!.drink, l.set!.burger, l.set!.pct);
   if (l.kind === 'burger') return burgerPrice(l.burger!);
   if (l.kind === 'coffee') return coffeePrice(l.coffee!);
   const it = ITEM(l.item!)!;
   return it.price + (it.sized ? SIZES.find(s => s.id === l.size)?.add ?? 0 : 0) + (l.extras ?? []).reduce((a, e) => a + EXTRAS[e].price, 0);
 }
 export function lineName(l: Line): string {
+  if (l.kind === 'set') return `${t('set.name')}: ${ITEM(l.set!.drink)!.name[state.lang]} + ${ITEM(l.set!.burger)!.name[state.lang]}`;
   if (l.kind === 'burger') return burgerName(l.burger!, state.lang);
   if (l.kind === 'coffee') return coffeeName(l.coffee!, state.lang);
   return ITEM(l.item!)!.name[state.lang];
 }
 export function lineSub(l: Line): string {
+  if (l.kind === 'set') return `${ITEM(l.set!.drink)!.sized ? 'M · ' : ''}${tf('set.off', { p: l.set!.pct })}`;
   if (l.kind === 'burger') return `${t('lab.custom')} · ${l.burger!.fill.length} ${t('lab.layersShort')}`;
   if (l.kind === 'coffee') return `${t('lab.custom')} · ${l.coffee!.size} · ${t('lab.temp.' + l.coffee!.temp)}`;
   const parts: string[] = [];
@@ -95,16 +103,18 @@ export function lineSub(l: Line): string {
   return parts.join(' · ');
 }
 export function lineArt(l: Line): ArtSpec {
+  if (l.kind === 'set') return { k: 'combo', parts: [ITEM(l.set!.drink)!.art, ITEM(l.set!.burger)!.art] };
   if (l.kind === 'burger') return burgerArt(l.burger!);
   if (l.kind === 'coffee') return coffeeArt(l.coffee!);
   return ITEM(l.item!)!.art;
 }
 export function linePrep(l: Line): number {
+  if (l.kind === 'set') return Math.max(ITEM(l.set!.drink)!.prep, ITEM(l.set!.burger)!.prep);
   if (l.kind === 'burger') return burgerPrep(l.burger!);
   if (l.kind === 'coffee') return coffeePrep(l.coffee!);
   return ITEM(l.item!)!.prep;
 }
-export const isCoffeeLine = (l: Line) => l.kind === 'coffee' || (l.kind === 'item' && ['coffee', 'cold'].includes(ITEM(l.item!)!.cat) && ITEM(l.item!)!.id !== 'soda' && !ITEM(l.item!)!.id.includes('lemonade'));
+export const isCoffeeLine = (l: Line) => l.kind === 'coffee' || (l.kind === 'set' && l.set!.drink !== 'matcha') || (l.kind === 'item' && ['coffee', 'cold'].includes(ITEM(l.item!)!.cat) && ITEM(l.item!)!.id !== 'soda' && !ITEM(l.item!)!.id.includes('lemonade'));
 export const subtotal = () => cart.reduce((a, l) => a + unitPrice(l) * l.qty, 0);
 export const count = () => cart.reduce((a, l) => a + l.qty, 0);
 
@@ -124,7 +134,7 @@ export function itemPic(it: Item, w: number, alt = '', eager = false): string {
   if (!it.photo) return svg(it.art, 'art', alt);
   return `<img class="ph" src="${photoURL(it.photo, w)}" srcset="${photoURL(it.photo, w)} 1x, ${photoURL(it.photo, w * 2)} 2x" alt="${esc(alt)}" ${eager ? '' : 'loading="lazy"'} decoding="async" data-fb="${it.id}">`;
 }
-export function lineVisual(l: Pick<Line, 'kind' | 'item' | 'burger' | 'coffee'>, w: number): string {
+export function lineVisual(l: Pick<Line, 'kind' | 'item' | 'burger' | 'coffee' | 'set'>, w: number): string {
   return l.kind === 'item' ? itemPic(ITEM(l.item!)!, w) : svg(lineArt(l as Line));
 }
 document.addEventListener('error', e => {

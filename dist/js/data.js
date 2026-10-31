@@ -130,3 +130,9 @@ export const ZONES = [
     { id: 'city', name: n('Andijon shahri', 'Город Андижан', 'Andijan city'), fee: 12000, freeFrom: 200000, mins: 40 },
 ];
 export const STAMPS_FOR_GIFT = 6;
+/* ---------- hero pair (a random drink + burger set with a discount, new on every visit) ---------- */
+export const SET_DISCOUNTS = [10, 12, 15];
+export const SET_DRINKS = ['violette-latte', 'latte', 'cappuccino', 'mocha', 'raf', 'iced-latte', 'iced-violette', 'matcha'];
+export const SET_BURGERS = ['violette-burger', 'classic-burger', 'cheeseburger', 'double-beef', 'chicken-burger'];
+export function setFull(d, b) { const di = ITEM(d), bi = ITEM(b); return di.price + (di.sized ? SIZES[1].add : 0) + bi.price; }
+export function setPrice(d, b, pct) { return Math.round((setFull(d, b) * (100 - pct)) / 100 / 500) * 500; }

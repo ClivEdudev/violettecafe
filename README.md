@@ -4,7 +4,7 @@ Coffee shop and fast-food website for Violette cafe, Andijan (Plus Code P8WQ+PW,
 Zero-dependency static site written in TypeScript, in Uzbek, Russian and English.
 
 ## What it does
-- **Scroll-driven hero**, drawn to look real in one scene: a glass mug fills with lavender syrup, milk and espresso (soft blended layers, foam, latte-art heart, steam), then a violet-bun burger drops onto a plate layer by layer, and a receipt prints with the pair's price ("Get this pair" adds both).
+- **Scroll-driven hero**, drawn to look real in one scene, with a **new random pair on every visit**: one of 8 drinks (Violette latte, latte, cappuccino, mocha, raf, iced latte, iced Violette, iced matcha — each with its own layers, foam, latte art, ice or whipped cream) and one of 5 burgers (built from that burger's real recipe), plus a random pair discount of 10, 12 or 15%. The glass fills layer by layer, the burger drops onto a plate, a discount sticker pops on and a receipt prints the prices, discount and total. "Get this pair" adds it to the cart as one discounted set (`SET_*` and `setPrice` in `src/data.ts`; the discount is a proposal — confirm with the owner).
 - **Two-world menu**: a Coffee & sweets / Fast food switch floods the screen with liquid and re-colours the site (violet for coffee, ketchup red for food). Opens on coffee before noon and on food after, by Tashkent time. Category chips, search across all three languages, item dialog with sizes (S/M/L) and extras.
 - **Build your own** (`src/lab.ts`):
   - Burger stacker: pick a bun, drop up to 9 fillings (the top bun hops up and lands back), undo, clear, "Surprise me". Live price, calories, prep time, height in cm and an auto-generated name.

@@ -1,6 +1,6 @@
 // Small shared core: DOM helpers, storage, language, cart, overlays, toasts.
 import { DICT } from './i18n.js';
-import { ITEM, EXTRAS, SIZES, photoURL } from './data.js';
+import { ITEM, EXTRAS, SIZES, photoURL, SET_DISCOUNTS, SET_DRINKS, SET_BURGERS, setPrice } from './data.js';
 import { burgerPrice, burgerName, burgerArt, burgerPrep, coffeePrice, coffeeName, coffeeArt, coffeePrep, sanitizeBurger, sanitizeCoffee } from './recipes.js';
 import { svg } from './art.js';
 export const $ = (s, root = document) => root.querySelector(s);
@@ -58,6 +58,8 @@ const sigOf = (l) => {
         return `i:${l.item}:${l.size ?? ''}:${(l.extras ?? []).slice().sort().join(',')}`;
     if (l.kind === 'burger')
         return `b:${l.burger.bun}:${l.burger.fill.join(',')}`;
+    if (l.kind === 'set')
+        return `s:${l.set.drink}:${l.set.burger}:${l.set.pct}`;
     const c = l.coffee;
     return `c:${[c.temp, c.size, c.shots, c.milk, c.milkAmt, c.foam, c.syrup, c.topping].join(',')}`;
 };
@@ -88,6 +90,11 @@ function sanitize(raw) {
             if (c)
                 base = { kind: 'coffee', coffee: c };
         }
+        else if (o.kind === 'set' && o.set && typeof o.set === 'object') {
+            const st = o.set;
+            if (SET_DRINKS.includes(st.drink) && SET_BURGERS.includes(st.burger) && SET_DISCOUNTS.includes(Number(st.pct)))
+                base = { kind: 'set', set: { drink: String(st.drink), burger: String(st.burger), pct: Number(st.pct) } };
+        }
         if (base)
             out.push({ ...base, sig: sigOf(base), qty, who });
     }
@@ -96,6 +103,8 @@ function sanitize(raw) {
 export let cart = sanitize(store.get('vc-cart'));
 export const saveCart = () => { store.set('vc-cart', cart); emit('cart'); };
 export function unitPrice(l) {
+    if (l.kind === 'set')
+        return setPrice(l.set.drink, l.set.burger, l.set.pct);
     if (l.kind === 'burger')
         return burgerPrice(l.burger);
     if (l.kind === 'coffee')
@@ -104,6 +113,8 @@ export function unitPrice(l) {
     return it.price + (it.sized ? SIZES.find(s => s.id === l.size)?.add ?? 0 : 0) + (l.extras ?? []).reduce((a, e) => a + EXTRAS[e].price, 0);
 }
 export function lineName(l) {
+    if (l.kind === 'set')
+        return `${t('set.name')}: ${ITEM(l.set.drink).name[state.lang]} + ${ITEM(l.set.burger).name[state.lang]}`;
     if (l.kind === 'burger')
         return burgerName(l.burger, state.lang);
     if (l.kind === 'coffee')
@@ -111,6 +122,8 @@ export function lineName(l) {
     return ITEM(l.item).name[state.lang];
 }
 export function lineSub(l) {
+    if (l.kind === 'set')
+        return `${ITEM(l.set.drink).sized ? 'M · ' : ''}${tf('set.off', { p: l.set.pct })}`;
     if (l.kind === 'burger')
         return `${t('lab.custom')} · ${l.burger.fill.length} ${t('lab.layersShort')}`;
     if (l.kind === 'coffee')
@@ -122,6 +135,8 @@ export function lineSub(l) {
     return parts.join(' · ');
 }
 export function lineArt(l) {
+    if (l.kind === 'set')
+        return { k: 'combo', parts: [ITEM(l.set.drink).art, ITEM(l.set.burger).art] };
     if (l.kind === 'burger')
         return burgerArt(l.burger);
     if (l.kind === 'coffee')
@@ -129,13 +144,15 @@ export function lineArt(l) {
     return ITEM(l.item).art;
 }
 export function linePrep(l) {
+    if (l.kind === 'set')
+        return Math.max(ITEM(l.set.drink).prep, ITEM(l.set.burger).prep);
     if (l.kind === 'burger')
         return burgerPrep(l.burger);
     if (l.kind === 'coffee')
         return coffeePrep(l.coffee);
     return ITEM(l.item).prep;
 }
-export const isCoffeeLine = (l) => l.kind === 'coffee' || (l.kind === 'item' && ['coffee', 'cold'].includes(ITEM(l.item).cat) && ITEM(l.item).id !== 'soda' && !ITEM(l.item).id.includes('lemonade'));
+export const isCoffeeLine = (l) => l.kind === 'coffee' || (l.kind === 'set' && l.set.drink !== 'matcha') || (l.kind === 'item' && ['coffee', 'cold'].includes(ITEM(l.item).cat) && ITEM(l.item).id !== 'soda' && !ITEM(l.item).id.includes('lemonade'));
 export const subtotal = () => cart.reduce((a, l) => a + unitPrice(l) * l.qty, 0);
 export const count = () => cart.reduce((a, l) => a + l.qty, 0);
 export function addLine(base, qty = 1, from) {
