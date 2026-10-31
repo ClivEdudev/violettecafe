@@ -12,7 +12,7 @@ const NONE: Hit = { kind: 'none', el: null, box: null, label: '' };
 const INTERACTIVE = 'a[href], button:not(:disabled), [role="button"], [role="option"], [role="tab"], [role="radio"], label.check, label.switch, input:not([type="hidden"]), textarea, summary';
 const TEXTY = 'input:not([type]), input[type="text"], input[type="tel"], input[type="search"], input[type="email"], textarea, #bgAmount';
 /** Buttons that spend money, remove things or send something must be hit on purpose. */
-const NO_MAGNET = '[data-add], #imAdd, #bAdd, #cAdd, #bgAdd, #bgSpin, #heroCombo, #coNext, #toCheckout, #bkSend, [data-rm], #bClear, input[type="range"]';
+const NO_MAGNET = '[data-add], [data-bq], #imAdd, #bAdd, #cAdd, #bgAdd, #bgSurprise, #bgClear, #heroCombo, #coNext, #toCheckout, #bkSend, [data-rm], #bClear, input[type="range"]';
 const SURFACE = '.sheet, .drawer-panel, .menu.open, .top, main, footer';
 const MAGNET = 18;
 

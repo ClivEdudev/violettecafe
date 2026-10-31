@@ -1,172 +1,149 @@
-// "Will it fit my budget?" — a slot machine that builds a filling set for each person within the money they have.
-import { ITEMS, SIZES } from './data.js';
-import { $, $$, clamp, reduced, esc, state, t, tf, money, on, addLine, toast, itemPic } from './shared.js';
-const bg = { amount: 100000, people: 2, mood: 'both' };
-let last = null;
+// "Will it fit my budget?" — a live budget tracker. Set the money and how many people, then tap dishes:
+// each pick is taken off the budget, dishes that no longer fit are marked, and the split per person updates.
+import { ITEMS, CATS, SIZES } from './data.js';
+import { $, $$, clamp, reduced, esc, state, t, tf, money, on, addLine, toast, itemPic, tween } from './shared.js';
+const bg = { amount: 150000, people: 2, cat: 'all' };
+const picks = new Map();
+const MAX_EACH = 20;
 const priceOf = (i) => i.price + (i.sized ? SIZES[1].add : 0);
-function pools(m) {
-    const main = ITEMS.filter(i => ['burger', 'lavash', 'hotdog'].includes(i.cat));
-    const sides = ITEMS.filter(i => i.cat === 'sides');
-    const sweets = ITEMS.filter(i => i.cat === 'sweet');
-    const coffee = ITEMS.filter(i => ['coffee', 'cold'].includes(i.cat) && i.role === 'drink');
-    const colds = ITEMS.filter(i => i.cat === 'cold' || i.cat === 'tea');
-    if (m === 'food')
-        return [main, sides, colds];
-    if (m === 'coffee')
-        return [sweets, sweets.filter(s => s.id.includes('croissant')), coffee];
-    return [main, [...sides, ...sweets], coffee];
-}
-const sum = (set) => set.reduce((a, i) => a + (i ? priceOf(i) : 0), 0);
-function pickSets() {
-    const [A, Bp, Cp] = pools(bg.mood);
-    const per = bg.amount / bg.people;
-    const minA = Math.min(...A.map(priceOf)), minC = Math.min(...Cp.map(priceOf));
-    const minPossible = Math.min(minA, minC);
-    if (per < minPossible)
-        return { sets: [], min: Math.ceil(minPossible * bg.people / 1000) * 1000 };
-    const rnd = (a) => a[Math.floor(Math.random() * a.length)];
-    const used = new Map();
-    const sets = [];
-    for (let p = 0; p < bg.people; p++) {
-        let best = null, bestScore = -1;
-        for (let k = 0; k < 500; k++) {
-            const shape = k < 300 ? 3 : k < 420 ? 2 : 1;
-            const cand = shape === 3 ? [rnd(A), rnd(Bp), rnd(Cp)] : shape === 2 ? [rnd(A), null, rnd(Cp)] : [Math.random() < .5 ? rnd(A) : null, null, null];
-            if (shape === 1 && !cand[0])
-                cand[2] = rnd(Cp);
-            const s = sum(cand);
-            if (s > per || s === 0)
-                continue;
-            const rep = cand.reduce((a, i) => a + (i ? used.get(i.id) ?? 0 : 0), 0);
-            const score = s / per + (shape === 3 ? .35 : shape === 2 ? .15 : 0) - rep * .12 + Math.random() * .1;
-            if (score > bestScore) {
-                bestScore = score;
-                best = cand;
-            }
-        }
-        if (!best)
-            return { sets: [], min: Math.ceil(minPossible * bg.people / 1000) * 1000 };
-        best.forEach(i => i && used.set(i.id, (used.get(i.id) ?? 0) + 1));
-        sets.push(best);
-    }
-    return { sets, min: 0 };
-}
-const REEL_H = () => $('.reel').getBoundingClientRect().height || 120;
-function cellHTML(i) {
-    return `<div class="cell">${i ? itemPic(i, 300, '', true) : '<span class="cell-none">—</span>'}</div>`;
-}
-function spinReels(final, done) {
-    const strips = $$('.reel .strip');
-    const [A, Bp, Cp] = pools(bg.mood);
-    const pool = [A, Bp, Cp];
-    const N = 16;
-    let finished = 0;
-    strips.forEach((s, r) => {
-        const cells = Array.from({ length: N - 1 }, () => pool[r][Math.floor(Math.random() * pool[r].length)]);
-        cells.push(final[r]);
-        s.innerHTML = cells.map(cellHTML).join('');
-        const h = REEL_H();
-        if (reduced) {
-            s.style.transform = `translateY(${-(N - 1) * h}px)`;
-            if (++finished === 3)
-                done();
-            return;
-        }
-        const a = s.animate([{ transform: 'translateY(0)', filter: 'blur(0)' }, { transform: `translateY(${-(N - 4) * h}px)`, filter: 'blur(2px)', offset: .7 }, { transform: `translateY(${-(N - 1) * h - 12}px)`, filter: 'blur(0)', offset: .92 }, { transform: `translateY(${-(N - 1) * h}px)` }], { duration: 1300 + r * 380, easing: 'cubic-bezier(.3,.1,.2,1)', fill: 'forwards' });
-        a.onfinish = () => { s.style.transform = `translateY(${-(N - 1) * h}px)`; a.cancel(); $('#slot').classList.add(`hit${r}`); if (++finished === 3)
-            done(); };
-    });
-}
-function renderResult() {
-    const box = $('#bgResult');
-    if (!last) {
-        box.innerHTML = '';
-        return;
-    }
-    const total = last.reduce((a, s) => a + sum(s), 0);
-    box.innerHTML = `<ul class="bg-people">${last.map((s, p) => `<li style="--k:${p}"><span class="bg-who">${tf('budget.person', { n: p + 1 })}</span>
-      <div class="bg-items">${s.filter(Boolean).map(i => `<span class="bg-item">${itemPic(i, 120)}<small>${esc(i.name[state.lang])}</small></span>`).join('')}</div>
-      <b>${money(sum(s))}</b></li>`).join('')}</ul>
-    <div class="bg-sum"><div><span>${t('budget.total')}</span><b>${money(total)}</b></div><div><span>${t('budget.left')}</span><b>${money(bg.amount - total)}</b></div>
-    <button type="button" class="btn btn-ink" id="bgAdd">${t('budget.addAll')}</button></div>`;
-}
+const spent = () => [...picks].reduce((a, [id, q]) => a + priceOf(ITEMS.find(i => i.id === id)) * q, 0);
+const count = () => [...picks.values()].reduce((a, b) => a + b, 0);
+const round500 = (n) => Math.ceil(n / 500) * 500;
 const fmt = (n) => n.toLocaleString('ru-RU').replace(/\s/g, ' ');
-function setAmount(v, fromRange = false) {
-    bg.amount = clamp(Math.round(v / 1000) * 1000, 0, 5000000);
-    if (!fromRange)
-        $('#bgRange').value = String(clamp(bg.amount, 20000, 600000));
-    const inp = $('#bgAmount');
-    if (document.activeElement !== inp)
-        inp.value = fmt(bg.amount);
-    const r = $('#bgRange');
-    r.style.setProperty('--fill', `${((Number(r.value) - 20000) / (600000 - 20000)) * 100}%`);
+const PCOL = ['#7A4FB0', '#E2452F', '#F4B731', '#3E8E6A', '#3E6FB8', '#C2185B', '#8A5A3B', '#4B4F5C', '#9D7BD1', '#E07B39'];
+let shownLeft = bg.amount, stopCount = null;
+function animateLeft(to) {
+    stopCount?.();
+    const from = shownLeft, el = $('#bgLeft');
+    stopCount = tween(450, k => { shownLeft = Math.round(from + (to - from) * (1 - Math.pow(1 - k, 3))); el.textContent = money(Math.abs(shownLeft)); });
 }
-function renderMood() {
-    $('#bgMood').innerHTML = ['both', 'food', 'coffee'].map(m => `<button type="button" role="radio" data-mood="${m}" aria-checked="${bg.mood === m}">${t('mood.' + m)}</button>`).join('');
+function renderCats() {
+    $('#bgCats').innerHTML = [`<button role="tab" data-bcat="all" aria-selected="${bg.cat === 'all'}">${t('menu.all')}</button>`,
+        ...CATS.map(c => `<button role="tab" data-bcat="${c.id}" aria-selected="${bg.cat === c.id}">${esc(c.name[state.lang])}</button>`)].join('');
+}
+function renderList() {
+    const left = bg.amount - spent();
+    const list = ITEMS.filter(i => bg.cat === 'all' || i.cat === bg.cat).sort((a, b) => (bg.cat === 'all' ? b.pop - a.pop : priceOf(a) - priceOf(b)));
+    $('#bgList').innerHTML = list.map(i => {
+        const q = picks.get(i.id) ?? 0, p = priceOf(i), fits = p <= left;
+        return `<li class="pick${q ? ' on' : ''}${fits || q ? '' : ' nofit'}" data-id="${i.id}">
+      <div class="pk-art">${itemPic(i, 120)}</div>
+      <div class="pk-main"><b>${esc(i.name[state.lang])}${i.sized ? ' <small>M</small>' : ''}</b>
+        <span>${money(p)}${fits || q ? '' : ` · <em>${t('budget.noFit')} (${tf('budget.need', { s: money(p - left) })})</em>`}</span></div>
+      <div class="stepper sm pk-q">${q ? `<button type="button" data-bq="-1" aria-label="${t('aria.less')}: ${esc(i.name[state.lang])}">−</button><output>${q}</output>` : ''}<button type="button" data-bq="1" ${fits && q < MAX_EACH ? '' : 'disabled'} aria-label="${t('aria.more')}: ${esc(i.name[state.lang])}">+</button></div>
+    </li>`;
+    }).join('');
+}
+function renderMeter() {
+    const s = spent(), left = bg.amount - s, n = count();
+    const over = left < 0;
+    $('#bgMeter').classList.toggle('over', over);
+    $('#bgLeftLabel').textContent = over ? t('budget.overLabel') : t('budget.left');
+    animateLeft(left);
+    $('#bgBar').style.width = `${bg.amount > 0 ? clamp(s / bg.amount, 0, 1) * 100 : 0}%`;
+    $('#bgSpent').textContent = `${money(s)}${n ? ` · ${tf('budget.items', { n })}` : ''}`;
+    $('#bgEach').textContent = money(round500(s / bg.people));
+    $('#bgPer').textContent = money(Math.floor(bg.amount / bg.people / 500) * 500);
+    const fitN = ITEMS.filter(i => priceOf(i) <= left).length;
+    $('#bgHint').textContent = !n ? t('budget.empty') : over ? tf('budget.over', { s: money(-left) }) : fitN ? tf('budget.fits', { n: fitN, s: money(left) }) : t('budget.none');
+    $('#bgSplit').innerHTML = Array.from({ length: bg.people }, (_, k) => `<span style="--pc:${PCOL[k % PCOL.length]}"><i>${k + 1}</i>${money(round500(s / bg.people))}</span>`).join('');
+    $('#bgHeads').innerHTML = Array.from({ length: bg.people }, (_, k) => `<i style="--pc:${PCOL[k % PCOL.length]};--k:${k}"></i>`).join('');
+    const add = $('#bgAdd');
+    add.textContent = n ? `${t('budget.addAll')} · ${money(s)}` : t('budget.addAll');
+    add.disabled = !n;
+    $('#bgClear').disabled = !n;
+    $('#bgSurprise').disabled = left < Math.min(...ITEMS.map(priceOf));
     $('output', $('#bgPeople')).textContent = String(bg.people);
 }
+function render() { renderList(); renderMeter(); }
+function flyCost(from, amount) {
+    if (reduced)
+        return;
+    const a = from.getBoundingClientRect(), b = $('#bgLeft').getBoundingClientRect();
+    const el = document.createElement('span');
+    el.className = 'cost-fly';
+    el.textContent = `−${fmt(amount)}`;
+    el.style.left = `${a.left + a.width / 2}px`;
+    el.style.top = `${a.top}px`;
+    document.body.appendChild(el);
+    const dx = b.left + b.width / 2 - (a.left + a.width / 2), dy = b.top + b.height / 2 - a.top;
+    const onScreen = b.top > 0 && b.bottom < innerHeight;
+    el.animate(onScreen
+        ? [{ transform: 'translate(-50%, 0) scale(1)', opacity: 1 }, { transform: `translate(calc(-50% + ${dx * .5}px), ${Math.min(-60, dy * .5 - 80)}px) scale(1.15)`, opacity: 1, offset: .5 }, { transform: `translate(calc(-50% + ${dx}px), ${dy}px) scale(.6)`, opacity: 0 }]
+        : [{ transform: 'translate(-50%, 0)', opacity: 1 }, { transform: 'translate(-50%, -70px)', opacity: 0 }], { duration: onScreen ? 700 : 600, easing: 'cubic-bezier(.4,0,.3,1)' }).onfinish = () => el.remove();
+    const m = $('#bgMeter');
+    m.classList.remove('bump');
+    void m.offsetWidth;
+    m.classList.add('bump');
+}
+/** Fills what's left of the budget with a random, filling set (a main, then a side or sweet, then a drink, round after round). */
+function surprise() {
+    let left = bg.amount - spent();
+    const main = ITEMS.filter(i => ['burger', 'lavash', 'hotdog'].includes(i.cat));
+    const side = ITEMS.filter(i => i.cat === 'sides' || i.cat === 'sweet');
+    const drink = ITEMS.filter(i => ['coffee', 'cold', 'tea'].includes(i.cat));
+    const rnd = (a) => { const ok = a.filter(i => priceOf(i) <= left); return ok.length ? ok[Math.floor(Math.random() * ok.length)] : null; };
+    const added = [];
+    for (let round = 0; round < bg.people; round++) {
+        for (const pool of [main, side, drink]) {
+            const it = rnd(pool);
+            if (it && (picks.get(it.id) ?? 0) < MAX_EACH) {
+                picks.set(it.id, (picks.get(it.id) ?? 0) + 1);
+                left -= priceOf(it);
+                added.push(it);
+            }
+        }
+    }
+    if (!added.length)
+        return;
+    render();
+    if (!reduced)
+        $$('#bgList .pick.on').forEach((li, k) => li.animate([{ transform: 'scale(1)' }, { transform: 'scale(1.03)', offset: .4 }, { transform: 'scale(1)' }], { duration: 380, delay: k * 40 }));
+}
 export function initBudget() {
-    renderMood();
+    renderCats();
+    render();
+    $('#budgetForm').addEventListener('submit', e => e.preventDefault());
+    const range = $('#bgRange'), amt = $('#bgAmount');
+    const setAmount = (v, fromRange = false) => {
+        bg.amount = clamp(Math.round(v / 1000) * 1000, 0, 5000000);
+        if (!fromRange)
+            range.value = String(clamp(bg.amount, 20000, 600000));
+        if (document.activeElement !== amt)
+            amt.value = fmt(bg.amount);
+        range.style.setProperty('--fill', `${((Number(range.value) - 20000) / (600000 - 20000)) * 100}%`);
+        render();
+    };
     setAmount(bg.amount);
-    // idle reels show a teaser
-    const teaser = pools('both');
-    $$('.reel .strip').forEach((s, r) => { s.innerHTML = cellHTML(teaser[r][r + 1]); });
-    $('#bgRange').addEventListener('input', e => setAmount(Number(e.target.value), true));
-    const amt = $('#bgAmount');
+    range.addEventListener('input', () => setAmount(Number(range.value), true));
     amt.addEventListener('input', () => { const d = amt.value.replace(/\D/g, '').slice(0, 7); amt.value = d ? fmt(Number(d)) : ''; setAmount(Number(d) || 0); });
     amt.addEventListener('blur', () => { amt.value = fmt(bg.amount); });
-    $('#budgetForm').addEventListener('click', e => {
-        const tg = e.target;
-        const m = tg.closest('[data-mood]');
-        if (m) {
-            bg.mood = m.dataset.mood;
-            renderMood();
-            $(`[data-mood="${bg.mood}"]`).focus();
+    $('#bgPeople').addEventListener('click', e => { const d = e.target.closest('[data-d]'); if (d) {
+        bg.people = clamp(bg.people + Number(d.dataset.d), 1, 10);
+        renderMeter();
+    } });
+    $('#bgCats').addEventListener('click', e => { const b = e.target.closest('[data-bcat]'); if (!b)
+        return; bg.cat = b.dataset.bcat; renderCats(); renderList(); });
+    $('#bgList').addEventListener('click', e => {
+        const b = e.target.closest('[data-bq]');
+        if (!b || b.disabled)
             return;
-        }
-        const d = tg.closest('#bgPeople [data-d]');
-        if (d) {
-            bg.people = clamp(bg.people + Number(d.dataset.d), 1, 10);
-            renderMood();
-        }
+        const id = b.closest('.pick').dataset.id, it = ITEMS.find(i => i.id === id);
+        const q = clamp((picks.get(id) ?? 0) + Number(b.dataset.bq), 0, MAX_EACH);
+        if (Number(b.dataset.bq) > 0)
+            flyCost(b, priceOf(it));
+        q ? picks.set(id, q) : picks.delete(id);
+        render();
+        $(`#bgList [data-id="${id}"] [data-bq="${b.dataset.bq}"]:not(:disabled)`)?.focus({ preventScroll: true });
     });
-    let spinning = false;
-    $('#budgetForm').addEventListener('submit', e => {
-        e.preventDefault();
-        if (spinning)
-            return;
-        const { sets, min } = pickSets();
-        const slot = $('#slot');
-        slot.classList.remove('hit0', 'hit1', 'hit2');
-        if (!sets.length) {
-            last = null;
-            $('#bgResult').innerHTML = `<p class="bg-low">${esc(tf('budget.low', { n: bg.people, m: money(min) }))}</p>`;
-            slot.classList.remove('shake');
-            void slot.offsetWidth;
-            slot.classList.add('shake');
-            return;
-        }
-        spinning = true;
-        slot.classList.remove('pull');
-        void slot.offsetWidth;
-        slot.classList.add('pull');
-        $('#bgResult').classList.add('wait');
-        spinReels(sets[0], () => {
-            spinning = false;
-            last = sets;
-            renderResult();
-            $('#bgResult').classList.remove('wait');
-            $('#bgSpin span').textContent = t('budget.again');
-        });
-    });
-    $('#bgResult').addEventListener('click', e => {
-        if (!e.target.closest('#bgAdd') || !last)
+    $('#bgSurprise').addEventListener('click', surprise);
+    $('#bgClear').addEventListener('click', () => { picks.clear(); render(); });
+    $('#bgAdd').addEventListener('click', e => {
+        if (!picks.size)
             return;
         let first = true;
-        last.forEach(s => s.forEach(i => { if (!i)
-            return; addLine({ kind: 'item', item: i.id, size: i.sized ? 'M' : undefined, extras: [] }, 1, first ? $('#bgAdd') : null); first = false; }));
+        picks.forEach((q, id) => { const it = ITEMS.find(i => i.id === id); addLine({ kind: 'item', item: id, size: it.sized ? 'M' : undefined, extras: [] }, q, first ? e.currentTarget : null); first = false; });
         toast(t('budget.added'));
     });
-    on('lang', () => { renderMood(); renderResult(); if (last)
-        $('#bgSpin span').textContent = t('budget.again'); });
+    on('lang', () => { renderCats(); render(); });
 }

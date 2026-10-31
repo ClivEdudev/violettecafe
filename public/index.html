@@ -172,26 +172,36 @@
       <div data-sr="slide"><h2 data-i18n="budget.title" data-split>Pul yetadimi?</h2><p class="sec-sub" data-i18n="budget.sub"></p></div>
     </div>
     <div class="budget-wrap">
-      <form class="budget-form" id="budgetForm" data-sr="tilt">
-        <label class="field"><span data-i18n="budget.amount">Qancha pulingiz bor?</span>
-          <div class="money-in"><input id="bgAmount" inputmode="numeric" autocomplete="off" value="100 000"><em data-i18n="cur">soʻm</em></div>
-          <input type="range" id="bgRange" min="20000" max="600000" step="5000" value="100000" data-i18n-aria="budget.amount" aria-label="Qancha pulingiz bor?">
-        </label>
-        <div class="field"><span data-i18n="budget.people">Necha kishi?</span>
-          <div class="stepper" id="bgPeople"><button type="button" data-d="-1" data-i18n-aria="aria.less" aria-label="Kamroq">−</button><output>2</output><button type="button" data-d="1" data-i18n-aria="aria.more" aria-label="Koʻproq">+</button></div>
+      <div class="budget-side" data-sr="tilt">
+        <form class="budget-form" id="budgetForm">
+          <label class="field"><span data-i18n="budget.amount">Qancha pulingiz bor?</span>
+            <div class="money-in"><input id="bgAmount" inputmode="numeric" autocomplete="off" value="150 000"><em data-i18n="cur">soʻm</em></div>
+            <input type="range" id="bgRange" min="20000" max="600000" step="5000" value="150000" data-i18n-aria="budget.amount" aria-label="Qancha pulingiz bor?">
+          </label>
+          <div class="field"><span data-i18n="budget.people">Necha kishi?</span>
+            <div class="people-row"><div class="stepper" id="bgPeople"><button type="button" data-d="-1" data-i18n-aria="aria.less" aria-label="Kamroq">−</button><output>2</output><button type="button" data-d="1" data-i18n-aria="aria.more" aria-label="Koʻproq">+</button></div><div class="heads" id="bgHeads" aria-hidden="true"></div></div>
+          </div>
+        </form>
+        <div class="meter" id="bgMeter" aria-live="polite">
+          <div class="meter-top"><span id="bgLeftLabel" data-i18n="budget.left">Qoldi</span><b id="bgLeft">150 000</b></div>
+          <div class="meter-bar"><i id="bgBar"></i></div>
+          <div class="meter-rows">
+            <div><span data-i18n="budget.spent">Tanlandi</span><b id="bgSpent"></b></div>
+            <div><span data-i18n="budget.each">Har kishi toʻlaydi</span><b id="bgEach"></b></div>
+            <div><span data-i18n="budget.perHead">Bir kishiga byudjet</span><b id="bgPer"></b></div>
+          </div>
+          <p class="meter-hint" id="bgHint"></p>
+          <div class="split-heads" id="bgSplit"></div>
+          <div class="meter-actions">
+            <button type="button" class="btn btn-mini" id="bgSurprise" data-i18n="budget.surprise">Tasodifiy toʻldirish</button>
+            <button type="button" class="btn btn-mini" id="bgClear" data-i18n="budget.clear">Tozalash</button>
+          </div>
+          <button type="button" class="btn btn-ink btn-big" id="bgAdd"></button>
         </div>
-        <div class="field"><span data-i18n="budget.mood">Nimani xohlaysiz?</span>
-          <div class="seg" id="bgMood" role="radiogroup"></div>
-        </div>
-        <button class="btn btn-acc btn-big" id="bgSpin" type="submit"><span data-i18n="budget.spin">Aylantirish</span></button>
-      </form>
-      <div class="slot-side">
-        <div class="slot" id="slot" aria-hidden="true" data-sr="swing">
-          <div class="slot-top"><span>V</span><i></i><i></i><i></i></div>
-          <div class="reels"><div class="reel"><div class="strip"></div></div><div class="reel"><div class="strip"></div></div><div class="reel"><div class="strip"></div></div></div>
-          <div class="slot-lever"><i></i></div>
-        </div>
-        <div class="bg-result" id="bgResult" aria-live="polite"></div>
+      </div>
+      <div class="picker" data-sr="up">
+        <div class="chips" id="bgCats" role="tablist"></div>
+        <ul class="pick-list" id="bgList"></ul>
       </div>
     </div>
   </section>
