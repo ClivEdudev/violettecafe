@@ -400,7 +400,13 @@ input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 
 
 /* ============ footer ============ */
 .foot { padding: 0 max(20px, 4vw) 40px; text-align: center; overflow: hidden; }
-.foot-word { font: 400 clamp(4.5rem, 21vw, 19rem)/.9 var(--display); color: transparent; -webkit-text-stroke: 2px var(--violet); letter-spacing: -.02em; user-select: none; }
+.foot-word { position: relative; width: min(100%, 1300px); margin: 0 auto; user-select: none; }
+.foot-word svg { display: block; width: 100%; height: auto; overflow: visible; }
+.foot-word text { font: 400 210px var(--display); }
+.fw-o text { fill: none; stroke: var(--violet); stroke-width: 2.5; }
+.fw-f { position: absolute; inset: 0; }
+.fw-f text { fill: var(--violet); opacity: .9; }
+.sr-on .fw-f { clip-path: inset(calc((1 - var(--p)) * 100%) 0 0 0); }
 .foot p { margin: 14px auto 0; color: var(--ink2); max-width: 60ch; font-weight: 600; font-size: .92rem; }
 .foot-small { font-size: .82rem !important; }
 
@@ -653,7 +659,6 @@ html.cur-labelled .cur-label { opacity: 1; scale: 1; }
 .sr-on [data-sr="swing"] { rotate: calc((1 - var(--p)) * 8deg); translate: calc((1 - var(--p)) * 120px) calc((1 - var(--p)) * 40px); opacity: calc(.1 + var(--p) * .9); }
 .sr-on .grid { perspective: 1400px; }
 .sr-on [data-sr="card"] { translate: 0 calc((1 - var(--p)) * 110px); rotate: x calc((1 - var(--p)) * 38deg); transform-origin: 50% 100%; opacity: calc(var(--p) * 1.6 - .1); }
-.sr-on [data-sr="spread"] { letter-spacing: calc((1 - var(--p)) * .28em - .02em); translate: 0 calc((1 - var(--p)) * 40px); }
 .beans { position: fixed; inset: 0; z-index: -1; pointer-events: none; overflow: hidden; }
 .beans i { position: absolute; display: block; opacity: .55; will-change: transform; filter: drop-shadow(0 6px 8px rgba(42, 20, 64, .2)); }
 .beans i:nth-child(odd) { filter: blur(1.5px) drop-shadow(0 6px 8px rgba(42, 20, 64, .2)); opacity: .35; }

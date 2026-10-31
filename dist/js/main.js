@@ -130,7 +130,7 @@ function buildScene() {
     <g class="sky">${stars}</g>
     <circle id="disc" cx="520" cy="440" r="330" fill="url(#discG)"/>
     <g id="discRing" fill="none" stroke="var(--ring)" stroke-width="2" stroke-dasharray="3 12"><circle cx="520" cy="440" r="372"/></g>
-    <text class="neon" x="520" y="128" text-anchor="middle">Violette</text>
+    <text class="neon" x="520" y="128" text-anchor="middle" textLength="640" lengthAdjust="spacingAndGlyphs">Violette</text>
     <ellipse cx="${cx}" cy="${bot + 12}" rx="${wb * .72}" ry="14" fill="#1a0a24" opacity=".28" filter="url(#fx-steam)"/>
     ${plateSVG(BURGER.cx, BURGER.base + 10, 206)}
     <g id="pour"><rect id="stream" x="${cx - 7}" y="-20" width="14" height="0" rx="7"/><rect id="streamHi" x="${cx - 7}" y="-20" width="14" height="0" rx="7" fill="url(#g-stream)"/></g>

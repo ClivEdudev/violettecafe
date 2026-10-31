@@ -33,8 +33,8 @@ function frame() {
             continue;
         const kind = el.dataset.sr;
         let p;
-        if (kind === 'spread')
-            p = clamp((vh - top) / (vh * .7));
+        if (kind === 'fill')
+            p = clamp(1 - (document.documentElement.scrollHeight - vh - scrollY) / (vh * .55)); // full when the page bottom is reached
         else if (kind === 'card')
             p = clamp((vh - top) / (vh * .42) - col * .12);
         else

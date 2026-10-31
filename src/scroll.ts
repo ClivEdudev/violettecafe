@@ -32,7 +32,7 @@ function frame() {
     if (top > vh + 200 || top < -3000) continue;
     const kind = el.dataset.sr;
     let p: number;
-    if (kind === 'spread') p = clamp((vh - top) / (vh * .7));
+    if (kind === 'fill') p = clamp(1 - (document.documentElement.scrollHeight - vh - scrollY) / (vh * .55)); // full when the page bottom is reached
     else if (kind === 'card') p = clamp((vh - top) / (vh * .42) - col * .12);
     else p = clamp((vh - top) / (vh * .5));
     el.style.setProperty('--p', p.toFixed(3));
