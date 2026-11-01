@@ -28,7 +28,7 @@ export const state = {
 };
 export const t = (k: string): string => DICT[state.lang]?.[k] ?? DICT.uz[k] ?? k;
 export const tf = (k: string, vars: Record<string, string | number>) => t(k).replace(/\{(\w+)\}/g, (_, v) => String(vars[v] ?? ''));
-export const money = (n: number) => `${Math.round(n).toLocaleString('ru-RU').replace(/\s/g, ' ')} ${t('cur')}`;
+export const money = (n: number) => `${Math.round(n).toLocaleString('ru-RU').replace(/\s/g, '\u00A0')}\u00A0${t('cur')}`;
 export const plural = (n: number, key: string) => {
   if (state.lang === 'ru') { const m10 = n % 10, m100 = n % 100; const f = m10 === 1 && m100 !== 11 ? 'one' : m10 >= 2 && m10 <= 4 && (m100 < 12 || m100 > 14) ? 'few' : 'many'; return t(`${key}.${f}`); }
   if (state.lang === 'en') return t(n === 1 ? `${key}.one` : `${key}.many`);

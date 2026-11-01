@@ -162,7 +162,7 @@ export function wrapName(w: WrapSpec, lang: Lang): string {
     return (head.charAt(0).toUpperCase() + head.slice(1)) + ' ' + (WN[w.meat]?.ru ?? '');
   }
   const words = [w.double ? WN.double[lang] : '', WN[w.meat]?.[lang] ?? '', spicy ? WN.spicy[lang] : '', cheesy ? WN.cheesy[lang] : '', WN[w.base]?.[lang] ?? WN.lavash[lang]].filter(Boolean);
-  const s = words.join(' ');
+  const s = words.map((x, i) => (i ? x.charAt(0).toLowerCase() + x.slice(1) : x)).join(' ');
   return s.charAt(0).toUpperCase() + s.slice(1);
 }
 export const wrapArt = (w: WrapSpec): ArtSpec => ({ k: 'cwrap', w });

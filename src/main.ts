@@ -168,7 +168,7 @@ function buildScene() {
       <text class="st-pct" y="10" text-anchor="middle">−${PAIR.pct}%</text><text class="st-lbl" y="34" text-anchor="middle" id="stLbl"></text></g></g>`;
   if (scale < 1) $('#burger', scene).setAttribute('transform', `translate(${BURGER.cx} ${BURGER.base}) scale(${scale}) translate(${-BURGER.cx} ${-BURGER.base})`);
 }
-function fitScene() { scene.setAttribute('viewBox', innerWidth <= 960 ? '160 150 840 560' : '0 0 1200 800'); }
+function fitScene() { scene.setAttribute('viewBox', innerWidth <= 960 ? '160 34 840 676' : '0 0 1200 800'); }
 const stageKeys = ['hero.s0', 'hero.s1', 'hero.s2', 'hero.s3', 'hero.s4', 'hero.s5', 'hero.s6'];
 let stageIdx = -1, heroP = -1;
 function setAttrs(el: Element, a: Record<string, number | string>) { for (const k in a) el.setAttribute(k, String(a[k])); }
@@ -517,7 +517,8 @@ function renderCart() {
   const last = store.get('vc-last') as { n?: number; total?: number; at?: number } | null;
   $('#cartLast').hidden = !last || !last.n;
   if (last && last.n) $('#cartLast').innerHTML = `<div><b>${t('last.title')}</b><small>${last.at ? ddmmyyyy(new Date(last.at)) + ' · ' : ''}${last.n} ${plural(last.n, 'items')} · ${money(last.total ?? 0)}</small></div><button type="button" class="btn btn-mini" data-repeat>${t('last.repeat')}</button>`;
-  $('#cartEta').textContent = tf('cart.eta', { t: hhmm(eta()) });
+  if (acceptingNow()) $('#cartEta').textContent = tf('cart.eta', { t: hhmm(eta()) });
+  else { const s = timeSlots(); $('#cartEta').textContent = tf('cart.closedEta', { t: timeInline(s.slots[0] ?? `${pad(CAFE.open)}:00`, s.tomorrow) }); }
   renderSplit(); renderStamps();
 }
 function splitShares(): number[] {
@@ -585,7 +586,7 @@ const saved = (store.get('vc-contact') ?? {}) as Record<string, string>;
 const order = {
   step: 1, method: (tableParam ? 'table' : 'pickup') as Method, zone: 'near', table: tableParam,
   name: typeof saved.name === 'string' ? saved.name.slice(0, 60) : '', phone: typeof saved.phone === 'string' ? saved.phone.replace(/\D/g, '').slice(0, 9) : '',
-  address: typeof saved.address === 'string' ? saved.address.slice(0, 160) : '', time: 'asap', payment: 'cash', comment: '',
+  address: typeof saved.address === 'string' ? saved.address.slice(0, 160) : '', time: 'asap', tomorrow: false, payment: 'cash', comment: '',
 };
 const phoneDigits = (raw: string) => { let d = raw.replace(/\D/g, ''); if (d.length > 9 && d.startsWith('998')) d = d.slice(3); return d.slice(0, 9); };
 const fmtPhone = (raw: string) => { const d = phoneDigits(raw); return [d.slice(0, 2), d.slice(2, 5), d.slice(5, 7), d.slice(7, 9)].filter(Boolean).join(' '); };
@@ -599,19 +600,33 @@ function bindPhone(el: HTMLInputElement) {
 }
 const deliveryFee = () => { if (order.method !== 'delivery') return 0; const z = ZONES.find(z => z.id === order.zone) ?? ZONES[0]; return subtotal() >= z.freeFrom ? 0 : z.fee; };
 const orderTotal = () => subtotal() + deliveryFee();
-function timeSlots(): string[] {
+/** The cafe takes "as soon as possible" orders until half an hour before closing. */
+const ASAP_CUTOFF = .5;
+function acceptingNow() { const n = tashkentNow(), h = n.getHours() + n.getMinutes() / 60; return h >= CAFE.open && h < CAFE.close - ASAP_CUTOFF; }
+/** Times to choose from: today's if there are any left, otherwise tomorrow's from opening (never while the cafe is closed). */
+function timeSlots(): { slots: string[]; tomorrow: boolean } {
   const now = tashkentNow();
   const lead = order.method === 'delivery' ? 45 : 20;
-  const start = new Date(now.getTime() + lead * 60000);
-  start.setMinutes(Math.ceil(start.getMinutes() / 15) * 15, 0, 0);
-  const out: string[] = [];
-  for (let d = new Date(start); out.length < 9; d = new Date(d.getTime() + 15 * 60000)) {
-    const h = d.getHours() + d.getMinutes() / 60;
-    if (d.getDate() !== now.getDate() || h >= CAFE.close || h < CAFE.open) break;
-    out.push(hhmm(d));
-  }
-  return out;
+  const build = (day: Date, from: Date) => {
+    const open = new Date(day); open.setHours(CAFE.open, 0, 0, 0);
+    let d = new Date(Math.max(from.getTime(), open.getTime() + lead * 60000));
+    d.setMinutes(Math.ceil(d.getMinutes() / 15) * 15, 0, 0);
+    const out: string[] = [];
+    for (; out.length < 9; d = new Date(d.getTime() + 15 * 60000)) {
+      const h = d.getHours() + d.getMinutes() / 60;
+      if (d.getDate() !== day.getDate() || h > CAFE.close - .25) break;
+      out.push(hhmm(d));
+    }
+    return out;
+  };
+  const today = build(now, new Date(now.getTime() + lead * 60000));
+  if (today.length) return { slots: today, tomorrow: false };
+  const tm = new Date(now); tm.setDate(tm.getDate() + 1); tm.setHours(0, 0, 0, 0);
+  return { slots: build(tm, tm), tomorrow: true };
 }
+const timeLabel = (time: string, tomorrow: boolean) => (tomorrow ? `${t('time.tomorrow')}, ${time}` : time);
+/** "tomorrow at 08:45" inside a sentence. */
+const timeInline = (time: string, tomorrow: boolean) => (tomorrow ? tf('time.tomorrowAt', { t: time }) : time);
 function renderCheckout() {
   $$('#coSteps li').forEach((li, i) => { li.classList.toggle('on', i + 1 === order.step); li.classList.toggle('done', i + 1 < order.step); });
   $$('.co-step').forEach(s => (s.hidden = Number(s.dataset.step) !== order.step));
@@ -639,9 +654,11 @@ function renderCheckout() {
     $('#coAddrWrap').hidden = order.method !== 'delivery';
     $('#coTimeWrap').hidden = order.method === 'table';
     $('#coTimeLabel').textContent = t(order.method === 'delivery' ? 'time.delivery' : 'time.pickup');
-    const slots = timeSlots();
-    if (order.time !== 'asap' && !slots.includes(order.time)) order.time = 'asap';
-    $('#coTimes').innerHTML = ['asap', ...slots].map(s => `<button type="button" role="radio" data-time="${s}" aria-checked="${order.time === s}">${s === 'asap' ? t('time.asap') : s}</button>`).join('');
+    const { slots, tomorrow } = timeSlots(), asap = acceptingNow();
+    order.tomorrow = tomorrow;
+    if ((order.time === 'asap' && !asap) || (order.time !== 'asap' && !slots.includes(order.time))) order.time = asap ? 'asap' : slots[0] ?? 'asap';
+    $('#coTimes').innerHTML = (asap ? ['asap', ...slots] : slots).map(s => `<button type="button" role="radio" data-time="${s}" aria-checked="${order.time === s}">${s === 'asap' ? t('time.asap') : s}</button>`).join('')
+      + (asap ? '' : `<p class="time-note">${tf(tomorrow ? 'time.closedTomorrow' : 'time.closedToday', { t: slots[0] ?? '' })}</p>`);
     $('#coPay').innerHTML = ['cash', 'card', 'click'].map(p => `<button type="button" role="radio" data-pay="${p}" aria-checked="${order.payment === p}">${t('pay.' + p)}</button>`).join('') ;
   }
   if (order.step === 3) {
@@ -652,7 +669,7 @@ function renderCheckout() {
       <ul>${cart.map(l => `<li><span>${l.qty} × ${esc(lineName(l))}${lineSub(l) ? `<small>${esc(lineSub(l))}</small>` : ''}</span><b>${money(unitPrice(l) * l.qty)}</b></li>`).join('')}</ul>
       <dl>
         <div><dt>${t('rv.how')}</dt><dd>${esc(howLine)}</dd></div>
-        ${order.method !== 'table' ? `<div><dt>${t('rv.time')}</dt><dd>${order.time === 'asap' ? `${t('time.asap')} (~${hhmm(eta())})` : order.time}</dd></div>` : ''}
+        ${order.method !== 'table' ? `<div><dt>${t('rv.time')}</dt><dd>${order.time === 'asap' ? `${t('time.asap')} (~${hhmm(eta())})` : timeLabel(order.time, order.tomorrow)}</dd></div>` : ''}
         ${order.method === 'delivery' ? `<div><dt>${t('rv.delivery')}</dt><dd>${fee ? money(fee) : t('rv.free')}</dd></div>` : ''}
         <div><dt>${t('rv.contact')}</dt><dd>${esc(order.name)}, +998 ${fmtPhone(order.phone)}</dd></div>
         <div class="rv-total"><dt>${t('rv.total')}</dt><dd>${money(orderTotal())}</dd></div>
@@ -689,6 +706,7 @@ $('#coForm').addEventListener('submit', async e => {
   e.preventDefault();
   if (order.step === 1) {
     if (order.method === 'table' && !order.table) return fail(t('err.table'), '#coTable');
+    if (order.method === 'table' && !acceptingNow()) return fail(t('err.tableClosed'));
     order.step = 2; renderCheckout(); $<HTMLElement>('#coName').focus(); return;
   }
   if (order.step === 2) {
@@ -704,16 +722,19 @@ $('#coForm').addEventListener('submit', async e => {
 let sending = false;
 async function sendOrder() {
   if (sending || !cart.length) return;
+  // the cafe may have closed while the form was open
+  if (order.time === 'asap' && !acceptingNow()) { sending = false; order.step = order.method === 'table' ? 1 : 2; renderCheckout(); return fail(t(order.method === 'table' ? 'err.tableClosed' : 'err.closedNow')); }
   sending = true;
   const btn = $<HTMLButtonElement>('#coNext');
   btn.disabled = true; btn.textContent = t('co.sending');
   const id = 'V' + Date.now().toString(36).slice(-5).toUpperCase();
   const due = order.method === 'table' || order.time === 'asap' ? hhmm(eta()) : order.time;
+  const dueLabel = order.time === 'asap' || order.method === 'table' ? due : timeLabel(due, order.tomorrow);
   const items = cart.map(l => `${l.qty} × ${lineName(l)}${lineSub(l) ? ` (${lineSub(l)})` : ''} — ${money(unitPrice(l) * l.qty)}${split.on && l.who >= 0 && l.who < split.n ? ` [${l.who + 1}]` : ''}`).join('\n');
   const data: Record<string, string> = {
     'form-name': 'order', 'bot-field': '', order_id: id, method: order.method, table: order.method === 'table' ? order.table : '',
     name: order.name, phone: '+998 ' + fmtPhone(order.phone), address: order.method === 'delivery' ? order.address : '',
-    zone: order.method === 'delivery' ? (ZONES.find(z => z.id === order.zone) ?? ZONES[0]).name.uz : '', time: order.time === 'asap' ? `ASAP ~${due}` : order.time,
+    zone: order.method === 'delivery' ? (ZONES.find(z => z.id === order.zone) ?? ZONES[0]).name.uz : '', time: order.time === 'asap' ? `ASAP ~${due}` : `${order.tomorrow ? 'ERTAGA / TOMORROW ' : ''}${order.time}`,
     payment: order.payment, comment: order.comment, items, split: split.on ? splitShares().map((s, i) => `${i + 1}: ${money(Math.ceil(s / 500) * 500)}`).join('; ') : '',
     subtotal: String(subtotal()), delivery: String(deliveryFee()), total: String(orderTotal()), lang: state.lang,
   };
@@ -744,12 +765,12 @@ async function sendOrder() {
     const done = $('#coDone');
     done.hidden = false;
     done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('cappuccino')!.art)}</div><h4>${t('done.title')}</h4>
-      <p>${tf('done.text', { id, phone: '+998 ' + fmtPhone(order.phone) })}</p><p class="eta-big">${tf('done.eta', { t: due })}</p>
-      ${coffees ? `<p class="stamp-plus">${tf('done.stamp', { n: coffees })}</p>` : ''}
+      <p>${tf('done.text', { id, phone: '+998 ' + fmtPhone(order.phone) })}</p><p class="eta-big">${tf((order.method === 'delivery' ? 'done.etaDelivery' : 'done.eta') + (order.time !== 'asap' && order.method !== 'table' && order.tomorrow ? 'Tm' : ''), { t: due })}</p>
+      ${coffees ? `<p class="stamp-plus">${tf('done.stamp', { n: coffees, w: plural(coffees, 'stamps') })}</p>` : ''}
       ${isDelivery ? `<button type="button" class="btn btn-ink tk-done-btn" data-track>${t('tr.open')}</button>` : ''}
       <button type="button" class="watch-btn" data-watch><span class="wb-play" aria-hidden="true"></span><span><b>${t('afk.watch')}</b><small>${t('afk.watchSub')}</small></span></button>
       <button class="btn btn-acc" data-close>${t('done.close')}</button>`;
-    $('[data-watch]', done).addEventListener('click', () => showOrder(made, due));
+    $('[data-watch]', done).addEventListener('click', () => showOrder(made, dueLabel));
     done.querySelector('[data-track]')?.addEventListener('click', () => { closeOverlay($('#checkout')); setTimeout(openTrack, 250); });
     $<HTMLElement>('[data-close].btn', done).focus();
   } catch {
@@ -809,7 +830,9 @@ $('#bookForm').addEventListener('submit', async e => {
 
 /* =============== visit =============== */
 function renderVisit() {
-  $('#phoneV').textContent = CAFE.phone;
+  // until the cafe's real number is in, show Telegram instead of a placeholder
+  const realPhone = /\d{2}\s?\d{3}/.test(CAFE.phone) && !/X/i.test(CAFE.phone);
+  $('#phoneV').innerHTML = realPhone ? `<a href="tel:${CAFE.phone.replace(/\s/g, '')}">${esc(CAFE.phone)}</a>` : `<a href="https://t.me/${CAFE.telegram}" target="_blank" rel="noopener">Telegram @${esc(CAFE.telegram)}</a>`;
   const tg = $<HTMLAnchorElement>('#tgLink'), ig = $<HTMLAnchorElement>('#igLink');
   tg.href = `https://t.me/${CAFE.telegram}`; tg.textContent = `Telegram @${CAFE.telegram}`;
   ig.href = `https://instagram.com/${CAFE.instagram}`; ig.textContent = `Instagram @${CAFE.instagram}`;

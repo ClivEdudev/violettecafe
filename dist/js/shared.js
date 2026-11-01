@@ -38,7 +38,7 @@ export const state = {
 };
 export const t = (k) => DICT[state.lang]?.[k] ?? DICT.uz[k] ?? k;
 export const tf = (k, vars) => t(k).replace(/\{(\w+)\}/g, (_, v) => String(vars[v] ?? ''));
-export const money = (n) => `${Math.round(n).toLocaleString('ru-RU').replace(/\s/g, ' ')} ${t('cur')}`;
+export const money = (n) => `${Math.round(n).toLocaleString('ru-RU').replace(/\s/g, '\u00A0')}\u00A0${t('cur')}`;
 export const plural = (n, key) => {
     if (state.lang === 'ru') {
         const m10 = n % 10, m100 = n % 100;

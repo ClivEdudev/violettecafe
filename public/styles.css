@@ -39,7 +39,7 @@ section { position: relative; }
 .chips { min-width: 0; max-width: 100%; }
 
 /* split words */
-[data-split] .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .06em; }
+[data-split] .w { display: inline-block; overflow: hidden; vertical-align: top; padding-bottom: .16em; margin-bottom: -.1em; }
 [data-split] .w > span { display: inline-block; transform: translateY(105%); transition: transform .8s cubic-bezier(.2, .8, .2, 1); transition-delay: calc(var(--i) * 60ms); }
 [data-split].in .w > span, .reduced [data-split] .w > span { transform: none; }
 
@@ -269,8 +269,8 @@ input[type=range]::-moz-range-thumb { width: 22px; height: 22px; border-radius: 
 .check input:checked + i::after { transform: rotate(-45deg) scale(1); }
 .check input:focus-visible + i { outline: 3px solid var(--mustard); outline-offset: 2px; }
 .check small { color: var(--ink2); font-weight: 700; }
-.switch { display: inline-flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 800; }
-.switch input { position: absolute; opacity: 0; }
+.switch { position: relative; display: inline-flex; align-items: center; gap: 12px; cursor: pointer; font-weight: 800; }
+.switch input { position: absolute; left: 0; top: 50%; width: 1px; height: 1px; opacity: 0; }
 .switch i { width: 48px; height: 28px; border-radius: 14px; background: var(--bg2); border: 2px solid var(--ink); position: relative; transition: background-color .25s; }
 .switch i::after { content: ''; position: absolute; top: 2px; left: 2px; width: 20px; height: 20px; border-radius: 50%; background: var(--ink); transition: transform .3s cubic-bezier(.3, 1.5, .5, 1); }
 .switch input:checked + i { background: var(--acc); }
@@ -888,7 +888,7 @@ main, .foot { overflow-x: clip; }
 .tk-acts { display: flex; flex-wrap: wrap; gap: 10px; } .tk-acts .btn { flex: 1 1 180px; }
 .tk-note { margin: 12px 0 0; font-size: .78rem; }
 .tk-done-btn { width: 100%; margin-top: 14px; }
-@media (max-width: 640px) { .tk-pill { left: 12px; right: 12px; justify-content: flex-start; } .tk-sheet { padding: 22px 16px 18px; } }
+@media (max-width: 640px) { .tk-pill { left: 12px; right: 12px; justify-content: flex-start; } .tk-sheet { width: 100%; padding: 22px 16px calc(18px + env(safe-area-inset-bottom)); } }
 @media (prefers-reduced-motion: reduce) { .tk-pill, .tk-dot, .tk-pulse { animation: none; } }
 /* never let a faded-out kitchen overlay catch taps or sit over the page */
 .afk:not(.on) { pointer-events: none; }
@@ -904,3 +904,25 @@ main, .foot { overflow-x: clip; }
 @media (max-width: 640px) { .lab .tabs button { padding: 9px 14px; } }
 #wrapLab .two, #hotdogLab .two { grid-template-columns: 1fr auto; }
 @media (max-width: 640px) { #wrapLab .two, #hotdogLab .two { grid-template-columns: 1fr; } }
+.time-note { flex-basis: 100%; margin: 6px 0 0; font-size: .86rem; font-weight: 700; color: var(--ink2); }
+
+/* ============ polish ============ */
+html { -webkit-text-size-adjust: 100%; text-size-adjust: 100%; }
+body { -webkit-font-smoothing: antialiased; -moz-osx-font-smoothing: grayscale; text-rendering: optimizeLegibility; }
+a, button, label, [role="tab"], [role="radio"] { -webkit-tap-highlight-color: transparent; touch-action: manipulation; }
+::selection { background: color-mix(in srgb, var(--violet) 32%, transparent); color: inherit; }
+img { max-width: 100%; }
+#phoneV a { color: inherit; font-weight: 800; }
+/* chip rows that scroll sideways fade at the edges so it's clear there's more */
+@media (max-width: 640px) {
+  .chips, .diets, .date-chips { -webkit-mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 28px), transparent); mask-image: linear-gradient(90deg, transparent 0, #000 18px, #000 calc(100% - 28px), transparent); }
+  .hero-cta { margin-top: 18px; }
+  .lab .tabs { display: grid; grid-template-columns: repeat(4, auto); width: 100%; justify-content: stretch; }
+  .lab .tabs button { padding: 9px 6px; font-size: .86rem; }
+  .tracking .foot { padding-bottom: calc(96px + env(safe-area-inset-bottom)); }
+}
+@media (max-width: 960px) { #scene { overflow: hidden; } }
+.receipt { width: clamp(184px, 23%, 250px); }
+.rc-row:not(.rc-title):not(.rc-bar):not(.rc-thanks) { flex-wrap: wrap; column-gap: 8px; row-gap: 0; }
+.rc-row > span:last-child:not(:first-child) { white-space: nowrap; margin-left: auto; }
+@media (max-width: 960px) { .receipt { width: min(176px, 40%); } .rc-paper { padding: 0 11px; } }

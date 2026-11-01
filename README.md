@@ -34,3 +34,10 @@ Zero-dependency static site written in TypeScript, in Uzbek, Russian and English
 npm run build      # needs the TypeScript compiler (tsc)
 ```
 Netlify publishes the `dist` folder as-is (see `netlify.toml`, which also sets the security headers). Netlify site: `violettecafeand` (violettecafeand.netlify.app), auto-deploys from this repo.
+
+## Ordering hours
+"As soon as possible" is offered until 30 minutes before closing. When the cafe is closed, checkout only offers the first times after opening (tomorrow's when today is over), the cart says so, and table orders are refused until opening. Change the hours in `CAFE.open` / `CAFE.close` (`src/data.ts`).
+
+## Placeholders to replace
+- `CAFE.phone` in `src/data.ts` — while it holds the `XX` placeholder the site shows the Telegram link instead of a phone number.
+- Prices for the shawarma and hot-dog builders (`WRAP_*`, `HD_*` in `src/data.ts`).

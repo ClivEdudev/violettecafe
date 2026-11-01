@@ -1,0 +1,14 @@
+{
+  "name": "Violette cafe",
+  "short_name": "Violette",
+  "description": "Kofe va fast-food, Andijon — menyu, buyurtma va stol band qilish.",
+  "start_url": "/",
+  "display": "browser",
+  "background_color": "#F1EAF7",
+  "theme_color": "#7A4FB0",
+  "icons": [
+    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
+    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
+    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+  ]
+}

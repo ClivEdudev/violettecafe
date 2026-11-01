@@ -942,8 +942,16 @@ function open() {
   document.documentElement.classList.add('afk-on');
   cancelAnimationFrame(raf); raf = requestAnimationFrame(frame);
 }
+/** Not while someone is in the middle of something: an open cart, item, checkout or tracker, a menu, or a focused field. */
+function busy() {
+  const a = document.activeElement as HTMLElement | null;
+  if (a && (a.isContentEditable || /^(INPUT|TEXTAREA|SELECT)$/.test(a.tagName))) return true;
+  const r = document.documentElement;
+  return r.classList.contains('locked') || r.classList.contains('menu-open') || !!document.querySelector('.modal.open, .drawer.open');
+}
 function show() {
   if (el?.classList.contains('on') || document.hidden || mode !== 'idle') return;
+  if (busy()) { clearTimeout(idleTimer); idleTimer = window.setTimeout(show, IDLE_MS); return; }
   setActs(idleActs()); open();
 }
 /** The order-confirmation screen's "watch it being made": the customer's exact order, dish by dish, until they close it. */
