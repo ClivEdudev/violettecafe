@@ -3,6 +3,13 @@ import type { Lang } from './data.js';
 type Dict = Record<string, string>;
 const uz: Dict = {
   cur: 'soʻm',
+  "perf.label": "Animatsiyalar",
+  "perf.auto": "Avtomatik",
+  "perf.full": "Toʻliq",
+  "perf.lite": "Yengil",
+  "perf.nowFull": "Hozir: toʻliq",
+  "perf.nowLite": "Hozir: yengil — qurilmangiz uchun",
+  "perf.switched": "Silliqroq ishlashi uchun yengil animatsiyalarga oʻtdik",
   "err.closedNow": "Kafe hozirgina yopildi — iltimos, ertangi vaqtni tanlang.",
   "time.tomorrowAt": "ertaga {t}",
   "done.etaTm": "Ertaga {t} da tayyor boʻladi",
@@ -182,6 +189,13 @@ const uz: Dict = {
 };
 const ru: Dict = {
   cur: 'сум',
+  "perf.label": "Анимации",
+  "perf.auto": "Авто",
+  "perf.full": "Полные",
+  "perf.lite": "Лёгкие",
+  "perf.nowFull": "Сейчас: полные",
+  "perf.nowLite": "Сейчас: лёгкие — для вашего устройства",
+  "perf.switched": "Включили лёгкие анимации, чтобы всё шло плавнее",
   "err.closedNow": "Кафе только что закрылось — выберите время на завтра.",
   "time.tomorrowAt": "завтра в {t}",
   "done.etaTm": "Будет готово завтра к {t}",
@@ -361,6 +375,13 @@ const ru: Dict = {
 };
 const en: Dict = {
   cur: 'sum',
+  "perf.label": "Animations",
+  "perf.auto": "Auto",
+  "perf.full": "Full",
+  "perf.lite": "Light",
+  "perf.nowFull": "Now: full",
+  "perf.nowLite": "Now: light — to suit your device",
+  "perf.switched": "Switched to light animations so things run smoother",
   "err.closedNow": "The cafe has just closed — please pick a time for tomorrow.",
   "time.tomorrowAt": "tomorrow at {t}",
   "done.etaTm": "Ready tomorrow at {t}",

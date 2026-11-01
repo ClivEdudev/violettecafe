@@ -85,7 +85,7 @@ export function initPointer(t) {
     }, true);
     /* -- the cursor itself -- */
     const ok = matchMedia('(hover: hover) and (pointer: fine)').matches && !matchMedia('(prefers-reduced-motion: reduce)').matches && !matchMedia('(forced-colors: active)').matches;
-    if (!ok)
+    if (!ok || document.documentElement.classList.contains('lite'))
         return;
     cursorOn = true;
     const root = document.documentElement;
@@ -99,6 +99,8 @@ export function initPointer(t) {
     ring.innerHTML = '<span class="cur-label"></span>';
     document.body.append(ring, dot);
     root.classList.add('has-cursor');
+    // stepping down to light mode mid-visit: back to the system pointer
+    addEventListener('vc-lite', () => { cursorOn = false; ring.remove(); dot.remove(); root.classList.remove('has-cursor'); }, { once: true });
     const lab = ring.firstElementChild;
     let mx = -100, my = -100, shown = false, dirty = true, down = false, raf = 0, still = 0;
     let cur = NONE;

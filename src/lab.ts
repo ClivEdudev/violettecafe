@@ -47,7 +47,7 @@ function burgerInfo() {
   ($('#bClear') as HTMLButtonElement).disabled = !B.fill.length;
 }
 function crumbs() {
-  if (reduced) return;
+  if (reduced || document.documentElement.classList.contains('lite')) return;
   const g = $('#bCrumbs');
   const top = BASE - stackHeight(B) * bScale;
   g.innerHTML = Array.from({ length: 8 }, (_, i) => `<circle cx="${CX}" cy="${top + 30}" r="${3 + (i % 3)}" fill="${['#F4B731', '#7CB342', '#E2452F', '#E3A04C'][i % 4]}"/>`).join('');

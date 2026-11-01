@@ -13,6 +13,11 @@ const toggle = (arr, id) => (arr.includes(id) ? arr.filter(x => x !== id) : [...
 function drop(g, from = -260) {
     if (!g || reduced)
         return;
+    // light mode: the whole part drops in as one piece instead of each bit on its own
+    if (document.documentElement.classList.contains('lite')) {
+        g.animate([{ transform: `translate(0, ${from * .4}px)`, opacity: 0 }, { transform: 'translate(0, 0)', opacity: 1 }], { duration: 320, easing: 'cubic-bezier(.3,1.3,.5,1)' });
+        return;
+    }
     Array.from(g.children).forEach((c, i) => {
         const pathLen = c instanceof SVGPathElement ? c.getTotalLength() : 0;
         if (c.tagName === 'path' && pathLen > 60) { // sauce lines draw themselves

@@ -41,3 +41,11 @@ Netlify publishes the `dist` folder as-is (see `netlify.toml`, which also sets t
 ## Placeholders to replace
 - `CAFE.phone` in `src/data.ts` — while it holds the `XX` placeholder the site shows the Telegram link instead of a phone number.
 - Prices for the shawarma and hot-dog builders (`WRAP_*`, `HD_*` in `src/data.ts`).
+
+## Light mode (slower devices)
+`src/perf.ts` decides between full and light animations. Light mode is chosen automatically when the device reports Data Saver, a slow connection or little memory, when the first seconds on screen run slowly, or when scrolling keeps dropping frames (a short notice tells the visitor). Visitors can choose Auto / Full / Light at the bottom of the page; `?lite=1` and `?lite=0` force it for testing.
+
+Light mode keeps every feature but skips what costs the most to draw: SVG textures and soft shadows, blur, scroll-linked effects, the floating coffee beans, endlessly repeating decorative animations and the custom cursor; builder pieces drop in as one group and the kitchen show runs at 30 fps.
+
+Measured on a simulated low-end phone (CPU slowed 6×): idle 30–40 → 60 fps, menu scrolling ~16 → ~54 fps, hero scrolling ~16 → ~37 fps, kitchen show ~20 → ~37 fps, shawarma builder ~15 → ~45 fps. Full mode also got cheaper: scroll effects no longer re-read the page layout or restyle whole sections on every frame.
+

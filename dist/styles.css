@@ -926,3 +926,24 @@ img { max-width: 100%; }
 .rc-row:not(.rc-title):not(.rc-bar):not(.rc-thanks) { flex-wrap: wrap; column-gap: 8px; row-gap: 0; }
 .rc-row > span:last-child:not(:first-child) { white-space: nowrap; margin-left: auto; }
 @media (max-width: 960px) { .receipt { width: min(176px, 40%); } .rc-paper { padding: 0 11px; } }
+
+/* ============ performance ============ */
+/* --p is set per element by the scroll effects; not inheriting it keeps each update from restyling whole sections */
+@property --p { syntax: '<number>'; inherits: false; initial-value: 1; }
+.foot-word .fw-f { --p: inherit; }
+.perf-pick { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 8px 12px; margin: 26px 0 6px; font-weight: 800; font-size: .86rem; color: var(--ink2); }
+.perf-pick .seg button { padding: 6px 12px; font-size: .82rem; }
+.perf-pick small { flex-basis: 100%; font-weight: 600; font-size: .78rem; }
+
+/* Light mode: same site, cheaper to draw. */
+.lite svg [filter], .lite svg[filter] { filter: none !important; }
+.lite *, .lite *::before, .lite *::after { animation-iteration-count: 1 !important; backdrop-filter: none !important; -webkit-backdrop-filter: none !important; }
+.lite .receipt, .lite #scene .neon, .lite .beans i, .lite .map iframe { filter: none !important; }
+.lite .scrim { background: rgba(23, 13, 34, .62); }
+.lite .ak-scene { animation: none !important; }
+.lite .grid { perspective: none; }
+.lite .beans { display: none; }
+.lite .lab-stage::before, .lite .lab-stage::after { display: none; }
+.lite .lab-stage { background: color-mix(in srgb, var(--disc-a) 70%, var(--disc-b)); }
+.lite .lab-stage svg { will-change: transform; }
+.lite.scrolled .top { background: var(--bg); }

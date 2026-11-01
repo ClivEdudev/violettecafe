@@ -3,6 +3,7 @@ import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } 
 import { initPointer } from './ui.js';
 import { initScroll } from './scroll.js';
 import { initAfk, showOrder } from './afk.js';
+import { initPerf, choosePerf, perfChoice, perf } from './perf.js';
 import { initTrack, startTrack, openTrack, langTrack } from './track.js';
 document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import {
@@ -856,7 +857,7 @@ function initReveal() {
 }
 
 /* =============== scroll loop =============== */
-let ticking = false;
+let ticking = false, tapeW = 0;
 function onScroll() {
   if (ticking) return; ticking = true;
   requestAnimationFrame(() => {
@@ -866,19 +867,30 @@ function onScroll() {
     root.classList.toggle('scrolled', scrollY > 20);
     const hr = hero.getBoundingClientRect();
     if (hr.bottom > 0) updateHero(heroProgress());
-    $('#tape').style.transform = `translate3d(${-(scrollY * .35) % ($('#tape').scrollWidth / 3 || 1)}px,0,0) skewX(var(--skew, 0deg))`;
+    if (!tapeW) tapeW = $('#tape').scrollWidth / 3 || 1;
+    $('#tape').style.transform = `translate3d(${(-(scrollY * .35) % tapeW).toFixed(1)}px,0,0) skewX(var(--skew, 0deg))`;
   });
 }
 addEventListener('scroll', onScroll, { passive: true });
-addEventListener('resize', () => { heroP = -1; fitScene(); onScroll(); });
+addEventListener('resize', () => { heroP = -1; tapeW = 0; fitScene(); onScroll(); });
 
 /* =============== boot =============== */
 on('lang', () => { renderStatus(); renderReceipt(); renderChips(); renderGrid(); renderCart(); renderBooking(); renderTable(); if (!$('#itemModal').hidden && im.id) renderItem(); if (!$('#checkout').hidden && !$('#coForm').hidden) { if (order.step === 2) captureStep2(); renderCheckout(); } });
+initPerf();
 buildScene(); fitScene(); renderTape(); renderVisit(); setWorldUI();
 applyLang();
 initLab(); initBudget();
 initPointer(t); initReveal(); initScroll(); initAfk(); initTrack();
 on('lang', langTrack);
+/* animations: full / light (automatic unless the visitor picks) */
+function renderPerf() {
+  const c = perfChoice();
+  $('#perfSeg').innerHTML = (['auto', 'full', 'lite'] as const).map(k => `<button type="button" role="radio" data-perf="${k}" aria-checked="${(c ?? 'auto') === k}">${t('perf.' + k)}</button>`).join('');
+  $('#perfNow').textContent = c ? '' : t(perf.lite ? 'perf.nowLite' : 'perf.nowFull');
+}
+$('#perfSeg').addEventListener('click', e => { const b = (e.target as Element).closest<HTMLElement>('[data-perf]'); if (!b || b.getAttribute('aria-checked') === 'true') return; const k = b.dataset.perf!; choosePerf(k === 'auto' ? null : (k as 'full' | 'lite')); });
+on('lang', renderPerf); on('perf', renderPerf); renderPerf();
+on('perf-auto', () => toast(t('perf.switched')));
 if (reduced) root.classList.add('reduced');
 // iOS Safari brings pages back from its back/forward cache with frozen transitions, a stale scroll state and the pinned
 // hero scene unpinned. Instead of patching that state, load the page fresh (from cache, so it's instant).

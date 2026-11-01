@@ -45,7 +45,7 @@ function burgerInfo() {
     $('#bClear').disabled = !B.fill.length;
 }
 function crumbs() {
-    if (reduced)
+    if (reduced || document.documentElement.classList.contains('lite'))
         return;
     const g = $('#bCrumbs');
     const top = BASE - stackHeight(B) * bScale;

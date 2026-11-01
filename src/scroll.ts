@@ -1,18 +1,21 @@
 // Scroll-driven motion for the rest of the page (the hero has its own timeline in main.ts).
 // Every element with data-sr gets a --p value from 0 (just entering the screen) to 1 (settled);
 // the CSS turns that into slides, 3D flips, reveals and tilts. Without JS, or with reduced motion, --p stays 1.
-import { $, $$, clamp, reduced } from './shared.js';
+import { $, $$, clamp, reduced, on as onBus } from './shared.js';
+import { perf } from './perf.js';
 
-let items: { el: HTMLElement; top: number; col: number }[] = [];
+let items: { el: HTMLElement; top: number; col: number; last: number }[] = [];
 let beans: { el: HTMLElement; speed: number; spin: number; x: number; y: number }[] = [];
-let lastY = scrollY, vel = 0;
+let lastY = scrollY, vel = 0, docH = 0, vh = innerHeight, on = false, tape: HTMLElement | null = null, lastSkew = '';
 
 // Positions come from layout (offsetTop), not getBoundingClientRect, so an element's own scroll motion never feeds back into its progress.
 function absTop(el: HTMLElement) { let y = 0, n: HTMLElement | null = el; while (n) { y += n.offsetTop; n = n.offsetParent as HTMLElement | null; } return y; }
+/** All layout reads happen here (on load, resize and menu changes), never inside the scroll frame. */
 function collect() {
   const cards = $$<HTMLElement>('#grid .card');
   const x0 = cards[0]?.offsetLeft ?? 0, cw = (cards[0]?.offsetWidth ?? 1) + 12;
-  items = $$<HTMLElement>('[data-sr]').map(el => ({ el, top: absTop(el), col: el.dataset.sr === 'card' ? Math.round((el.offsetLeft - x0) / cw) : 0 }));
+  items = $$<HTMLElement>('[data-sr]').map(el => ({ el, top: absTop(el), col: el.dataset.sr === 'card' ? Math.round((el.offsetLeft - x0) / cw) : 0, last: -1 }));
+  docH = document.documentElement.scrollHeight; vh = innerHeight; tape = $('#tape');
 }
 
 function makeBeans() {
@@ -22,40 +25,52 @@ function makeBeans() {
   layer.innerHTML = spots.map(([x, y, s], i) => `<i style="left:${x}%;top:${y}%;width:${s}px;height:${s * 1.35}px" data-i="${i}"><svg viewBox="0 0 24 32"><ellipse cx="12" cy="16" rx="10" ry="14" fill="url(#beanG)"/><path d="M12 3c-5 6 5 14 0 26" fill="none" stroke="#2A1206" stroke-width="2.2" stroke-linecap="round"/><ellipse cx="8" cy="9" rx="2.4" ry="3.8" fill="#fff" opacity=".3"/></svg></i>`).join('')
     + '<svg width="0" height="0" style="position:absolute"><defs><radialGradient id="beanG" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#B8763F"/><stop offset=".55" stop-color="#7A3F1E"/><stop offset="1" stop-color="#3E1E0C"/></radialGradient></defs></svg>';
   document.body.prepend(layer);
-  beans = $$<HTMLElement>('i', layer).map((el, i) => ({ el, speed: .08 + (i % 4) * .07, spin: (i % 2 ? 1 : -1) * (.04 + (i % 3) * .03), x: 0, y: 0 }));
+  beans = $$<HTMLElement>('i', layer).filter(el => getComputedStyle(el).display !== 'none').map((el, i) => ({ el, speed: .08 + (i % 4) * .07, spin: (i % 2 ? 1 : -1) * (.04 + (i % 3) * .03), x: 0, y: 0 }));
 }
 
 function frame() {
-  const vh = innerHeight;
-  for (const { el, top: t0, col } of items) {
-    const top = t0 - scrollY;
-    if (top > vh + 200 || top < -3000) continue;
-    const kind = el.dataset.sr;
-    let p: number;
-    if (kind === 'fill') p = clamp(1 - (document.documentElement.scrollHeight - vh - scrollY) / (vh * .55)); // full when the page bottom is reached
-    else if (kind === 'card') p = clamp((vh - top) / (vh * .42) - col * .12);
-    else p = clamp((vh - top) / (vh * .5));
-    el.style.setProperty('--p', p.toFixed(3));
-  }
+  if (!on) return;
   const y = scrollY;
+  for (const it of items) {
+    const top = it.top - y;
+    if (top > vh + 200 || top < -3000) continue;
+    const kind = it.el.dataset.sr;
+    let p: number;
+    if (kind === 'fill') p = clamp(1 - (docH - vh - y) / (vh * .55)); // full when the page bottom is reached
+    else if (kind === 'card') p = clamp((vh - top) / (vh * .42) - it.col * .12);
+    else p = clamp((vh - top) / (vh * .5));
+    p = Math.round(p * 250) / 250; // only write when it visibly changes
+    if (p !== it.last) { it.last = p; it.el.style.setProperty('--p', String(p)); }
+  }
   vel += ((y - lastY) - vel) * .2; lastY = y;
-  for (const b of beans) b.el.style.transform = `translate3d(0, ${(-y * b.speed) % (vh * 1.6)}px, 0) rotate(${y * b.spin}deg)`;
-  const tape = $('#tape');
-  if (tape) tape.style.setProperty('--skew', `${clamp(vel * .35, -12, 12).toFixed(2)}deg`);
+  for (const b of beans) b.el.style.transform = `translate3d(0, ${((-y * b.speed) % (vh * 1.6)).toFixed(1)}px, 0) rotate(${(y * b.spin).toFixed(1)}deg)`;
+  const skew = `${clamp(vel * .35, -12, 12).toFixed(1)}deg`;
+  if (tape && skew !== lastSkew) { lastSkew = skew; tape.style.setProperty('--skew', skew); }
 }
 
 let raf = 0;
-const kick = () => { if (!raf) raf = requestAnimationFrame(() => { raf = 0; frame(); if (Math.abs(vel) > .2) kick(); }); };
+const kick = () => { if (on && !raf) raf = requestAnimationFrame(() => { raf = 0; frame(); if (Math.abs(vel) > .2) kick(); }); };
+
+/** Light mode: everything simply sits in place. */
+function stop() {
+  on = false; cancelAnimationFrame(raf); raf = 0;
+  const r = document.documentElement; r.classList.remove('sr-on'); r.classList.add('sr-off');
+  items.forEach(it => it.el.style.removeProperty('--p'));
+  document.querySelector('.beans')?.remove(); beans = [];
+  tape?.style.removeProperty('--skew');
+}
 
 export function initScroll() {
-  if (reduced) { document.documentElement.classList.add('sr-off'); return; }
+  if (reduced || perf.lite) { document.documentElement.classList.add('sr-off'); return; }
+  on = true;
   document.documentElement.classList.add('sr-on');
   collect(); makeBeans();
   // menu cards are re-rendered when filters change: pick them up again
-  new MutationObserver(() => { collect(); frame(); }).observe($('#grid'), { childList: true });
+  new MutationObserver(() => { if (on) { collect(); frame(); } }).observe($('#grid'), { childList: true });
   addEventListener('scroll', kick, { passive: true });
-  addEventListener('pageshow', () => { collect(); frame(); });
-  addEventListener('resize', () => { collect(); kick(); });
-  new ResizeObserver(() => { collect(); frame(); }).observe(document.body);
+  addEventListener('pageshow', () => { if (on) { collect(); frame(); } });
+  addEventListener('resize', () => { if (on) { collect(); kick(); } });
+  new ResizeObserver(() => { if (on) { collect(); frame(); } }).observe(document.body);
+  onBus('perf', lite => { if (lite) stop(); });
   frame();
 }
