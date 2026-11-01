@@ -21,7 +21,15 @@ Zero-dependency static site written in TypeScript, in Uzbek, Russian and English
 - **Scroll motion** (`src/scroll.ts`): headings slide in, menu cards flip up in 3D column by column, the builders and map open with a reveal, the booking card and budget form straighten as they arrive, the slot machine swings in, coffee beans drift behind the page at different speeds, the ticker tape leans with scroll speed and the footer word tightens at the end. Off with reduced motion.
 - Live open/closed badge and greeting by Tashkent time, light/dark theme (night scene with neon sign), reduced-motion support.
 - **Cursor & pointer comfort** (`src/ui.ts`, same system as the Robiya site): on mouse/trackpad a coffee-bean pointer replaces the system arrow, an outline frames what you're about to use (a whole menu card shows "Details"), and near-miss clicks beside small controls still count — never for add, remove, spin or send buttons.
-- Orders go to **Netlify Forms** (form `order`), bookings to form `booking`. Add email notifications in Netlify → Forms so the cafe gets each one.
+- Orders and table bookings are posted to the shop's **Telegram group** by `netlify/functions/telegram.mjs` (`/api/telegram`). A copy also goes to **Netlify Forms** (forms `order` and `booking`) as a backup; the visitor sees success if either one lands.
+- The hero picks one real deal per visit (1 kg KFC + 2 burgers, Crunch duo, Yolgʻizlik, Madina, FFS mega mix, or a set of menu items at menu prices) and builds it on the tray as you scroll; the receipt and the button show exactly that deal. `?deal=kfc|crunch|solo|madina|mega|hotdog|boss|doner|spicy` forces one. Deals live in `src/hero.ts`.
+
+## Telegram group setup (one time)
+1. In Telegram open **@BotFather** → `/newbot` → pick a name → copy the token.
+2. Add the bot to the shop's order group (as admin, or turn off privacy mode in BotFather with `/setprivacy` → Disable), then send any message in the group.
+3. Netlify → Site configuration → Environment variables: add `TELEGRAM_BOT_TOKEN` = the token. Redeploy.
+4. Open `https://<site>/api/telegram` — it lists the groups the bot has seen. Copy the group's id (like `-1001234567890`) into `TELEGRAM_CHAT_ID`. Redeploy.
+5. Opening `/api/telegram` again shows `"ready": true`. Place a test order.
 
 ## Edit content
 - Menu, prices, phone, socials, hours, delivery zones: `src/data.ts` (prices, phone and hours are **placeholders** — replace with the cafe's real data).
@@ -56,6 +64,7 @@ Boburshoh koʻchasi 48, Andijan (after the My Sports store), Plus Code Q8PJ+CWH;
 - Full menu with prices (the owner will type it); other dishes, calories and prep times are samples.
 - What is inside each combo, and what Spicy bite and FFS mega mix are.
 - Delivery fee in the city below 100 000 and for the districts (10 000 / 25 000 are placeholders).
-- The Telegram group for orders (needs a bot to post there) — until then orders arrive through Netlify Forms.
+- What exactly is in each combo (the hero and receipts follow the menu descriptions).
+- Delivery fees for the city under 100 000 soʻm and for the districts (placeholders now: 10 000 / 25 000).
 - Telegram @ffs and Instagram @javanews as given; the second branch's address.
 - Domain ffs.uz; then make `og:image` an absolute URL. Real photos.

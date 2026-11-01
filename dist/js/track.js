@@ -200,7 +200,7 @@ export function initTrack() {
     if (demo !== null) {
         const now = Date.now(), start = now - (Number(demo) || 6) * MIN;
         tr = { id: 'DEMO1', placed: start, start, cooked: start + 14 * MIN, due: start + 42 * MIN, zone: 'near', address: 'Bobur shoh koʻchasi, 12', total: 96000,
-            lines: [{ sig: 'd1', kind: 'item', item: 'violette-burger', extras: [], qty: 1, who: -1 }, { sig: 'd2', kind: 'item', item: 'fries', extras: [], qty: 1, who: -1 }, { sig: 'd3', kind: 'item', item: 'iced-violette', size: 'M', extras: [], qty: 1, who: -1 }] };
+            lines: [{ sig: 'd1', kind: 'item', item: 'ffs-boss-burger', extras: [], qty: 1, who: -1 }, { sig: 'd2', kind: 'item', item: 'fries', extras: [], qty: 1, who: -1 }, { sig: 'd3', kind: 'item', item: 'turkish-tea', extras: [], qty: 1, who: -1 }] };
     }
     document.addEventListener('visibilitychange', () => { if (!document.hidden)
         tick(); });

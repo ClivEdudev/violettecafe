@@ -677,6 +677,10 @@ main, .foot { overflow-x: clip; }
 #scene .st-pct { font: 400 34px var(--display); fill: #fff; }
 #scene .st-lbl { font: 800 11px var(--body); fill: #fff; letter-spacing: .02em; }
 .rc-disc { color: #C2185B; font-weight: 800; }
+.rc-sub { opacity: .72; font-size: .92em; padding-left: .6em; }
+#scene .tray-logo { font: 400 34px var(--display); fill: #E11D24; letter-spacing: 1px; }
+#scene .tray-logo.light { fill: #fff; opacity: .9; }
+#scene .tray-gift { font: 800 13px var(--body, system-ui); fill: #fff; letter-spacing: .5px; }
 
 /* cursor: easier to spot (bigger bean, white rim, accent glow and halo) — behaviour unchanged */
 .cur-dot { width: 21px; height: 28px; margin: -14px 0 0 -10.5px; filter: drop-shadow(0 0 1.2px #fff) drop-shadow(0 0 1.2px #fff) drop-shadow(0 0 7px var(--acc)) drop-shadow(0 3px 4px rgba(0, 0, 0, .35)); }

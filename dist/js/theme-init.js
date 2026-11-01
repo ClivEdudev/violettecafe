@@ -8,5 +8,5 @@
   document.documentElement.setAttribute('data-theme', t);
   var m = document.querySelector('meta[name="theme-color"]'); if (m) m.setAttribute('content', t === 'dark' ? '#141010' : '#FAF7F6');
   var h = new Date(Date.now() + (new Date().getTimezoneOffset() + 300) * 60000).getHours();
-  document.documentElement.setAttribute('data-world', h < 12 ? 'coffee' : 'food');
+  document.documentElement.setAttribute('data-world', 'food'); void h;
 })();

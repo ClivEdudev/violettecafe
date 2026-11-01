@@ -1,5 +1,5 @@
 import { BUNS, FILLINGS, LAB, SIZES, WRAP_BASES, WRAP_MEATS, WRAP_ADDS, WRAP_SAUCES, HD_SAUSAGES, HD_TOPS, HD_SAUCES, HD_XL, MAX_WRAP_ADDS, MAX_SAUCES, MAX_HD_TOPS } from './data.js';
-export const DEFAULT_COFFEE = { temp: 'hot', size: 'M', shots: 1, milk: 'cow', milkAmt: 70, foam: 'thin', syrup: 'lavender', topping: 'none' };
+export const DEFAULT_COFFEE = { temp: 'hot', size: 'M', shots: 1, milk: 'cow', milkAmt: 70, foam: 'thin', syrup: 'caramel', topping: 'none' };
 export const DEFAULT_BURGER = { bun: 'classic', fill: ['sauce', 'beef', 'cheese', 'lettuce', 'tomato'] };
 const clamp = (v, a, b) => Math.min(b, Math.max(a, v));
 const fillOf = (id) => FILLINGS.find(f => f.id === id);

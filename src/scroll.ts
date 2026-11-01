@@ -22,8 +22,8 @@ function makeBeans() {
   const layer = document.createElement('div');
   layer.className = 'beans'; layer.setAttribute('aria-hidden', 'true');
   const spots = [[6, 18, 34], [88, 30, 26], [14, 62, 22], [93, 72, 38], [48, 90, 20], [72, 12, 18], [30, 40, 16], [62, 55, 24]];
-  layer.innerHTML = spots.map(([x, y, s], i) => `<i style="left:${x}%;top:${y}%;width:${s}px;height:${s * 1.35}px" data-i="${i}"><svg viewBox="0 0 24 32"><ellipse cx="12" cy="16" rx="10" ry="14" fill="url(#beanG)"/><path d="M12 3c-5 6 5 14 0 26" fill="none" stroke="#2A1206" stroke-width="2.2" stroke-linecap="round"/><ellipse cx="8" cy="9" rx="2.4" ry="3.8" fill="#fff" opacity=".3"/></svg></i>`).join('')
-    + '<svg width="0" height="0" style="position:absolute"><defs><radialGradient id="beanG" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#B8763F"/><stop offset=".55" stop-color="#7A3F1E"/><stop offset="1" stop-color="#3E1E0C"/></radialGradient></defs></svg>';
+  layer.innerHTML = spots.map(([x, y, s], i) => `<i style="left:${x}%;top:${y}%;width:${s}px;height:${s * 1.35}px" data-i="${i}"><svg viewBox="0 0 24 32"><ellipse cx="12" cy="16" rx="8" ry="14" fill="url(#beanG)"/><ellipse cx="9" cy="10" rx="2.2" ry="4.5" fill="#fff" opacity=".45"/></svg></i>`).join('')
+    + '<svg width="0" height="0" style="position:absolute"><defs><radialGradient id="beanG" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#FFF6DC"/><stop offset=".6" stop-color="#F1D9A0"/><stop offset="1" stop-color="#C99B55"/></radialGradient></defs></svg>';
   document.body.prepend(layer);
   beans = $$<HTMLElement>('i', layer).filter(el => getComputedStyle(el).display !== 'none').map((el, i) => ({ el, speed: .08 + (i % 4) * .07, spin: (i % 2 ? 1 : -1) * (.04 + (i % 3) * .03), x: 0, y: 0 }));
 }

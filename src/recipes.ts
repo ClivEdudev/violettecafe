@@ -7,7 +7,7 @@ export interface CoffeeSpec {
   temp: 'hot' | 'iced'; size: 'S' | 'M' | 'L'; shots: number; milk: string; milkAmt: number;
   foam: 'none' | 'thin' | 'thick'; syrup: string; topping: string;
 }
-export const DEFAULT_COFFEE: CoffeeSpec = { temp: 'hot', size: 'M', shots: 1, milk: 'cow', milkAmt: 70, foam: 'thin', syrup: 'lavender', topping: 'none' };
+export const DEFAULT_COFFEE: CoffeeSpec = { temp: 'hot', size: 'M', shots: 1, milk: 'cow', milkAmt: 70, foam: 'thin', syrup: 'caramel', topping: 'none' };
 export const DEFAULT_BURGER: BurgerSpec = { bun: 'classic', fill: ['sauce', 'beef', 'cheese', 'lettuce', 'tomato'] };
 
 const clamp = (v: number, a: number, b: number) => Math.min(b, Math.max(a, v));
