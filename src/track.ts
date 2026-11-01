@@ -59,7 +59,7 @@ function mapSVG(zone: string) {
     <path d="M-10 236 C80 222 140 250 230 236 S380 214 450 230" class="tk-canal"/>
     <path d="M0 210 H440 M0 104 H440 M0 144 H440 M166 0 V260 M316 0 V260 M126 0 V260 M252 0 V260 M0 54 H440" class="tk-street"/>
     <path id="tkRoute" d="${d}" class="tk-route"/><path id="tkDone" d="${d}" class="tk-route-done"/>
-    <g transform="translate(70 210)" class="tk-cafe"><circle r="17"/><text y="6" text-anchor="middle">V</text><g id="tkSteam"></g></g>
+    <g transform="translate(70 210)" class="tk-cafe"><circle r="17"/><text y="4" text-anchor="middle" style="font-size:10px">FFS</text><g id="tkSteam"></g></g>
     <g transform="translate(372 58)" class="tk-home"><circle r="22" class="tk-pulse"/><path d="M-11 2 L0 -9 L11 2 V12 H-11z"/><rect x="-3" y="4" width="6" height="8" rx="1"/></g>
     <g id="tkBike"><circle r="15" class="tk-bike-bg"/><g transform="scale(.9)"><circle cx="-7" cy="5" r="4" class="tk-wheel"/><circle cx="8" cy="5" r="4" class="tk-wheel"/><path d="M-7 5 L-1 -3 H6 L8 5 M-1 -3 L-4 -7 M4 -3 V-8 H9" class="tk-frame"/><rect x="-11" y="-11" width="9" height="8" rx="2" class="tk-box"/></g></g>
   </svg>`;

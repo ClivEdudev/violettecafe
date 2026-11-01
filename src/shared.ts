@@ -108,6 +108,7 @@ export function lineSub(l: Line): string {
   if (l.kind === 'wrap') { const w = l.wrap!; return [t('lab.custom'), ...w.add.map(a => WRAP_ADDS.find(p => p.id === a)!.name[state.lang]), ...w.sauces.map(a => WRAP_SAUCES.find(p => p.id === a)!.name[state.lang])].join(' · '); }
   if (l.kind === 'hotdog') { const h = l.hotdog!; return [t('lab.custom'), BUNS.find(b => b.id === h.bun)?.name[state.lang] ?? '', ...h.tops.map(a => HD_TOPS.find(p => p.id === a)!.name[state.lang]), ...h.sauces.map(a => HD_SAUCES.find(p => p.id === a)!.name[state.lang])].join(' · '); }
   const parts: string[] = [];
+  if (l.item === 'kfc-1kg') parts.push(t('promo.kfcGift'));
   if (l.size) parts.push(l.size);
   (l.extras ?? []).forEach(e => parts.push('+ ' + EXTRAS[e].name[state.lang]));
   return parts.join(' · ');

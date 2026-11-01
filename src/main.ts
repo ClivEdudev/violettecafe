@@ -1,4 +1,4 @@
-import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT, SET_DRINKS, SET_BURGERS, SET_DISCOUNTS, setFull, setPrice, isVeg, isSpicy, allergens, type World, type CatId, type Item, type ExtraId, type Lang } from './data.js';
+import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT, MIN_DELIVERY, FRIDAY_EVERY, SET_DRINKS, SET_BURGERS, SET_DISCOUNTS, setFull, setPrice, isVeg, isSpicy, allergens, type World, type CatId, type Item, type ExtraId, type Lang } from './data.js';
 import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } from './art.js';
 import { initPointer } from './ui.js';
 import { initScroll } from './scroll.js';
@@ -23,7 +23,7 @@ const currentTheme = (): Theme => (root.dataset.theme === 'dark' ? 'dark' : 'lig
 function paintTheme(th: Theme) {
   root.dataset.theme = th;
   $('#themeBtn').setAttribute('aria-pressed', String(th === 'dark'));
-  $('meta[name="theme-color"]').setAttribute('content', th === 'dark' ? '#170D22' : '#F1EAF7');
+  $('meta[name="theme-color"]').setAttribute('content', th === 'dark' ? '#141010' : '#FAF7F6');
 }
 function setTheme(next: Theme, origin?: HTMLElement) {
   store.set('vc-theme', next);
@@ -49,7 +49,7 @@ function applyLang() {
   $$('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', t(el.dataset.i18nAria!)));
   $$<HTMLInputElement>('[data-i18n-ph]').forEach(el => (el.placeholder = t(el.dataset.i18nPh!)));
   $$('.lang button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === state.lang)));
-  document.title = { uz: 'Violette — kofe va fast-food, Andijon', ru: 'Violette — кофе и фастфуд, Андижан', en: 'Violette — coffee & fast food, Andijan' }[state.lang];
+  document.title = { uz: 'FFS — Fresh Fried Soul, Andijon', ru: 'FFS — Fresh Fried Soul, Андижан', en: 'FFS — Fresh Fried Soul, Andijan' }[state.lang];
   emit('lang');
 }
 $$('.lang button').forEach(b => b.addEventListener('click', () => {
@@ -68,15 +68,16 @@ $$('.nav a').forEach(a => a.addEventListener('click', () => setMenu(false)));
 document.addEventListener('keydown', e => { if (e.key === 'Escape' && menu.classList.contains('open')) setMenu(false); });
 
 /* =============== open status & greeting =============== */
+const hourStr = (h: number) => `${pad(h % 24)}:00`;
 function renderStatus() {
   const now = tashkentNow(), h = now.getHours() + now.getMinutes() / 60;
   const open = h >= CAFE.open && h < CAFE.close;
   const pill = $('#openPill');
   pill.classList.toggle('closed', !open);
-  $('span', pill).textContent = open ? tf('open.now', { t: `${pad(CAFE.close)}:00` }) : tf('open.closed', { t: `${pad(CAFE.open)}:00` });
+  $('span', pill).textContent = open ? tf('open.now', { t: hourStr(CAFE.close) }) : tf('open.closed', { t: hourStr(CAFE.open) });
   const g = h < 5 ? 'night' : h < 11.5 ? 'morning' : h < 17 ? 'day' : h < 22.5 ? 'evening' : 'night';
   $('#greet').textContent = t('greet.' + g);
-  $('#hoursV').textContent = tf('visit.hoursV', { o: `${pad(CAFE.open)}:00`, c: `${pad(CAFE.close)}:00` });
+  $('#hoursV').textContent = tf('visit.hoursV', { o: hourStr(CAFE.open), c: hourStr(CAFE.close) });
 }
 setInterval(renderStatus, 60000);
 
@@ -84,13 +85,13 @@ setInterval(renderStatus, 60000);
 const scene = $<SVGSVGElement>('#scene');
 interface DrinkRecipe { layers: { c: string; f: number }[]; foam: number; art?: 'heart' | 'rosetta' | 'tulip'; artC?: string; ice?: boolean; cream?: boolean; dust?: string; top?: string }
 const RECIPES: Record<string, DrinkRecipe> = {
-  'violette-latte': { layers: [{ c: '#B08CDB', f: .12 }, { c: '#F5EDF6', f: .5 }, { c: '#9A6A45', f: .2 }], foam: .09, art: 'heart', artC: '#B07FD8' },
+  'violette-latte': { layers: [{ c: '#DB8C90', f: .12 }, { c: '#F4EFEF', f: .5 }, { c: '#9A6A45', f: .2 }], foam: .09, art: 'heart', artC: '#D87F83' },
   latte: { layers: [{ c: '#F6EFE6', f: .52 }, { c: '#B8865C', f: .16 }, { c: '#8E5E3C', f: .12 }], foam: .1, art: 'rosetta', artC: '#B07A50' },
   cappuccino: { layers: [{ c: '#F3E7D8', f: .3 }, { c: '#9A6A45', f: .22 }], foam: .3, art: 'heart', artC: '#A8744C' },
   mocha: { layers: [{ c: '#4A2616', f: .16 }, { c: '#C9A27E', f: .34 }, { c: '#6B3E24', f: .26 }], foam: 0, cream: true, dust: '#3A1F14' },
   raf: { layers: [{ c: '#F1DFC2', f: .5 }, { c: '#D9B98F', f: .26 }], foam: .1, art: 'tulip', artC: '#C49A6C' },
   'iced-latte': { layers: [{ c: '#F6EFE6', f: .5 }, { c: '#B8865C', f: .14 }, { c: '#5A3220', f: .2 }], foam: 0, ice: true },
-  'iced-violette': { layers: [{ c: '#B08CDB', f: .16 }, { c: '#EFE4F8', f: .44 }, { c: '#9A6A45', f: .22 }], foam: 0, ice: true },
+  'iced-violette': { layers: [{ c: '#DB8C90', f: .16 }, { c: '#F3E9EA', f: .44 }, { c: '#9A6A45', f: .22 }], foam: 0, ice: true },
   matcha: { layers: [{ c: '#F6EFE6', f: .44 }, { c: '#A9C76F', f: .14 }, { c: '#7FA54A', f: .24 }], foam: 0, ice: true },
 };
 const pick = <T,>(a: T[]) => a[Math.floor(Math.random() * a.length)];
@@ -126,16 +127,16 @@ function buildScene() {
       <clipPath id="glassClip"><path d="${gp}"/></clipPath>
       <radialGradient id="discG" cx="50%" cy="40%" r="60%"><stop offset="0" stop-color="var(--disc-a)"/><stop offset="1" stop-color="var(--disc-b)"/></radialGradient>
       <linearGradient id="g-stream" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".25"/><stop offset=".35" stop-color="#fff" stop-opacity=".35"/><stop offset="1" stop-color="#000" stop-opacity=".2"/></linearGradient>
-      <radialGradient id="g-sticker" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#FF8A70"/><stop offset=".6" stop-color="#E2452F"/><stop offset="1" stop-color="#B02A1C"/></radialGradient>
+      <radialGradient id="g-sticker" cx=".35" cy=".3" r=".8"><stop offset="0" stop-color="#FF8A70"/><stop offset=".6" stop-color="#E11D24"/><stop offset="1" stop-color="#B02A1C"/></radialGradient>
     </defs>
     <g class="sky">${stars}</g>
     <circle id="disc" cx="520" cy="440" r="330" fill="url(#discG)"/>
     <g id="discRing" fill="none" stroke="var(--ring)" stroke-width="2" stroke-dasharray="3 12"><circle cx="520" cy="440" r="372"/></g>
-    <text class="neon" x="520" y="128" text-anchor="middle" textLength="640" lengthAdjust="spacingAndGlyphs">Violette</text>
-    <ellipse cx="${cx}" cy="${bot + 12}" rx="${wb * .72}" ry="14" fill="#1a0a24" opacity=".28" filter="url(#fx-steam)"/>
+    <text class="neon" x="520" y="128" text-anchor="middle" textLength="380" lengthAdjust="spacingAndGlyphs">FFS</text>
+    <ellipse cx="${cx}" cy="${bot + 12}" rx="${wb * .72}" ry="14" fill="#1C1213" opacity=".28" filter="url(#fx-steam)"/>
     ${plateSVG(BURGER.cx, BURGER.base + 10, 206)}
     <g id="pour"><rect id="stream" x="${cx - 7}" y="-20" width="14" height="0" rx="7"/><rect id="streamHi" x="${cx - 7}" y="-20" width="14" height="0" rx="7" fill="url(#g-stream)"/></g>
-    ${REC.ice ? '' : `<path d="${hp}" fill="none" stroke="rgba(42,20,64,.22)" stroke-width="26" stroke-linecap="round"/>
+    ${REC.ice ? '' : `<path d="${hp}" fill="none" stroke="rgba(50, 34, 35,.22)" stroke-width="26" stroke-linecap="round"/>
     <path d="${hp}" fill="none" stroke="rgba(255,255,255,.5)" stroke-width="22" stroke-linecap="round"/>
     <path d="${hp}" fill="none" stroke="#fff" stroke-width="4" stroke-linecap="round" opacity=".9" transform="translate(-4 -4)"/>`}
     <path d="${gp}" fill="rgba(255,255,255,.2)"/>
@@ -149,24 +150,24 @@ function buildScene() {
     <g id="surfaceTop"></g>
     <path d="${gp}" fill="url(#g-glass)"/>
     <path d="${gp}" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="3.5" stroke-linejoin="round"/>
-    <path d="${gp}" fill="none" stroke="rgba(42,20,64,.3)" stroke-width="1.6" stroke-linejoin="round" transform="translate(0 2)"/>
+    <path d="${gp}" fill="none" stroke="rgba(50, 34, 35,.3)" stroke-width="1.6" stroke-linejoin="round" transform="translate(0 2)"/>
     <path d="M${L + 20} ${top + 36} L${bl + 14} ${bot - 54}" stroke="#fff" stroke-width="12" stroke-linecap="round" opacity=".45"/>
     <path d="M${L + 42} ${top + 50} L${bl + 32} ${bot - 150}" stroke="#fff" stroke-width="3.5" stroke-linecap="round" opacity=".5"/>
     <path d="M${R - 20} ${top + 60} L${br - 14} ${bot - 70}" stroke="#fff" stroke-width="6" stroke-linecap="round" opacity=".28"/>
     <ellipse cx="${cx}" cy="${bot - 7}" rx="${wb / 2 - 5}" ry="10" fill="rgba(255,255,255,.38)"/>
-    <text x="${cx}" y="${top + 205}" text-anchor="middle" class="glass-print">Violette</text>
+    <text x="${cx}" y="${top + 205}" text-anchor="middle" class="glass-print">FFS</text>
     ${drops}
     <g id="creamTop" opacity="0"></g>
     <ellipse cx="${cx}" cy="${top}" rx="${wt / 2}" ry="11" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="3.5"/>
-    <ellipse cx="${cx}" cy="${top}" rx="${wt / 2}" ry="11" fill="none" stroke="rgba(42,20,64,.22)" stroke-width="1.4" transform="translate(0 2.5)"/>
+    <ellipse cx="${cx}" cy="${top}" rx="${wt / 2}" ry="11" fill="none" stroke="rgba(50, 34, 35,.22)" stroke-width="1.4" transform="translate(0 2.5)"/>
     ${REC.ice ? `<g id="straw" opacity="0"><path d="M${cx + 22} ${bot - 60} L${cx + 70} ${top - 120}" stroke="url(#g-straw)" stroke-width="16" stroke-linecap="round"/><path d="M${cx + 22} ${bot - 60} L${cx + 70} ${top - 120}" stroke="#fff" stroke-width="4" stroke-linecap="round" stroke-dasharray="10 14" opacity=".55"/></g>` : ''}
-    <g id="heroSteam" opacity="0" filter="url(#fx-steam)">${REC.ice ? '' : steam(cx, top - 30, 1.6).replace(/stroke="#9D7BD1"/, 'stroke="#FFFFFF"')}</g>
+    <g id="heroSteam" opacity="0" filter="url(#fx-steam)">${REC.ice ? '' : steam(cx, top - 30, 1.6).replace(/stroke="#EC5A5F"/, 'stroke="#FFFFFF"')}</g>
     <g id="burger">${layersSvg}</g>
     <g class="sparkle" id="sparkles" opacity="0">${[[900, 380], [560, 400], [920, 520], [560, 280]].map(([x, yy], i) => `<path style="--d:${i * .3}s" d="M${x} ${yy - 14} l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4z" fill="#F4B731"/>`).join('')}</g>
     <g id="sticker" opacity="0" transform="translate(500 405)"><g class="st-in">
       <path d="${Array.from({ length: 24 }, (_, i) => { const a = (i / 24) * Math.PI * 2, r = i % 2 ? 62 : 70; return `${i ? 'L' : 'M'}${(Math.cos(a) * r).toFixed(1)} ${(Math.sin(a) * r).toFixed(1)}`; }).join(' ')}z" fill="url(#g-sticker)" filter="url(#fx-soft)"/>
       <circle r="52" fill="none" stroke="#fff" stroke-width="2" stroke-dasharray="4 5" opacity=".7"/>
-      <text class="st-pct" y="10" text-anchor="middle">−${PAIR.pct}%</text><text class="st-lbl" y="34" text-anchor="middle" id="stLbl"></text></g></g>`;
+      <text class="st-pct" y="10" text-anchor="middle">+2</text><text class="st-lbl" y="34" text-anchor="middle" id="stLbl"></text></g></g>`;
   if (scale < 1) $('#burger', scene).setAttribute('transform', `translate(${BURGER.cx} ${BURGER.base}) scale(${scale}) translate(${-BURGER.cx} ${-BURGER.base})`);
 }
 function fitScene() { scene.setAttribute('viewBox', innerWidth <= 960 ? '160 34 840 676' : '0 0 1200 800'); }
@@ -254,26 +255,26 @@ function updateHero(p: number) {
 function easeBackOut(t: number) { const c = 1.9; return 1 + (c + 1) * Math.pow(t - 1, 3) + c * Math.pow(t - 1, 2); }
 function renderReceipt() {
   const now = tashkentNow();
-  const full = setFull(PAIR.drink, PAIR.burger), price = setPrice(PAIR.drink, PAIR.burger, PAIR.pct);
-  const dPrice = HL.price + (HL.sized ? SIZES[1].add : 0);
+  // the shop's running deal: 1 kg KFC combo with two burgers on top
+  const deal = ITEM('kfc-1kg')!;
   $('#rcPaper').innerHTML = `
     <div class="rc-row rc-title">${t('rc.title')}</div>
     <div class="rc-row rc-meta"><span>${ddmmyyyy(now)}</span><span>${hhmm(now)}</span></div>
-    <div class="rc-row"><span>${esc(HL.name[state.lang])}${HL.sized ? ' M' : ''}</span><span>${money(dPrice)}</span></div>
-    <div class="rc-row"><span>${esc(HB.name[state.lang])}</span><span>${money(HB.price)}</span></div>
-    <div class="rc-row rc-disc"><span>${tf('rc.disc', { p: PAIR.pct })}</span><span>−${money(full - price)}</span></div>
-    <div class="rc-row rc-total"><span>${t('rc.total')}</span><span>${money(price)}</span></div>
+    <div class="rc-row"><span>${esc(deal.name[state.lang])}</span><span>${money(deal.price)}</span></div>
+    <div class="rc-row rc-disc"><span>${t('rc.gift')}</span><span>${money(0)}</span></div>
+    <div class="rc-row rc-total"><span>${t('rc.total')}</span><span>${money(deal.price)}</span></div>
     <div class="rc-row rc-bar" aria-hidden="true">${Array.from({ length: 34 }, (_, i) => `<i style="width:${1 + ((i * 7) % 4)}px"></i>`).join('')}</div>
     <div class="rc-row rc-thanks">${t('rc.thanks')}</div>`;
-  $('#heroComboPrice').innerHTML = `<s>${money(full)}</s> ${money(price)}`;
-  $('#heroPairName').textContent = `${HL.name[state.lang]} + ${HB.name[state.lang]}`;
+  $('#heroComboPrice').textContent = money(deal.price);
+  $('#heroPairName').textContent = t('promo.kfcGift');
   const lbl = $('#stLbl', scene); if (lbl) lbl.textContent = t('hero.badge');
   scene.setAttribute('aria-label', `${HL.name[state.lang]} + ${HB.name[state.lang]}`);
   stageIdx = -1; const p = heroP; heroP = -1; updateHero(Math.max(0, p));
 }
 $('#heroCombo').addEventListener('click', e => {
-  addLine({ kind: 'set', set: { ...PAIR } }, 1, e.currentTarget as Element);
-  toast(`${t('set.name')}: ${HL.name[state.lang]} + ${HB.name[state.lang]} — ${t('card.added').toLowerCase()}`);
+  const deal = ITEM('kfc-1kg')!;
+  addLine({ kind: 'item', item: deal.id, extras: [] }, 1, e.currentTarget as Element);
+  toast(`${deal.name[state.lang]} ${t('promo.kfcGift')} — ${t('card.added').toLowerCase()}`);
 });
 const hero = $('#top');
 function heroProgress() {
@@ -285,7 +286,7 @@ function heroProgress() {
 
 /* =============== tape =============== */
 function renderTape() {
-  const words = ['Violette latte', 'Lavash', 'Cheesecake', 'Double beef', 'Raf', 'Hot-dog', 'Medovik', 'Iced Violette', 'Fri'];
+  const words = ['Soul burger', 'Lavash', 'Hot-dog', 'Double beef', 'Fri', 'Soul latte', 'Nuggets', 'Cheesecake', 'Raf'];
   const seq = words.map((w, i) => `<span class="${i % 2 ? 'tw-a' : 'tw-b'}">${w}</span><svg viewBox="0 0 24 24"><ellipse cx="12" cy="12" rx="7" ry="10"/><path d="M12 3c-4 5 4 13 0 18" fill="none" stroke-width="1.8"/></svg>`).join('');
   $('#tape').innerHTML = seq + seq + seq;
 }
@@ -484,7 +485,7 @@ $('#imAdd').addEventListener('click', () => {
 });
 
 /* =============== cart drawer =============== */
-const PCOL = ['#7A4FB0', '#E2452F', '#F4B731', '#3E8E6A', '#3E6FB8', '#C2185B', '#8A5A3B', '#4B4F5C'];
+const PCOL = ['#E11D24', '#E11D24', '#F4B731', '#3E8E6A', '#3E6FB8', '#C2185B', '#8A5A3B', '#5C4B4C'];
 const split = { on: false, n: 2 };
 function eta(): Date {
   const prep = cart.length ? Math.max(...cart.map(linePrep)) : 0;
@@ -511,15 +512,15 @@ function renderCart() {
       <button type="button" class="rm" data-rm aria-label="${t('aria.remove')}">×</button>
     </li>`).join('');
   $('#cartSub').textContent = money(subtotal());
-  const near = ZONES[0], sub = subtotal(), toFree = Math.max(0, near.freeFrom - sub);
+  const near = ZONES[0], sub = subtotal(), toFree = Math.max(0, near.freeFrom - sub), short = Math.max(0, MIN_DELIVERY - sub);
   $('#cartDeliv').innerHTML = `<div class="dv-row"><span>${t('cart.delivery')}</span><b>${toFree ? tf('cart.delivFrom', { s: money(Math.min(...ZONES.map(z => z.fee))) }) : t('rv.free')}</b></div>
     <div class="dv-bar"><i style="width:${Math.min(100, (sub / near.freeFrom) * 100)}%"></i></div>
-    <small>${toFree ? tf('cart.toFree', { s: money(toFree) }) : t('cart.freeOk')} · ${t('cart.pickupFree')}</small>`;
+    <small>${short ? tf('cart.minDelivery', { s: money(MIN_DELIVERY), d: money(short) }) : toFree ? tf('cart.toFree', { s: money(toFree) }) : t('cart.freeOk')} · ${t('cart.pickupFree')}</small>`;
   const last = store.get('vc-last') as { n?: number; total?: number; at?: number } | null;
   $('#cartLast').hidden = !last || !last.n;
   if (last && last.n) $('#cartLast').innerHTML = `<div><b>${t('last.title')}</b><small>${last.at ? ddmmyyyy(new Date(last.at)) + ' · ' : ''}${last.n} ${plural(last.n, 'items')} · ${money(last.total ?? 0)}</small></div><button type="button" class="btn btn-mini" data-repeat>${t('last.repeat')}</button>`;
   if (acceptingNow()) $('#cartEta').textContent = tf('cart.eta', { t: hhmm(eta()) });
-  else { const s = timeSlots(); $('#cartEta').textContent = tf('cart.closedEta', { t: timeInline(s.slots[0] ?? `${pad(CAFE.open)}:00`, s.tomorrow) }); }
+  else { const s = timeSlots(); $('#cartEta').textContent = tf('cart.closedEta', { t: timeInline(s.slots[0] ?? hourStr(CAFE.open), s.tomorrow) }); }
   renderSplit(); renderStamps();
 }
 function splitShares(): number[] {
@@ -535,12 +536,14 @@ function renderSplit() {
   if (!split.on) return;
   $('#splitRes').innerHTML = splitShares().map((s, i) => `<div style="--pc:${PCOL[i]}"><i>${i + 1}</i><b>${money(Math.ceil(s / 500) * 500)}</b></div>`).join('');
 }
+/** Friday deal: dishes in the cart (drinks, sides and desserts don't count) and how many extra the order earns. */
+const isFriday = () => tashkentNow().getDay() === 5;
+const dishCount = () => cart.reduce((a, l) => a + (l.kind !== 'item' || ITEM(l.item!)!.role === 'main' ? l.qty : 0), 0);
+const fridayGifts = () => (isFriday() ? Math.floor(dishCount() / FRIDAY_EVERY) : 0);
 function renderStamps() {
-  const k = Number(store.get('vc-stamps')) || 0;
-  const have = k % STAMPS_FOR_GIFT;
-  const gift = k > 0 && have === 0;
-  $('#stamps').innerHTML = `<div class="st-head"><b>${t('stamps.title')}</b><small>${gift ? t('stamps.gift') : tf('stamps.text', { n: STAMPS_FOR_GIFT, k: have })}</small></div>
-    <div class="st-cups">${Array.from({ length: STAMPS_FOR_GIFT }, (_, i) => `<span class="${gift || i < have ? 'got' : ''}${i === STAMPS_FOR_GIFT - 1 ? ' gift' : ''}"><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M5 8h12v5a6 6 0 0 1-6 6 6 6 0 0 1-6-6z M17 10h1.5a2.5 2.5 0 0 1 0 5H16" fill="none" stroke="currentColor" stroke-width="2"/></svg></span>`).join('')}</div>`;
+  const n = dishCount(), have = n % FRIDAY_EVERY, gifts = fridayGifts();
+  $('#stamps').innerHTML = `<div class="st-head"><b>${t('fri.title')}</b><small>${!isFriday() ? tf('fri.other', { n: FRIDAY_EVERY }) : gifts && !have ? tf('fri.got', { g: gifts }) : tf('fri.more', { k: FRIDAY_EVERY - have, g: gifts })}</small></div>
+    <div class="st-cups fri">${Array.from({ length: FRIDAY_EVERY + 1 }, (_, i) => `<span class="${isFriday() && (i < have || (gifts && !have)) ? 'got' : ''}${i === FRIDAY_EVERY ? ' gift' : ''}"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M30 70 q-14 -2 -14 -20 q0 -22 22 -26 q22 -2 34 12 q8 10 2 22 q-6 12 -22 14z" fill="currentColor"/><path d="M62 66 l14 10 q6 2 6 -4 q4 -2 0 -6 l-12 -8" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg></span>`).join('')}</div>`;
 }
 $('#cartBtn').addEventListener('click', () => { renderCart(); openOverlay($('#cart')); });
 $('#cart').addEventListener('click', e => {
@@ -601,9 +604,8 @@ function bindPhone(el: HTMLInputElement) {
 }
 const deliveryFee = () => { if (order.method !== 'delivery') return 0; const z = ZONES.find(z => z.id === order.zone) ?? ZONES[0]; return subtotal() >= z.freeFrom ? 0 : z.fee; };
 const orderTotal = () => subtotal() + deliveryFee();
-/** The cafe takes "as soon as possible" orders until half an hour before closing. */
-const ASAP_CUTOFF = .5;
-function acceptingNow() { const n = tashkentNow(), h = n.getHours() + n.getMinutes() / 60; return h >= CAFE.open && h < CAFE.close - ASAP_CUTOFF; }
+/** "As soon as possible" orders are taken until the last-order time (23:40). */
+function acceptingNow() { const n = tashkentNow(), h = n.getHours() + n.getMinutes() / 60; return h >= CAFE.open && h < CAFE.lastOrder; }
 /** Times to choose from: today's if there are any left, otherwise tomorrow's from opening (never while the cafe is closed). */
 function timeSlots(): { slots: string[]; tomorrow: boolean } {
   const now = tashkentNow();
@@ -643,7 +645,7 @@ function renderCheckout() {
     };
     $('#coHow').innerHTML = how.map(m => `<button type="button" role="radio" data-how="${m}" aria-checked="${order.method === m}"><svg viewBox="0 0 24 24" aria-hidden="true">${ico[m]}</svg><b>${t('how.' + m)}</b><small>${t('how.' + m + 'D')}</small></button>`).join('');
     const x = $('#coHowExtra');
-    if (order.method === 'delivery') x.innerHTML = `<h4>${t('how.zone')}</h4><div class="zones" role="radiogroup">${ZONES.map(z => `<button type="button" role="radio" data-zone="${z.id}" aria-checked="${order.zone === z.id}"><b>${esc(z.name[state.lang])}</b><small>${money(z.fee)} · ${tf('how.free', { s: money(z.freeFrom) })} · ~${z.mins} ${t('card.min')}</small></button>`).join('')}</div>`;
+    if (order.method === 'delivery') x.innerHTML = `<h4>${t('how.zone')}</h4><div class="zones" role="radiogroup">${ZONES.map(z => `<button type="button" role="radio" data-zone="${z.id}" aria-checked="${order.zone === z.id}"><b>${esc(z.name[state.lang])}</b><small>${money(z.fee)}${Number.isFinite(z.freeFrom) ? ` · ${tf('how.free', { s: money(z.freeFrom) })}` : ''} · ~${z.mins} ${t('card.min')}</small></button>`).join('')}</div>`;
     else if (order.method === 'table') x.innerHTML = `<label class="field"><span>${t('how.tableNo')}</span><input id="coTable" inputmode="numeric" maxlength="3" value="${esc(order.table)}"></label>`;
     else x.innerHTML = '';
   }
@@ -707,6 +709,7 @@ $('#coForm').addEventListener('submit', async e => {
   e.preventDefault();
   if (order.step === 1) {
     if (order.method === 'table' && !order.table) return fail(t('err.table'), '#coTable');
+    if (order.method === 'delivery' && subtotal() < MIN_DELIVERY) return fail(tf('err.minDelivery', { s: money(MIN_DELIVERY), d: money(MIN_DELIVERY - subtotal()) }));
     if (order.method === 'table' && !acceptingNow()) return fail(t('err.tableClosed'));
     order.step = 2; renderCheckout(); $<HTMLElement>('#coName').focus(); return;
   }
@@ -728,25 +731,24 @@ async function sendOrder() {
   sending = true;
   const btn = $<HTMLButtonElement>('#coNext');
   btn.disabled = true; btn.textContent = t('co.sending');
-  const id = 'V' + Date.now().toString(36).slice(-5).toUpperCase();
+  const id = 'F' + Date.now().toString(36).slice(-5).toUpperCase();
   const due = order.method === 'table' || order.time === 'asap' ? hhmm(eta()) : order.time;
   const dueLabel = order.time === 'asap' || order.method === 'table' ? due : timeLabel(due, order.tomorrow);
   const items = cart.map(l => `${l.qty} × ${lineName(l)}${lineSub(l) ? ` (${lineSub(l)})` : ''} — ${money(unitPrice(l) * l.qty)}${split.on && l.who >= 0 && l.who < split.n ? ` [${l.who + 1}]` : ''}`).join('\n');
+  const gifts = fridayGifts();
+  const itemsText = items + (gifts ? `\n+ ${tf('fri.orderNote', { g: gifts })}` : '');
   const data: Record<string, string> = {
     'form-name': 'order', 'bot-field': '', order_id: id, method: order.method, table: order.method === 'table' ? order.table : '',
     name: order.name, phone: '+998 ' + fmtPhone(order.phone), address: order.method === 'delivery' ? order.address : '',
     zone: order.method === 'delivery' ? (ZONES.find(z => z.id === order.zone) ?? ZONES[0]).name.uz : '', time: order.time === 'asap' ? `ASAP ~${due}` : `${order.tomorrow ? 'ERTAGA / TOMORROW ' : ''}${order.time}`,
-    payment: order.payment, comment: order.comment, items, split: split.on ? splitShares().map((s, i) => `${i + 1}: ${money(Math.ceil(s / 500) * 500)}`).join('; ') : '',
+    payment: order.payment, comment: order.comment, items: itemsText, split: split.on ? splitShares().map((s, i) => `${i + 1}: ${money(Math.ceil(s / 500) * 500)}`).join('; ') : '',
     subtotal: String(subtotal()), delivery: String(deliveryFee()), total: String(orderTotal()), lang: state.lang,
   };
-  const coffees = cart.filter(isCoffeeLine).reduce((a, l) => a + l.qty, 0);
   try {
     const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 12000);
     const res = await fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(data).toString(), signal: ctl.signal });
     clearTimeout(tm);
     if (!res.ok) throw new Error(String(res.status));
-    const prev = Number(store.get('vc-stamps')) || 0;
-    store.set('vc-stamps', prev + coffees);
     store.set('vc-last', { at: Date.now(), n: count(), total: subtotal(), lines: cart.map(({ sig: _s, who: _w, ...l }) => l) });
     const made = cart.map(l => ({ ...l }));
     const isDelivery = order.method === 'delivery';
@@ -767,7 +769,7 @@ async function sendOrder() {
     done.hidden = false;
     done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('cappuccino')!.art)}</div><h4>${t('done.title')}</h4>
       <p>${tf('done.text', { id, phone: '+998 ' + fmtPhone(order.phone) })}</p><p class="eta-big">${tf((order.method === 'delivery' ? 'done.etaDelivery' : 'done.eta') + (order.time !== 'asap' && order.method !== 'table' && order.tomorrow ? 'Tm' : ''), { t: due })}</p>
-      ${coffees ? `<p class="stamp-plus">${tf('done.stamp', { n: coffees, w: plural(coffees, 'stamps') })}</p>` : ''}
+      ${gifts ? `<p class="stamp-plus">${tf('fri.got', { g: gifts })}</p>` : ''}
       ${isDelivery ? `<button type="button" class="btn btn-ink tk-done-btn" data-track>${t('tr.open')}</button>` : ''}
       <button type="button" class="watch-btn" data-watch><span class="wb-play" aria-hidden="true"></span><span><b>${t('afk.watch')}</b><small>${t('afk.watchSub')}</small></span></button>
       <button class="btn btn-acc" data-close>${t('done.close')}</button>`;
@@ -833,7 +835,8 @@ $('#bookForm').addEventListener('submit', async e => {
 function renderVisit() {
   // until the cafe's real number is in, show Telegram instead of a placeholder
   const realPhone = /\d{2}\s?\d{3}/.test(CAFE.phone) && !/X/i.test(CAFE.phone);
-  $('#phoneV').innerHTML = realPhone ? `<a href="tel:${CAFE.phone.replace(/\s/g, '')}">${esc(CAFE.phone)}</a>` : `<a href="https://t.me/${CAFE.telegram}" target="_blank" rel="noopener">Telegram @${esc(CAFE.telegram)}</a>`;
+  const tel = (n: string) => `<a href="tel:${n.replace(/\s/g, '')}">${esc(n)}</a>`;
+  $('#phoneV').innerHTML = realPhone ? [CAFE.phone, CAFE.phone2].filter(Boolean).map(tel).join('<br>') : `<a href="https://t.me/${CAFE.telegram}" target="_blank" rel="noopener">Telegram @${esc(CAFE.telegram)}</a>`;
   const tg = $<HTMLAnchorElement>('#tgLink'), ig = $<HTMLAnchorElement>('#igLink');
   tg.href = `https://t.me/${CAFE.telegram}`; tg.textContent = `Telegram @${CAFE.telegram}`;
   ig.href = `https://instagram.com/${CAFE.instagram}`; ig.textContent = `Instagram @${CAFE.instagram}`;

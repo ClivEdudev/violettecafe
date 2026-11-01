@@ -1,4 +1,4 @@
-/* Custom cursor & pointer assist (same system as the Robiya site, in Violette's style).
+/* Custom cursor & pointer assist (same system as the Robiya site, in the FFS style).
    The pointer is a small coffee bean that replaces the system arrow and stays exactly under the mouse.
    Around it, a soft outline settles on whatever you're about to use:
    - whole things are targets: anywhere on a menu card opens it;

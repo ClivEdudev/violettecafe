@@ -163,6 +163,8 @@ export function lineSub(l) {
         return [t('lab.custom'), BUNS.find(b => b.id === h.bun)?.name[state.lang] ?? '', ...h.tops.map(a => HD_TOPS.find(p => p.id === a).name[state.lang]), ...h.sauces.map(a => HD_SAUCES.find(p => p.id === a).name[state.lang])].join(' · ');
     }
     const parts = [];
+    if (l.item === 'kfc-1kg')
+        parts.push(t('promo.kfcGift'));
     if (l.size)
         parts.push(l.size);
     (l.extras ?? []).forEach(e => parts.push('+ ' + EXTRAS[e].name[state.lang]));

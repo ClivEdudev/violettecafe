@@ -131,18 +131,18 @@ function drawCook(p: Pose, tm: number) {
 }
 /* ===================== scene ===================== */
 const DEFS = `<defs>
-  <linearGradient id="aWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2A1934"/><stop offset=".7" stop-color="#1C1024"/><stop offset="1" stop-color="#140B1A"/></linearGradient>
+  <linearGradient id="aWall" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#2B2222"/><stop offset=".7" stop-color="#1D1617"/><stop offset="1" stop-color="#151010"/></linearGradient>
   <radialGradient id="aLamp" cx=".5" cy=".5" r=".5"><stop offset="0" stop-color="#FFD38A" stop-opacity=".55"/><stop offset=".45" stop-color="#FFB45A" stop-opacity=".18"/><stop offset="1" stop-color="#FFB45A" stop-opacity="0"/></radialGradient>
   <linearGradient id="aWood" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#8A5636"/><stop offset=".08" stop-color="#6B3F25"/><stop offset="1" stop-color="#3E2314"/></linearGradient>
   <linearGradient id="aTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E9DCCB"/><stop offset="1" stop-color="#BBA48B"/></linearGradient>
   <linearGradient id="aBoard" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D9A876"/><stop offset=".3" stop-color="#C08A57"/><stop offset="1" stop-color="#8E5E36"/></linearGradient>
-  <linearGradient id="aChrome" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5D5B66"/><stop offset=".18" stop-color="#E9E7EF"/><stop offset=".4" stop-color="#9C99A6"/><stop offset=".7" stop-color="#F4F3F8"/><stop offset="1" stop-color="#6B6875"/></linearGradient>
-  <linearGradient id="aBody" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#3B2357"/><stop offset=".35" stop-color="#6A3FA0"/><stop offset=".65" stop-color="#5A3590"/><stop offset="1" stop-color="#2E1A45"/></linearGradient>
+  <linearGradient id="aChrome" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5D5B66"/><stop offset=".18" stop-color="#EDE9E9"/><stop offset=".4" stop-color="#9C99A6"/><stop offset=".7" stop-color="#F7F4F4"/><stop offset="1" stop-color="#6B6875"/></linearGradient>
+  <linearGradient id="aBody" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#572326"/><stop offset=".35" stop-color="#A03F44"/><stop offset=".65" stop-color="#B5121A"/><stop offset="1" stop-color="#372829"/></linearGradient>
   <linearGradient id="aShirt" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#CDBFAE"/><stop offset=".45" stop-color="#F2EADF"/><stop offset="1" stop-color="#C2B4A1"/></linearGradient>
-  <linearGradient id="aApron" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#2C1A3C"/><stop offset=".5" stop-color="#4A2C66"/><stop offset="1" stop-color="#26162F"/></linearGradient>
+  <linearGradient id="aApron" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#312526"/><stop offset=".5" stop-color="#662C2F"/><stop offset="1" stop-color="#271E1F"/></linearGradient>
   <radialGradient id="aSkin" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#F0C9A6"/><stop offset=".7" stop-color="#D9A27C"/><stop offset="1" stop-color="#B98060"/></radialGradient>
-  <linearGradient id="aSteel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7E7B88"/><stop offset=".3" stop-color="#F2F1F6"/><stop offset=".6" stop-color="#ABA8B4"/><stop offset="1" stop-color="#5F5C69"/></linearGradient>
-  <linearGradient id="aCup" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#D8D0DE"/><stop offset=".4" stop-color="#FFFFFF"/><stop offset="1" stop-color="#C9BFD2"/></linearGradient>
+  <linearGradient id="aSteel" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#7E7B88"/><stop offset=".3" stop-color="#F5F2F2"/><stop offset=".6" stop-color="#ABA8B4"/><stop offset="1" stop-color="#5F5C69"/></linearGradient>
+  <linearGradient id="aCup" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#DED0D1"/><stop offset=".4" stop-color="#FFFFFF"/><stop offset="1" stop-color="#D2BFC0"/></linearGradient>
   <radialGradient id="aCrema" cx=".45" cy=".4" r=".6"><stop offset="0" stop-color="#D8A06A"/><stop offset=".8" stop-color="#9A5A2E"/><stop offset="1" stop-color="#6B3A1C"/></radialGradient>
   <linearGradient id="aLav" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F8E6BE"/><stop offset=".6" stop-color="#E8C487"/><stop offset="1" stop-color="#C99A5A"/></linearGradient>
   <linearGradient id="aDoner" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5A2C14"/><stop offset=".35" stop-color="#B8642C"/><stop offset=".6" stop-color="#D9864A"/><stop offset="1" stop-color="#6A3418"/></linearGradient>
@@ -156,15 +156,15 @@ const DEFS = `<defs>
 const board = (x: number, w: number) => `<g filter="url(#aSoft)"><rect x="${x}" y="488" width="${w}" height="16" rx="6" fill="url(#aBoard)"/></g><rect x="${x + 6}" y="489" width="${w - 12}" height="3" rx="1.5" fill="rgba(255,255,255,.3)"/>`;
 
 function sceneSVG() {
-  const jars = [0, 1, 2, 3, 4].map(i => { const x = 120 + i * 70; return `<g transform="translate(${x} 150)"><rect x="-22" y="-56" width="44" height="56" rx="8" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.18)"/><rect x="-18" y="-${20 + (i * 7) % 24}" width="36" height="${16 + (i * 7) % 24}" rx="4" fill="${['#5A3220', '#7A4A2A', '#3E2316', '#8A5A36', '#4A2A1A'][i]}"/><rect x="-24" y="-64" width="48" height="10" rx="4" fill="#3A2A44"/></g>`; }).join('');
+  const jars = [0, 1, 2, 3, 4].map(i => { const x = 120 + i * 70; return `<g transform="translate(${x} 150)"><rect x="-22" y="-56" width="44" height="56" rx="8" fill="rgba(255,255,255,.08)" stroke="rgba(255,255,255,.18)"/><rect x="-18" y="-${20 + (i * 7) % 24}" width="36" height="${16 + (i * 7) % 24}" rx="4" fill="${['#5A3220', '#7A4A2A', '#3E2316', '#8A5A36', '#4A2A1A'][i]}"/><rect x="-24" y="-64" width="48" height="10" rx="4" fill="#3C3233"/></g>`; }).join('');
   const bokeh = Array.from({ length: 14 }, (_, i) => `<circle class="ak-bokeh" style="--d:${(i * .9) % 8}s;--x:${(i % 2 ? 1 : -1) * (10 + i * 2)}px" cx="${(i * 83) % 1200}" cy="${80 + (i * 47) % 380}" r="${4 + (i % 4) * 3}" fill="#FFC98A" opacity="${.05 + (i % 3) * .04}"/>`).join('');
-  const lamp = (x: number, d: number) => `<g class="ak-lamp" style="--d:${d}s;transform-origin:${x}px 0px"><line x1="${x}" y1="0" x2="${x}" y2="90" stroke="#0E0812" stroke-width="2"/><path d="M${x - 34} 120 Q${x} 72 ${x + 34} 120z" fill="#1E1428"/><ellipse cx="${x}" cy="120" rx="34" ry="6" fill="#FFE2A8"/><circle cx="${x}" cy="150" r="190" fill="url(#aLamp)"/></g>`;
+  const lamp = (x: number, d: number) => `<g class="ak-lamp" style="--d:${d}s;transform-origin:${x}px 0px"><line x1="${x}" y1="0" x2="${x}" y2="90" stroke="#0F0B0B" stroke-width="2"/><path d="M${x - 34} 120 Q${x} 72 ${x + 34} 120z" fill="#221A1B"/><ellipse cx="${x}" cy="120" rx="34" ry="6" fill="#FFE2A8"/><circle cx="${x}" cy="150" r="190" fill="url(#aLamp)"/></g>`;
   const stripes = Array.from({ length: 22 }, (_, i) => `<rect x="${876 + i * 7}" y="280" width="3" height="200" fill="rgba(60,25,8,.35)"/>`).join('');
   return `${DEFS}
   <rect width="1200" height="700" fill="url(#aWall)"/>
   <g opacity=".5">${Array.from({ length: 12 }, (_, i) => `<rect x="${i * 100}" y="0" width="2" height="500" fill="rgba(255,255,255,.025)"/>`).join('')}</g>
   <rect x="60" y="150" width="420" height="10" rx="3" fill="#4A2E22"/>${jars}
-  <g transform="translate(860 70)"><rect width="260" height="160" rx="10" fill="#151018" stroke="#3A2A44" stroke-width="6"/><text x="130" y="58" text-anchor="middle" class="ak-chalk-t">Violette</text>
+  <g transform="translate(860 70)"><rect width="260" height="160" rx="10" fill="#151313" stroke="#3C3233" stroke-width="6"/><text x="130" y="58" text-anchor="middle" class="ak-chalk-t">FFS</text>
     <text x="24" y="98" class="ak-chalk" id="akBoardN1"></text><text x="236" y="98" text-anchor="end" class="ak-chalk" id="akBoardP1"></text><text x="24" y="128" class="ak-chalk" id="akBoardN2"></text><text x="236" y="128" text-anchor="end" class="ak-chalk" id="akBoardP2"></text></g>
   ${bokeh}
   <g id="stCoffee">
@@ -172,23 +172,23 @@ function sceneSVG() {
       <rect x="232" y="318" width="300" height="190" rx="18" fill="url(#aBody)"/>
       <rect x="232" y="318" width="300" height="34" rx="14" fill="url(#aChrome)"/>
       <rect x="250" y="300" width="70" height="20" rx="6" fill="url(#aCup)"/><rect x="330" y="302" width="64" height="18" rx="6" fill="url(#aCup)"/>
-      <circle cx="300" cy="388" r="20" fill="#1A1222" stroke="url(#aChrome)" stroke-width="5"/><line id="akNeedle" x1="300" y1="388" x2="300" y2="374" stroke="#FFB45A" stroke-width="3" stroke-linecap="round"/>
-      <circle cx="470" cy="388" r="20" fill="#1A1222" stroke="url(#aChrome)" stroke-width="5"/><line x1="470" y1="388" x2="481" y2="378" stroke="#FFB45A" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="300" cy="388" r="20" fill="#1D1717" stroke="url(#aChrome)" stroke-width="5"/><line id="akNeedle" x1="300" y1="388" x2="300" y2="374" stroke="#FFB45A" stroke-width="3" stroke-linecap="round"/>
+      <circle cx="470" cy="388" r="20" fill="#1D1717" stroke="url(#aChrome)" stroke-width="5"/><line x1="470" y1="388" x2="481" y2="378" stroke="#FFB45A" stroke-width="3" stroke-linecap="round"/>
       <rect x="352" y="420" width="56" height="26" rx="6" fill="url(#aChrome)"/><circle id="akLight" cx="380" cy="414" r="5" fill="#5A3A1C"/>
       <rect x="262" y="486" width="240" height="18" rx="5" fill="url(#aChrome)"/>
       <path d="M520 360 q30 4 26 40 l-2 56" fill="none" stroke="url(#aChrome)" stroke-width="7" stroke-linecap="round"/>
-      <text x="382" y="342" text-anchor="middle" class="ak-badge">V</text>
+      <text x="382" y="342" text-anchor="middle" class="ak-badge" style="font-size:16px">FFS</text>
     </g>
     <g id="akGrinder">
       <path d="M818 300 h64 l-10 58 h-44z" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.35)"/>
       <rect id="akBeans" x="826" y="318" width="48" height="38" rx="4" fill="#4A2A18"/>
       <rect x="810" y="356" width="80" height="70" rx="10" fill="url(#aChrome)"/>
       <rect x="838" y="426" width="24" height="16" rx="3" fill="#3A3640"/>
-      <rect x="800" y="500" width="100" height="8" rx="3" fill="#2A2630"/>
+      <rect x="800" y="500" width="100" height="8" rx="3" fill="#2D2929"/>
     </g>
   </g>
   <g id="stWrapBack" opacity="0">
-    <rect x="982" y="284" width="22" height="196" rx="6" fill="#2A2630"/><rect x="986" y="292" width="14" height="180" rx="4" fill="#FF7A3A" opacity=".75" class="ak-flicker"/>
+    <rect x="982" y="284" width="22" height="196" rx="6" fill="#2D2929"/><rect x="986" y="292" width="14" height="180" rx="4" fill="#FF7A3A" opacity=".75" class="ak-flicker"/>
     <ellipse cx="960" cy="380" rx="90" ry="130" fill="url(#aHeat)"/>
     <line x1="930" y1="232" x2="930" y2="500" stroke="url(#aSteel)" stroke-width="6"/><circle cx="930" cy="232" r="7" fill="url(#aSteel)"/>
     <path id="akCone" d="M890 296 Q930 284 970 296 L952 468 Q930 476 908 468z" fill="url(#aDoner)"/>
@@ -201,9 +201,9 @@ function sceneSVG() {
     <path d="M687 276 L713 276 L715 316 Q700 324 685 316z" fill="#C98E68"/><path d="M687 288 Q700 298 713 288 L713 298 Q700 306 687 298z" fill="rgba(90,50,30,.2)"/>
     <path d="M676 314 L700 340 L724 314 L713 304 L700 322 L687 304z" fill="#F7F1E8" stroke="#D8CDBE" stroke-width="1.5"/>
     <path d="M652 354 Q700 345 748 354 L756 640 H644z" fill="url(#aApron)"/>
-    <path d="M662 356 L678 314 M738 356 L722 314" stroke="#2C1A3C" stroke-width="6" stroke-linecap="round"/>
-    <rect x="681" y="442" width="40" height="30" rx="4" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2"/><line x1="712" y1="432" x2="714" y2="450" stroke="#C9B2E8" stroke-width="3" stroke-linecap="round"/>
-    <text x="700" y="414" text-anchor="middle" class="ak-badge">V</text>
+    <path d="M662 356 L678 314 M738 356 L722 314" stroke="#312526" stroke-width="6" stroke-linecap="round"/>
+    <rect x="681" y="442" width="40" height="30" rx="4" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2"/><line x1="712" y1="432" x2="714" y2="450" stroke="#F6C2C3" stroke-width="3" stroke-linecap="round"/>
+    <text x="700" y="414" text-anchor="middle" class="ak-badge" style="font-size:16px">FFS</text>
     <rect x="716" y="368" width="34" height="13" rx="3" fill="#F4ECE1"/><text x="733" y="377.8" text-anchor="middle" class="ak-tag">Sardor</text>
     <g id="akSplat"></g>
     <g id="akHead">
@@ -222,13 +222,13 @@ function sceneSVG() {
   </g>
   <g id="stGrill" opacity="0">
     ${board(410, 280)}
-    <rect x="800" y="470" width="190" height="34" rx="4" fill="#2A2630"/><rect x="806" y="464" width="178" height="8" rx="2" fill="#4A4652"/>
+    <rect x="800" y="470" width="190" height="34" rx="4" fill="#2D2929"/><rect x="806" y="464" width="178" height="8" rx="2" fill="#4A4652"/>
     <rect x="812" y="474" width="166" height="3" rx="1.5" fill="#FF7A3A" opacity=".6" class="ak-flicker"/>
     <circle cx="830" cy="490" r="5" fill="url(#aSteel)"/><circle cx="960" cy="490" r="5" fill="url(#aSteel)"/>
   </g>
   <g id="stWrap" opacity="0">${board(410, 300)}<rect x="866" y="486" width="84" height="18" rx="4" fill="url(#aSteel)"/><rect x="872" y="482" width="72" height="8" rx="3" fill="#8A4A22"/></g>
   <g id="stFryer" opacity="0">${board(410, 300)}
-    <rect x="812" y="300" width="182" height="150" rx="8" fill="url(#aChrome)" opacity=".35"/><rect x="826" y="314" width="154" height="10" rx="4" fill="#2A2630"/>
+    <rect x="812" y="300" width="182" height="150" rx="8" fill="url(#aChrome)" opacity=".35"/><rect x="826" y="314" width="154" height="10" rx="4" fill="#2D2929"/>
     <ellipse cx="903" cy="452" rx="84" ry="7" fill="#C98A2C" opacity=".85"/><ellipse cx="903" cy="440" rx="90" ry="60" fill="url(#aHeat)" opacity=".5"/></g>
   <g id="stPlain" opacity="0">${board(410, 300)}<rect x="830" y="456" width="150" height="48" rx="6" fill="url(#aChrome)" opacity=".55"/><rect x="840" y="462" width="130" height="6" rx="3" fill="rgba(255,255,255,.4)"/></g>
   <g id="akArms"></g>
@@ -239,7 +239,7 @@ function sceneSVG() {
   ${Array.from({ length: 6 }, (_, i) => `<rect x="${40 + i * 196}" y="548" width="176" height="128" rx="6" fill="none" stroke="rgba(0,0,0,.25)" stroke-width="3"/>`).join('')}
   <g id="akServe"></g>
   ${lamp(170, 0)}${lamp(600, 1.4)}
-  <g id="akInset" opacity="0"><circle cx="1010" cy="190" r="112" fill="#140B1A" stroke="#FFE2A8" stroke-opacity=".5" stroke-width="3"/>
+  <g id="akInset" opacity="0"><circle cx="1010" cy="190" r="112" fill="#151010" stroke="#FFE2A8" stroke-opacity=".5" stroke-width="3"/>
     <g clip-path="url(#aInset)"><circle cx="1010" cy="190" r="104" fill="url(#aCup)"/><circle cx="1010" cy="190" r="84" fill="url(#aCrema)"/><g id="akArt"></g></g></g>`;
 }
 
@@ -251,7 +251,7 @@ const servedSteam = (x: number, y: number, tm: number) => Array.from({ length: 3
 const BX = 520, BY = 488;
 const spatula = (hx: number, hy: number) => `<g><line x1="${f1(hx + 2)}" y1="${f1(hy)}" x2="${f1(hx + 24)}" y2="${f1(hy - 24)}" stroke="#2A1A14" stroke-width="7" stroke-linecap="round"/><path d="M${f1(hx - 2)} ${f1(hy - 2)} L${f1(hx - 12)} ${f1(hy + 10)}" stroke="url(#aSteel)" stroke-width="4"/><rect x="${f1(hx - 58)}" y="${f1(hy + 8)}" width="50" height="5" rx="2" fill="url(#aSteel)"/></g>`;
 const bottle = (hx: number, hy: number) => `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(172)"><rect x="-13" y="-8" width="26" height="54" rx="9" fill="#C62828"/><rect x="-13" y="-8" width="9" height="54" rx="4" fill="rgba(255,255,255,.22)"/><rect x="-9" y="-20" width="18" height="14" rx="3" fill="#F4ECE1"/><path d="M-3 -20 l3 -10 l3 10z" fill="#F4ECE1"/><rect x="-10" y="10" width="20" height="16" rx="2" fill="#F4B731"/></g>`;
-const flag = (x: number, y: number) => `<g><line x1="${f1(x)}" y1="${f1(y + 26)}" x2="${f1(x)}" y2="${f1(y - 30)}" stroke="#E7D3B0" stroke-width="2.5"/><path d="M${f1(x)} ${f1(y - 30)} h22 l-5 7 l5 7 h-22z" fill="#7A4FB0"/><text x="${f1(x + 9)}" y="${f1(y - 19)}" class="ak-flag" text-anchor="middle">V</text></g>`;
+const flag = (x: number, y: number) => `<g><line x1="${f1(x)}" y1="${f1(y + 26)}" x2="${f1(x)}" y2="${f1(y - 30)}" stroke="#E7D3B0" stroke-width="2.5"/><path d="M${f1(x)} ${f1(y - 30)} h22 l-5 7 l5 7 h-22z" fill="#E11D24"/><text x="${f1(x + 9)}" y="${f1(y - 19)}" class="ak-flag" text-anchor="middle" style="font-size:6.5px">FFS</text></g>`;
 
 /* ===================== act 3: lavash ===================== */
 const LX = 560;
@@ -273,8 +273,8 @@ function spiral(r: number, turns = 2.4) {
 const rollEnd = (x: number, y: number, r: number, ang: number) => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(ang)})" filter="url(#aSoft)"><circle r="${f1(r)}" fill="url(#aLav)"/><circle r="${f1(r * .5)}" fill="#A0552E" opacity=".8"/><path d="${spiral(r * .95)}" fill="none" stroke="#B9874A" stroke-width="2"/></g>`;
 const rollSide = (x: number, y: number, rot: number, paper: number) => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(rot)})" filter="url(#aSoft)">
   <rect x="-66" y="-17" width="132" height="34" rx="17" fill="url(#aLav)"/><path d="M-40 -14 l10 28 M-14 -14 l10 28 M12 -14 l10 28" stroke="#C99A5A" stroke-width="3" opacity=".6"/>
-  <ellipse cx="-62" cy="0" rx="9" ry="16" fill="#E8C487"/><ellipse cx="-62" cy="0" rx="5" ry="9" fill="#A0552E"/><circle cx="-60" cy="-4" r="2.6" fill="#E2452F"/><circle cx="-63" cy="5" r="2" fill="#7CB342"/>
-  ${paper > 0 ? `<rect x="${f1(66 - 80 * paper)}" y="-19" width="${f1(80 * paper)}" height="38" rx="6" fill="#7A4FB0"/><rect x="${f1(66 - 80 * paper)}" y="-19" width="${f1(80 * paper)}" height="8" rx="4" fill="rgba(255,255,255,.18)"/>${paper > .6 ? `<text x="30" y="7" text-anchor="middle" class="ak-flag" style="font-size:18px">V</text>` : ''}` : ''}</g>`;
+  <ellipse cx="-62" cy="0" rx="9" ry="16" fill="#E8C487"/><ellipse cx="-62" cy="0" rx="5" ry="9" fill="#A0552E"/><circle cx="-60" cy="-4" r="2.6" fill="#E11D24"/><circle cx="-63" cy="5" r="2" fill="#7CB342"/>
+  ${paper > 0 ? `<rect x="${f1(66 - 80 * paper)}" y="-19" width="${f1(80 * paper)}" height="38" rx="6" fill="#E11D24"/><rect x="${f1(66 - 80 * paper)}" y="-19" width="${f1(80 * paper)}" height="8" rx="4" fill="rgba(255,255,255,.18)"/>${paper > .6 ? `<text x="30" y="7" text-anchor="middle" class="ak-flag" style="font-size:13px">FFS</text>` : ''}` : ''}</g>`;
 
 
 /** The lavash timeline, drawn from the current recipe (WP): meat, sauce, fries or greens, cheese, jalapeño. */
@@ -301,7 +301,7 @@ function wrapDraw(tm: number, h: Hands): Partial<Out> {
     if (p.fries) [500, 528, 556, 590, 622].forEach((x, i) => { if (tm > 7.2 && x < right - 6) flat += `<rect x="${x - 11}" y="${470 - (i % 2) * 3}" width="22" height="4" rx="2" fill="#F4C542" transform="rotate(${(i * 31) % 40 - 20} ${x} 472)"/>`; });
     else [496, 530, 566, 604, 636].forEach((x, i) => { if (tm > 7.2 && x < right - 6) flat += `<path d="M${x - 10} ${471 - (i % 2) * 2} q10 -8 20 0" stroke="#5E9E3A" stroke-width="4" fill="none" stroke-linecap="round"/>`; });
     if (p.cheese) [490, 540, 596, 630].forEach((x, i) => { if (tm > 7.5 && x < right - 6) flat += `<path d="M${x - 12} ${466 + (i % 2)} h24 l-3 6 l-4 -2 l-5 4 l-4 -3 l-8 1z" fill="#F4B731"/>`; });
-    [512, 548, 600, 632].forEach(x => { if (tm > 7.8 && x < right - 6) flat += `<circle cx="${x}" cy="469" r="5" fill="#E2452F"/>`; });
+    [512, 548, 600, 632].forEach(x => { if (tm > 7.8 && x < right - 6) flat += `<circle cx="${x}" cy="469" r="5" fill="#E11D24"/>`; });
     if (p.jalapeno) [524, 576, 618].forEach(x => { if (tm > 7.9 && x < right - 6) flat += `<circle cx="${x}" cy="466" r="4.5" fill="none" stroke="#3F8A2E" stroke-width="2.6"/>`; });
     props += flat;
   }
@@ -380,18 +380,18 @@ function drawCup(kind: 'hot' | 'small' | 'iced', x: number, by: number, layers: 
   const topC = o.foam ? '#F3E6D6' : layers.filter(l => l.a > .01).slice(-1)[0]?.c ?? '#fff';
   const tops = o.tops ?? [];
   const cream = tops.find(t => t.k === 'cream'), mallow = tops.find(t => t.k === 'mallow');
-  return `<g transform="translate(${f1(x)} ${f1(by)}) rotate(${o.rot ?? 0}) scale(${sc.toFixed(3)})" filter="url(#aSoft)"><path d="M18 -26 q18 2 14 14 q-3 9 -16 8" fill="none" stroke="#E7DFEA" stroke-width="6"/>
-    <path d="M-22 -40 h44 l-5 36 q-1 4 -6 4 h-22 q-5 0 -6 -4z" fill="url(#aCup)"/><rect x="-21" y="-30" width="42" height="5" fill="#7A4FB0" opacity=".9"/>
+  return `<g transform="translate(${f1(x)} ${f1(by)}) rotate(${o.rot ?? 0}) scale(${sc.toFixed(3)})" filter="url(#aSoft)"><path d="M18 -26 q18 2 14 14 q-3 9 -16 8" fill="none" stroke="#E7E2E2" stroke-width="6"/>
+    <path d="M-22 -40 h44 l-5 36 q-1 4 -6 4 h-22 q-5 0 -6 -4z" fill="url(#aCup)"/><rect x="-21" y="-30" width="42" height="5" fill="#E11D24" opacity=".9"/>
     ${tot > .005 ? `<clipPath id="${o.clipId}"><path d="M-19 -38 h38 l-5 34 h-28z"/></clipPath><g clip-path="url(#${o.clipId})">${liquid}</g><ellipse cx="0" cy="${f1(-4 - lvl)}" rx="${f1(15 + Math.min(1, tot) * 4)}" ry="3" fill="${topC}"/>` : ''}
     ${cream && cream.v > 0 ? `<g transform="translate(0 ${f1(-4 - lvl)}) scale(${f1(cream.v)})"><path d="M-20 2 q-5 -14 10 -18 q2 -14 14 -11 q14 -4 15 10 q12 6 0 19z" fill="url(#g-cream)"/></g>` : ''}
-    ${mallow ? [[-8, 0], [5, -3], [12, 1]].slice(0, Math.ceil(mallow.v * 3)).map(([mx, my]) => `<rect x="${mx - 5}" y="${f1(-8 - lvl + my)}" width="10" height="8" rx="2.5" fill="#FFF4F8" stroke="#E9D6E0"/>`).join('') : ''}
+    ${mallow ? [[-8, 0], [5, -3], [12, 1]].slice(0, Math.ceil(mallow.v * 3)).map(([mx, my]) => `<rect x="${mx - 5}" y="${f1(-8 - lvl + my)}" width="10" height="8" rx="2.5" fill="#FFF4F8" stroke="#E9D6D7"/>`).join('') : ''}
     ${tops.filter(t => t.k === 'cocoa' || t.k === 'cinnamon').map(t => Array.from({ length: Math.round(14 * t.v) }, (_, i) => `<circle cx="${-12 + ((i * 37) % 24)}" cy="${f1(-5 - lvl - (cream ? 14 : 0) + ((i * 13) % 4))}" r="1.3" fill="${t.k === 'cocoa' ? '#3A1F14' : '#8A4B1F'}"/>`).join('')).join('')}
-    <ellipse cx="0" cy="0" rx="30" ry="5" fill="#EFE8F2"/></g>`;
+    <ellipse cx="0" cy="0" rx="30" ry="5" fill="#EFEBEB"/></g>`;
 }
-const pumpBottle = (hx: number, hy: number, c: string, press: number) => `<g transform="translate(${f1(hx)} ${f1(hy)})"><rect x="-12" y="${f1(-4 + press)}" width="24" height="6" rx="2" fill="#2A2630"/><rect x="-3" y="${f1(2 + press)}" width="6" height="14" fill="#3A3640"/><path d="M3 ${f1(8 + press)} h16 v4 h-12z" fill="#3A3640"/><rect x="-16" y="16" width="32" height="64" rx="8" fill="${c}" opacity=".92"/><rect x="-16" y="16" width="10" height="64" rx="5" fill="rgba(255,255,255,.25)"/><rect x="-12" y="36" width="24" height="18" rx="3" fill="#F4ECE1"/></g>`;
-const carton = (hx: number, hy: number, rot: number) => `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(${f1(rot)})"><rect x="-48" y="-30" width="40" height="64" rx="4" fill="#FBF8F2"/><path d="M-48 -30 l20 -16 l20 16z" fill="#EEE6DA"/><rect x="-48" y="0" width="40" height="14" fill="#7A4FB0"/></g>`;
+const pumpBottle = (hx: number, hy: number, c: string, press: number) => `<g transform="translate(${f1(hx)} ${f1(hy)})"><rect x="-12" y="${f1(-4 + press)}" width="24" height="6" rx="2" fill="#2D2929"/><rect x="-3" y="${f1(2 + press)}" width="6" height="14" fill="#3A3640"/><path d="M3 ${f1(8 + press)} h16 v4 h-12z" fill="#3A3640"/><rect x="-16" y="16" width="32" height="64" rx="8" fill="${c}" opacity=".92"/><rect x="-16" y="16" width="10" height="64" rx="5" fill="rgba(255,255,255,.25)"/><rect x="-12" y="36" width="24" height="18" rx="3" fill="#F4ECE1"/></g>`;
+const carton = (hx: number, hy: number, rot: number) => `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(${f1(rot)})"><rect x="-48" y="-30" width="40" height="64" rx="4" fill="#FBF8F2"/><path d="M-48 -30 l20 -16 l20 16z" fill="#EEE6DA"/><rect x="-48" y="0" width="40" height="14" fill="#E11D24"/></g>`;
 const kettle = (hx: number, hy: number, rot: number) => `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(${f1(rot)})"><path d="M-14 -6 q4 -14 -6 -18" fill="none" stroke="#2A1A14" stroke-width="6" stroke-linecap="round"/><path d="M-70 -30 h50 l4 32 q0 6 -6 6 h-46 q-6 0 -6 -6z" fill="url(#aSteel)"/><path d="M-70 -18 q-20 -6 -30 -24" fill="none" stroke="url(#aSteel)" stroke-width="5" stroke-linecap="round"/></g>`;
-const creamCan = (hx: number, hy: number) => `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(180)"><rect x="-11" y="-10" width="22" height="58" rx="6" fill="url(#aSteel)"/><path d="M-4 -10 l4 -14 l4 14z" fill="#2A2630"/><rect x="-11" y="20" width="22" height="10" fill="#7A4FB0"/></g>`;
+const creamCan = (hx: number, hy: number) => `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(180)"><rect x="-11" y="-10" width="22" height="58" rx="6" fill="url(#aSteel)"/><path d="M-4 -10 l4 -14 l4 14z" fill="#2D2929"/><rect x="-11" y="20" width="22" height="10" fill="#E11D24"/></g>`;
 const shaker = (hx: number, hy: number, c: string) => `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(170)"><rect x="-12" y="-6" width="24" height="40" rx="6" fill="#F4ECE1"/><rect x="-13" y="-12" width="26" height="9" rx="3" fill="url(#aSteel)"/><rect x="-12" y="8" width="24" height="12" fill="${c}"/></g>`;
 
 function coffeeAct(p: CoffeeP, qty = 1, order?: Act['order']): Act {
@@ -472,7 +472,7 @@ function coffeeAct(p: CoffeeP, qty = 1, order?: Act['order']): Act {
   for (const k of p.tops) {
     const dur = k === 'cream' ? 1.9 : 1.7, topY = p.cup === 'iced' ? 330 : 400;
     const tT = q.add({ dur, cap: () => t('k.top.' + k), R: [[0, 775, 505], [.3, 720, 545], [.7, 708, topY], [dur - .5, 714, topY], [dur, 775, 505]], face: () => ({ look: [0, 7], head: [0, 10] }),
-      draw: (tm, h) => { let props = '', fx = ''; if (between(tm, .35, dur - .3)) props += k === 'cream' ? creamCan(h.R.hx, h.R.hy) : k === 'mallow' ? [0, 1, 2].filter(i => tm < .8 + i * .25).map(i => `<rect x="${f1(h.R.hx - 6 + i * 4)}" y="${f1(h.R.hy + 8)}" width="10" height="8" rx="2.5" fill="#FFF4F8" stroke="#E9D6E0"/>`).join('') : shaker(h.R.hx, h.R.hy, k === 'cocoa' ? '#3A1F14' : '#8A4B1F');
+      draw: (tm, h) => { let props = '', fx = ''; if (between(tm, .35, dur - .3)) props += k === 'cream' ? creamCan(h.R.hx, h.R.hy) : k === 'mallow' ? [0, 1, 2].filter(i => tm < .8 + i * .25).map(i => `<rect x="${f1(h.R.hx - 6 + i * 4)}" y="${f1(h.R.hy + 8)}" width="10" height="8" rx="2.5" fill="#FFF4F8" stroke="#E9D6D7"/>`).join('') : shaker(h.R.hx, h.R.hy, k === 'cocoa' ? '#3A1F14' : '#8A4B1F');
         if ((k === 'cocoa' || k === 'cinnamon') && between(tm, .7, dur - .4)) for (let i = 0; i < 8; i++) { const f = ((tm * 2 + i / 8) % 1); fx += `<circle cx="${f1(h.R.hx + Math.sin(i * 2.7) * 8)}" cy="${f1(h.R.hy + 40 + f * 40)}" r="1.4" fill="${k === 'cocoa' ? '#3A1F14' : '#8A4B1F'}"/>`; }
         return { props, fx }; } });
     tops.push({ k, t0: tT + .7, t1: tT + dur - .4 });
@@ -615,7 +615,7 @@ function wrapAct(p: WrapP, qty = 1, order?: Act['order']): Act {
 
 /* ---------- fryer: fries, cheese fries, nuggets ---------- */
 function fryerAct(id: string, qty = 1, order?: Act['order']): Act {
-  const it = ITEM(id)!, cheese = id === 'cheese-fries', nug = id === 'nuggets';
+  const it = ITEM(id)!, cheese = id === 'cheese-fries', nug = ['nuggets', 'kfc-1kg', 'spicy-bite', 'ffs-mega-mix'].includes(id);
   const plain = cheese ? ITEM('fries')!.art : it.art;
   const R: P[] = [[0, 775, 505], [.6, 905, 418], [1.2, 905, 440], [4.2, 905, 440], [4.8, 905, 396], [4.9, 920, 396], [5.0, 890, 396], [5.1, 920, 396], [5.2, 890, 396], [5.3, 920, 396], [5.4, 890, 396], [5.6, 905, 396], [6.4, 640, 396], [7.4, 640, 396], [7.8, 775, 505]];
   if (cheese) R.push([8.2, 720, 545], [8.6, 600, 392], [9.6, 600, 392], [10.0, 775, 505]);
@@ -630,7 +630,7 @@ function fryerAct(id: string, qty = 1, order?: Act['order']): Act {
       let props = '', fx = '', serve = '';
       const inHand = T < 7.8, tip = -55 * ease(win(T, 6.5, 7.0)) * (1 - win(T, 7.3, 7.6));
       const done = T > 4.2, contents = done ? (nug ? '#C98A3C' : '#F2C14E') : (nug ? '#E9D3B0' : '#F6E7B8');
-      const basket = (x: number, y: number, rot: number, full: boolean) => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(rot)})"><line x1="0" y1="0" x2="-46" y2="18" stroke="#2A2630" stroke-width="6" stroke-linecap="round"/>
+      const basket = (x: number, y: number, rot: number, full: boolean) => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(rot)})"><line x1="0" y1="0" x2="-46" y2="18" stroke="#2D2929" stroke-width="6" stroke-linecap="round"/>
         ${full ? (nug ? [[-80, 26], [-64, 24], [-72, 16], [-56, 30]].map(([a, b]) => `<ellipse cx="${a}" cy="${b}" rx="9" ry="6.5" fill="${contents}"/>`).join('') : Array.from({ length: 9 }, (_, i) => `<rect x="${-96 + i * 6}" y="${12 + (i % 3) * 3}" width="4" height="22" rx="2" fill="${contents}" transform="rotate(${(i % 2 ? 1 : -1) * 12} ${-94 + i * 6} 24)"/>`).join('')) : ''}
         <path d="M-104 16 h62 v24 q0 4 -4 4 h-54 q-4 0 -4 -4z" fill="none" stroke="url(#aSteel)" stroke-width="3"/><path d="M-104 24 h62 M-104 32 h62 M-88 16 v28 M-72 16 v28 M-56 16 v28" stroke="rgba(200,200,210,.7)" stroke-width="1.2"/></g>`;
       if (inHand) props += basket(h.R.hx, h.R.hy, tip, T < 6.9);
@@ -677,7 +677,7 @@ function plateAct(id: string, qty = 1, order?: Act['order'], custom?: { art: Art
         else if (g === 'picks') gar = [PX - 22, PX + 22].filter((_, i) => gk > i * .5).map(x => flag(x, 432)).join('');
         else if (g === 'herbs') gar = Array.from({ length: Math.round(14 * gk) }, (_, i) => `<path d="M${x0 + 10 + ((i * 37) % 80)} ${452 + ((i * 13) % 14)} l4 -3 l4 3" stroke="#3F7D3A" stroke-width="2.5" fill="none"/>`).join('');
         else if (g === 'sugar' || g === 'cocoa') gar = Array.from({ length: Math.round(30 * gk) }, (_, i) => `<circle cx="${x0 + 8 + ((i * 37) % 84)}" cy="${448 + ((i * 13) % 16)}" r="1.5" fill="${g === 'sugar' ? '#FFFFFF' : '#3A1F14'}" opacity=".9"/>`).join('');
-        else if (g === 'berries') gar = [[-16, 438], [4, 434], [22, 440]].slice(0, Math.ceil(gk * 3)).map(([dx, y], i) => `<circle cx="${PX + dx}" cy="${y}" r="6.5" fill="${i % 2 ? '#6A1B9A' : '#C2185B'}" stroke="#2A1440" stroke-width="1"/>`).join('');
+        else if (g === 'berries') gar = [[-16, 438], [4, 434], [22, 440]].slice(0, Math.ceil(gk * 3)).map(([dx, y], i) => `<circle cx="${PX + dx}" cy="${y}" r="6.5" fill="${i % 2 ? '#9A1B21' : '#C2185B'}" stroke="#1A1414" stroke-width="1"/>`).join('');
         else if (g === 'honey') gar = `<path d="M${x0 + 10} 444 q12 8 24 0 t24 0 t24 0" stroke="#E0A42A" stroke-width="4" fill="none" stroke-dasharray="${f1(w * 1.2)} 400"/>`;
       }
       if (between(T, 2.3, 3.5) && (g === 'sugar' || g === 'cocoa' || g === 'herbs')) for (let i = 0; i < 6; i++) { const f = ((T * 2.2 + i / 6) % 1); fx += `<circle cx="${f1(h.R.hx + Math.sin(i * 2.7) * 8)}" cy="${f1(h.R.hy + 30 + f * 30)}" r="1.5" fill="${g === 'cocoa' ? '#3A1F14' : g === 'herbs' ? '#3F7D3A' : '#fff'}"/>`; }
@@ -706,7 +706,7 @@ function coldAct(id: string, qty = 1, order?: Act['order']): Act {
       if (between(T, 2.0, 4.3)) props += soda ? `<g transform="translate(${f1(h.L.hx)} ${f1(h.L.hy)}) rotate(${f1(tip * 1.6)})"><rect x="-12" y="-36" width="24" height="44" rx="5" fill="#C62828"/><rect x="-12" y="-36" width="24" height="5" rx="2" fill="url(#aSteel)"/><rect x="-12" y="-10" width="24" height="8" fill="#fff" opacity=".8"/></g>`
         : `<g transform="translate(${f1(h.L.hx)} ${f1(h.L.hy)}) rotate(${f1(-tip)})"><path d="M10 -40 h40 l-4 46 q0 4 -4 4 h-24 q-4 0 -4 -4z" fill="rgba(255,255,255,.25)" stroke="rgba(255,255,255,.8)" stroke-width="2"/><rect x="14" y="-20" width="32" height="26" fill="${c}" opacity=".85"/><path d="M50 -36 q12 4 6 22" fill="none" stroke="rgba(255,255,255,.8)" stroke-width="3"/></g>`;
       if (between(T, 2.6, 3.9)) fx += `<path d="M${f1(h.L.hx + (soda ? 14 : 12))} ${f1(h.L.hy - (soda ? 30 : 36))} Q${f1(GX - 30)} 380 ${GX} ${f1(GY - 10 - 74 * fill)}" stroke="${c}" stroke-width="5" fill="none" opacity=".9"/>`;
-      const gl = (x: number, y: number, s: number) => `${drawCup('iced', x, y, [{ c, a: fill }], { ice: T > 1.5 ? 1 : 0, straw: T > 5.3, clipId: 'akGlassClip', scale: s })}${!soda && T > 5.0 ? (id === 'berry-lemonade' ? `<circle cx="${f1(x - 18 * s)}" cy="${f1(y - 84 * s)}" r="${f1(7 * s)}" fill="#C2185B" stroke="#2A1440"/>` : `<circle cx="${f1(x - 22 * s)}" cy="${f1(y - 82 * s)}" r="${f1(11 * s)}" fill="#F7D94C" stroke="#C9A52A"/><circle cx="${f1(x - 22 * s)}" cy="${f1(y - 82 * s)}" r="${f1(7 * s)}" fill="#FCEB8E"/>`) : ''}`;
+      const gl = (x: number, y: number, s: number) => `${drawCup('iced', x, y, [{ c, a: fill }], { ice: T > 1.5 ? 1 : 0, straw: T > 5.3, clipId: 'akGlassClip', scale: s })}${!soda && T > 5.0 ? (id === 'berry-lemonade' ? `<circle cx="${f1(x - 18 * s)}" cy="${f1(y - 84 * s)}" r="${f1(7 * s)}" fill="#C2185B" stroke="#1A1414"/>` : `<circle cx="${f1(x - 22 * s)}" cy="${f1(y - 82 * s)}" r="${f1(11 * s)}" fill="#F7D94C" stroke="#C9A52A"/><circle cx="${f1(x - 22 * s)}" cy="${f1(y - 82 * s)}" r="${f1(7 * s)}" fill="#FCEB8E"/>`) : ''}`;
       const k = ease(win(T, serveT + .2, serveT + 1.2));
       if (k > 0) { const sp = servePose(k, GX, GY, 90, 84, .55); serve = gl(sp.x, sp.y, sp.s); } else props += gl(GX, GY, 1);
       return { props, fx, serve };
@@ -715,7 +715,7 @@ function coldAct(id: string, qty = 1, order?: Act['order']): Act {
 
 /* ---------- tea, poured the Uzbek way ---------- */
 function teaAct(id: string, qty = 1, order?: Act['order']): Act {
-  const it = ITEM(id)!, black = id === 'black-tea', c = black ? '#9A4A1C' : '#C9B44C';
+  const it = ITEM(id)!, black = id !== 'green-tea', c = black ? '#9A4A1C' : '#C9B44C';
   const R: P[] = [[0, 775, 505], [.5, 540, 452], [1.0, 600, 388], [2.0, 600, 388], [2.4, 540, 470], [2.6, 775, 505], [4.2, 775, 505], [4.6, 540, 452], [5.0, 600, 388], [6.0, 600, 388], [6.4, 540, 470], [6.6, 775, 505]];
   const L: P[] = [[0, 625, 505], [2.6, 625, 505], [2.9, 640, 476], [3.3, 560, 404], [3.9, 560, 404], [4.2, 625, 505], [6.7, 625, 505], [7.0, 620, 545], [7.4, 650, 440], [7.6, 650, 446], [7.9, 625, 505]];
   const serveT = black ? 8.0 : 6.8, dur = serveT + 3.0;
@@ -724,7 +724,7 @@ function teaAct(id: string, qty = 1, order?: Act['order']): Act {
   if (black) segs.push({ dur: 1.4, cap: () => t('k.lemon') });
   segs.push({ dur: dur - segs.reduce((a, s) => a + s.dur, 0), cap: () => tf('k.serve', { name: it.name[state.lang] }) });
   const pot = (x: number, y: number, rot: number) => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(rot)})"><path d="M-58 -10 c-18 -2 -22 -20 -28 -26" fill="none" stroke="#3E6FB8" stroke-width="6" stroke-linecap="round"/><path d="M-50 -34 h52 c4 30 -4 46 -26 46 c-22 0 -30 -16 -26 -46z" fill="#3E6FB8"/><path d="M-46 -12 q22 12 44 0" fill="none" stroke="#fff" stroke-width="3" stroke-dasharray="2 7" stroke-linecap="round"/><ellipse cx="-24" cy="-34" rx="26" ry="5" fill="#5C8BD0"/><circle cx="-24" cy="-42" r="5" fill="#F4B731"/><path d="M2 -26 q18 2 14 22" fill="none" stroke="#2A4F8A" stroke-width="5"/></g>`;
-  const piyola = (x: number, y: number, fill: number, rot = 0, s = 1) => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(rot)}) scale(${s.toFixed(3)})"><path d="M-24 -26 h48 c-2 16 -10 26 -24 26 c-14 0 -22 -10 -24 -26z" fill="#FBF8FD"/><path d="M-20 -14 q20 8 40 0" fill="none" stroke="#3E6FB8" stroke-width="3"/>${fill > 0 ? `<ellipse cx="0" cy="${f1(-24 + 6 * (1 - fill))}" rx="${f1(20 - 4 * (1 - fill))}" ry="3.5" fill="${c}"/>` : ''}${black && T_ > 7.6 ? `<path d="M-6 -27 a7 4 0 0 1 14 0z" fill="#F7D94C"/>` : ''}</g>`;
+  const piyola = (x: number, y: number, fill: number, rot = 0, s = 1) => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(rot)}) scale(${s.toFixed(3)})"><path d="M-24 -26 h48 c-2 16 -10 26 -24 26 c-14 0 -22 -10 -24 -26z" fill="#FFFDFC"/><path d="M-20 -14 q20 8 40 0" fill="none" stroke="#3E6FB8" stroke-width="3"/>${fill > 0 ? `<ellipse cx="0" cy="${f1(-24 + 6 * (1 - fill))}" rx="${f1(20 - 4 * (1 - fill))}" ry="3.5" fill="${c}"/>` : ''}${black && T_ > 7.6 ? `<path d="M-6 -27 a7 4 0 0 1 14 0z" fill="#F7D94C"/>` : ''}</g>`;
   let T_ = 0;
   return mkAct({ station: 'plain', name: () => it.name[state.lang], qty, order, segs,
     pose: (T) => ({ R: track(R, T), L: track(L, T), ...(T > serveT ? smileFace(.3)(T - serveT) : between(T, 2.6, 4.2) ? { look: [-2, 2], mouth: 'smirk' as Mouth } : {}) }),
@@ -750,12 +750,12 @@ function teaAct(id: string, qty = 1, order?: Act['order']): Act {
 }
 
 /* ---------- from a menu item / cart line to acts ---------- */
-const MILK_C: Record<string, string> = { cow: '#F5EDF6', oat: '#EFE2CC', coconut: '#FAF7F2' };
+const MILK_C: Record<string, string> = { cow: '#F4EFEF', oat: '#EFE2CC', coconut: '#FAF7F2' };
 const sizeScale = (s?: string) => (s === 'S' ? .88 : s === 'L' ? 1.14 : 1);
 const withSize = (n: () => string, size?: string, extras?: ExtraId[]) => () => `${n()}${size ? ' ' + size : ''}${extras?.length ? ' + ' + extras.map(e => EXTRAS[e].name[state.lang].toLowerCase()).join(', ') : ''}`;
 function coffeeFromItem(id: string, size?: 'S' | 'M' | 'L', extras: ExtraId[] = [], qty = 1): Act {
   const it = ITEM(id)!;
-  const syr = (k: string) => ({ c: LAB.syrupC[k] ?? '#B79AD8', n: () => t('syrup.' + k).toLowerCase() });
+  const syr = (k: string) => ({ c: LAB.syrupC[k] ?? '#F08A8D', n: () => t('syrup.' + k).toLowerCase() });
   const base: CoffeeP = { name: withSize(() => it.name[state.lang], it.sized ? size : undefined, extras), cup: 'hot', size: sizeScale(size), base: 'espresso', shots: 1, milk: 'steam', milkC: MILK_C.cow, milkN: () => t('milk.cow').toLowerCase(), tops: [] };
   const P: Record<string, Partial<CoffeeP>> = {
     espresso: { cup: 'small', milk: 'none' }, americano: { milk: 'water' }, cappuccino: { art: 'heart' }, latte: { art: 'rosetta' }, 'violette-latte': { syrup: syr('lavender'), art: 'heart' },
@@ -772,7 +772,7 @@ function coffeeFromItem(id: string, size?: 'S' | 'M' | 'L', extras: ExtraId[] = 
 }
 function coffeeFromSpec(c: CoffeeSpec, qty = 1): Act {
   const p: CoffeeP = { name: () => `${coffeeName(c, state.lang)} ${c.size}`, cup: c.temp === 'iced' ? 'iced' : c.milk === 'none' && c.size === 'S' ? 'small' : 'hot', size: sizeScale(c.size), base: 'espresso', shots: c.shots,
-    syrup: c.syrup !== 'none' ? { c: LAB.syrupC[c.syrup] ?? '#B79AD8', n: () => t('syrup.' + c.syrup).toLowerCase() } : undefined,
+    syrup: c.syrup !== 'none' ? { c: LAB.syrupC[c.syrup] ?? '#F08A8D', n: () => t('syrup.' + c.syrup).toLowerCase() } : undefined,
     milk: c.milk === 'none' ? (c.size === 'S' ? 'none' : 'water') : c.temp === 'iced' ? 'cold' : 'steam', milkC: MILK_C[c.milk] ?? MILK_C.cow, milkN: () => t('milk.' + (c.milk === 'none' ? 'cow' : c.milk)).toLowerCase(),
     art: c.foam === 'thick' ? 'heart' : c.foam === 'thin' ? 'rosetta' : undefined, tops: c.topping !== 'none' ? [c.topping as Top] : [] };
   return coffeeAct(p, qty);
@@ -795,15 +795,15 @@ function wrapFromItem(id: string, extras: ExtraId[] = [], qty = 1): Act {
 }
 function actsForItem(id: string, size?: 'S' | 'M' | 'L', extras: ExtraId[] = [], qty = 1): Act[] {
   const it = ITEM(id); if (!it) return [];
-  if (it.id === 'combo-lunch') return [burgerAct({ name: () => ITEM('cheeseburger')!.name[state.lang], bun: 'classic', layers: ['beef', 'cheese', 'lettuce'] }, qty), fryerAct('fries', qty), coldAct('soda', qty)];
-  if (it.id === 'combo-friends') return [wrapFromItem('lavash-chicken', [], qty), wrapFromItem('lavash-beef', [], qty), fryerAct('fries', qty), coldAct('lemonade', 2 * qty)];
-  if (it.id === 'combo-morning') return [plateAct('croissant', qty), coffeeFromItem('cappuccino', 'M', [], qty)];
+  if (it.id === 'crunch-duo') return [fryerAct('kfc-1kg', qty), burgerFromItem('cheeseburger', [], qty)];
+  if (it.id === 'madina-combo') return [wrapFromItem('lavash-chicken', [], qty), fryerAct('fries', qty), coldAct('soda', qty)];
+  if (it.id === 'solo-combo') return [burgerAct({ name: () => ITEM('cheeseburger')!.name[state.lang], bun: 'classic', layers: ['beef', 'cheese', 'lettuce'] }, qty), fryerAct('fries', qty), coldAct('soda', qty)];
   if (['coffee'].includes(it.cat) || ['iced-violette', 'iced-latte', 'frappe', 'matcha', 'cocoa'].includes(id)) return [coffeeFromItem(id, size, extras, qty)];
   if (['lemonade', 'berry-lemonade', 'soda'].includes(id)) return [coldAct(id, qty, { item: id, size })];
-  if (['green-tea', 'black-tea'].includes(id)) return [teaAct(id, qty, { item: id })];
+  if (['green-tea', 'black-tea', 'glass-tea', 'turkish-tea'].includes(id)) return [teaAct(id, qty, { item: id })];
   if (it.cat === 'burger') return [burgerFromItem(id, extras, qty)];
   if (it.cat === 'lavash') return [wrapFromItem(id, extras, qty)];
-  if (['fries', 'cheese-fries', 'nuggets'].includes(id)) return [fryerAct(id, qty, { item: id })];
+  if (['fries', 'cheese-fries', 'nuggets', 'kfc-1kg', 'spicy-bite', 'ffs-mega-mix'].includes(id)) return [fryerAct(id, qty, { item: id })];
   return [plateAct(id, qty, { item: id })];
 }
 export function actsForLines(lines: Line[]): Act[] {
@@ -842,7 +842,7 @@ function priceOf(a: Act) { const it = ITEM(a.order!.item)!; return it.price + (i
 function build() {
   el = document.createElement('div');
   el.className = 'afk'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'akTitle');
-  el.innerHTML = `<div class="ak-top"><span class="ak-logo">Violette</span><p id="akTitle"></p><span class="ak-clock" id="akClock"></span><button type="button" class="ak-close" id="akClose"><span aria-hidden="true">×</span></button></div>
+  el.innerHTML = `<div class="ak-top"><span class="ak-logo">FFS</span><p id="akTitle"></p><span class="ak-clock" id="akClock"></span><button type="button" class="ak-close" id="akClose"><span aria-hidden="true">×</span></button></div>
     <svg class="ak-scene" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${sceneSVG()}</svg>
     <div class="ak-bottom"><div class="ak-steps" id="akSteps"></div><p class="ak-caption" id="akCaption" aria-live="polite"></p>
       <button type="button" class="btn btn-acc ak-order" id="akOrder"><span id="akOrderT"></span><kbd>Enter</kbd></button><p class="ak-hint" id="akHint"></p></div>`;

@@ -10,7 +10,7 @@ const spent = () => [...picks].reduce((a, [id, q]) => a + priceOf(ITEMS.find(i =
 const count = () => [...picks.values()].reduce((a, b) => a + b, 0);
 const round500 = (n) => Math.ceil(n / 500) * 500;
 const fmt = (n) => n.toLocaleString('ru-RU').replace(/\s/g, ' ');
-const PCOL = ['#7A4FB0', '#E2452F', '#F4B731', '#3E8E6A', '#3E6FB8', '#C2185B', '#8A5A3B', '#4B4F5C', '#9D7BD1', '#E07B39'];
+const PCOL = ['#E11D24', '#E11D24', '#F4B731', '#3E8E6A', '#3E6FB8', '#C2185B', '#8A5A3B', '#5C4B4C', '#EC5A5F', '#E07B39'];
 let shownLeft = bg.amount, stopCount = null;
 function animateLeft(to) {
     stopCount?.();
@@ -79,7 +79,7 @@ function flyCost(from, amount) {
 /** Fills what's left of the budget with a random, filling set (a main, then a side or sweet, then a drink, round after round). */
 function surprise() {
     let left = bg.amount - spent();
-    const main = ITEMS.filter(i => ['burger', 'lavash', 'hotdog'].includes(i.cat));
+    const main = ITEMS.filter(i => ['chicken', 'burger', 'lavash', 'hotdog'].includes(i.cat));
     const side = ITEMS.filter(i => i.cat === 'sides' || i.cat === 'sweet');
     const drink = ITEMS.filter(i => ['coffee', 'cold', 'tea'].includes(i.cat));
     const rnd = (a) => { const ok = a.filter(i => priceOf(i) <= left); return ok.length ? ok[Math.floor(Math.random() * ok.length)] : null; };
