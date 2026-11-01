@@ -1,6 +1,5 @@
 import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT, MIN_DELIVERY, FRIDAY_EVERY, SET_DRINKS, SET_BURGERS, SET_DISCOUNTS, setFull, setPrice, isVeg, isSpicy, allergens, type World, type CatId, type Item, type ExtraId, type Lang } from './data.js';
 import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } from './art.js';
-import { initPointer } from './ui.js';
 import { initScroll } from './scroll.js';
 import { initAfk, showOrder } from './afk.js';
 import { initPerf, choosePerf, perfChoice, perf } from './perf.js';
@@ -705,7 +704,7 @@ initPerf();
 buildScene(); renderReceipt(); fitScene(); renderTape(); renderVisit(); setWorldUI();
 applyLang();
 initLab(); initBudget();
-initPointer(t); initReveal(); initScroll(); initAfk(); initTrack();
+initReveal(); initScroll(); initAfk(); initTrack();
 on('lang', langTrack);
 /* animations: full / light (automatic unless the visitor picks) */
 function renderPerf() {

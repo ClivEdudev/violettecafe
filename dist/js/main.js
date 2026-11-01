@@ -1,6 +1,5 @@
 import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, MIN_DELIVERY, FRIDAY_EVERY, isVeg, isSpicy, allergens } from './data.js';
 import { svg, REAL_DEFS } from './art.js';
-import { initPointer } from './ui.js';
 import { initScroll } from './scroll.js';
 import { initAfk, showOrder } from './afk.js';
 import { initPerf, choosePerf, perfChoice, perf } from './perf.js';
@@ -969,7 +968,6 @@ setWorldUI();
 applyLang();
 initLab();
 initBudget();
-initPointer(t);
 initReveal();
 initScroll();
 initAfk();

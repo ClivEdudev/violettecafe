@@ -20,7 +20,7 @@ Zero-dependency static site written in TypeScript, in Uzbek, Russian and English
 - **Table booking** with dates in dd/mm/yyyy, time chips and guest count.
 - **Scroll motion** (`src/scroll.ts`): headings slide in, menu cards flip up in 3D column by column, the builders and map open with a reveal, the booking card and budget form straighten as they arrive, the slot machine swings in, coffee beans drift behind the page at different speeds, the ticker tape leans with scroll speed and the footer word tightens at the end. Off with reduced motion.
 - Live open/closed badge and greeting by Tashkent time, light/dark theme (night scene with neon sign), reduced-motion support.
-- **Cursor & pointer comfort** (`src/ui.ts`, same system as the Robiya site): on mouse/trackpad a coffee-bean pointer replaces the system arrow, an outline frames what you're about to use (a whole menu card shows "Details"), and near-miss clicks beside small controls still count — never for add, remove, spin or send buttons.
+- **Cursor**: the normal system cursor (the custom pointer in `src/ui.ts` is switched off; `initPointer` is no longer called).
 - Orders and table bookings are posted to the shop's **Telegram group** by `netlify/functions/telegram.mjs` (`/api/telegram`). A copy also goes to **Netlify Forms** (forms `order` and `booking`) as a backup; the visitor sees success if either one lands.
 - The hero picks one real deal per visit (1 kg KFC + 2 burgers, Crunch duo, Yolgʻizlik, Madina, FFS mega mix, or a set of menu items at menu prices) and builds it on the tray as you scroll; the receipt and the button show exactly that deal. `?deal=kfc|crunch|solo|madina|mega|hotdog|boss|doner|spicy` forces one. Deals live in `src/hero.ts`.
 
@@ -53,7 +53,7 @@ Netlify publishes the `dist` folder as-is (see `netlify.toml`, which also sets t
 ## Light mode (slower devices)
 `src/perf.ts` decides between full and light animations. Light mode is chosen automatically when the device reports Data Saver, a slow connection or little memory, when the first seconds on screen run slowly, or when scrolling keeps dropping frames (a short notice tells the visitor). Visitors can choose Auto / Full / Light at the bottom of the page; `?lite=1` and `?lite=0` force it for testing.
 
-Light mode keeps every feature but skips what costs the most to draw: SVG textures and soft shadows, blur, scroll-linked effects, the floating coffee beans, endlessly repeating decorative animations and the custom cursor; builder pieces drop in as one group and the kitchen show runs at 30 fps.
+Light mode keeps every feature but skips what costs the most to draw: SVG textures and soft shadows, blur, scroll-linked effects, the floating sesame seeds and endlessly repeating decorative animations; builder pieces drop in as one group and the kitchen show runs at 30 fps.
 
 Measured on a simulated low-end phone (CPU slowed 6×): idle 30–40 → 60 fps, menu scrolling ~16 → ~54 fps, hero scrolling ~16 → ~37 fps, kitchen show ~20 → ~37 fps, shawarma builder ~15 → ~45 fps. Full mode also got cheaper: scroll effects no longer re-read the page layout or restyle whole sections on every frame.
 
