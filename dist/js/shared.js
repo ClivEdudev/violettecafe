@@ -305,15 +305,19 @@ export function closeOverlay(el) {
     emit('overlay');
 }
 export const topOverlay = () => stack[stack.length - 1];
-addEventListener('pageshow', () => {
-    document.querySelectorAll('.modal, .drawer').forEach(m => { if (!stack.includes(m)) {
-        m.classList.remove('open');
-        m.hidden = true;
-    } });
-    if (!stack.length)
+/** Puts overlays back in a consistent state: anything that isn't open is hidden, and the page is unlocked when nothing is. */
+function heal() {
+    document.querySelectorAll('.modal, .drawer').forEach(m => { if (!stack.includes(m) && !m.classList.contains('open'))
+        m.hidden = true; });
+    if (!stack.length && !document.querySelector('.modal.open, .drawer.open'))
         document.documentElement.classList.remove('locked');
+    if (!document.querySelector('.afk.on'))
+        document.documentElement.classList.remove('afk-on');
     document.getElementById('wipe')?.classList.remove('on');
-});
+}
+addEventListener('pageshow', heal);
+document.addEventListener('visibilitychange', () => { if (!document.hidden)
+    heal(); });
 document.addEventListener('keydown', e => {
     const top = topOverlay();
     if (!top)

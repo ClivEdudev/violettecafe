@@ -1135,6 +1135,15 @@ initTrack();
 on('lang', langTrack);
 if (reduced)
     root.classList.add('reduced');
+// iOS Safari brings pages back from its back/forward cache with frozen transitions, a stale scroll state and the pinned
+// hero scene unpinned. Instead of patching that state, load the page fresh (from cache, so it's instant).
+addEventListener('pageshow', e => { if (e.persisted)
+    location.reload(); });
+document.addEventListener('visibilitychange', () => { if (!document.hidden) {
+    heroP = -1;
+    fitScene();
+    onScroll();
+} });
 updateHero(heroProgress());
 onScroll();
 const hideLoader = () => { const l = document.getElementById('loader'); if (!l || l.classList.contains('gone'))
