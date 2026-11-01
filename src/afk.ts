@@ -1,4 +1,4 @@
-// Away screen and kitchen show. After 15 s without input a calm kitchen scene fades in over the page: one cook,
+// Away screen and kitchen show. After 50 s without input a calm kitchen scene fades in over the page: one cook,
 // a latte, a burger (with a flip that goes a little too high) and a lavash (rolled with a little too much confidence).
 // When he serves a dish, Enter (or a tap on the button) puts it in the cart; anything else brings the site back.
 // After checkout the same cook can make the customer's exact order — every size, extra and custom recipe — on request.
@@ -9,7 +9,7 @@ import { latteArt, LAYERS, bunTop, bunBottom, inner, type Layer, type ArtSpec } 
 import { coffeeName, burgerName, wrapName, hotdogName, type CoffeeSpec } from './recipes.js';
 
 const START_AT = Number(new URLSearchParams(location.search).get('afkt')) || 0; // jump into the loop (seconds), for previews
-const IDLE_MS = (() => { const v = Number(new URLSearchParams(location.search).get('afk')); return v > 0 ? v * 1000 : 15000; })();
+const IDLE_MS = (() => { const v = Number(new URLSearchParams(location.search).get('afk')); return v > 0 ? v * 1000 : 50000; })();
 type P = [number, number, number];
 const ease = (k: number) => (k < .5 ? 4 * k * k * k : 1 - Math.pow(-2 * k + 2, 3) / 2);
 const win = (tm: number, a: number, b: number) => clamp((tm - a) / (b - a));
