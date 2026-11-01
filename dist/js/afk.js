@@ -1142,10 +1142,6 @@ let lastDraw = 0;
 function frame(now) {
     if (!el)
         return;
-    if (document.documentElement.classList.contains('lite') && now - lastDraw < 31) {
-        raf = requestAnimationFrame(frame);
-        return;
-    }
     lastDraw = now;
     let T = ((now - t0) / 1000) % TOTAL, ai = 0;
     while (ai < ACTS.length - 1 && T >= ACTS[ai].dur) {

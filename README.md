@@ -50,12 +50,11 @@ Netlify publishes the `dist` folder as-is (see `netlify.toml`, which also sets t
 - `CAFE.phone` in `src/data.ts` — while it holds the `XX` placeholder the site shows the Telegram link instead of a phone number.
 - Prices for the shawarma and hot-dog builders (`WRAP_*`, `HD_*` in `src/data.ts`).
 
-## Light mode (slower devices)
-`src/perf.ts` decides between full and light animations. Light mode is chosen automatically when the device reports Data Saver, a slow connection or little memory, when the first seconds on screen run slowly, or when scrolling keeps dropping frames (a short notice tells the visitor). Visitors can choose Auto / Full / Light at the bottom of the page; `?lite=1` and `?lite=0` force it for testing.
+## Light mode (on for every device)
+The owner wants speed over show, so `src/perf.ts` turns light mode on for every visitor (there is no Full/Light switch any more; `?lite=0` brings full mode back for testing only).
 
-Light mode keeps every feature but skips what costs the most to draw: SVG textures and soft shadows, blur, scroll-linked effects, the floating sesame seeds and endlessly repeating decorative animations; builder pieces drop in as one group and the kitchen show runs at 30 fps.
-
-Measured on a simulated low-end phone (CPU slowed 6×): idle 30–40 → 60 fps, menu scrolling ~16 → ~54 fps, hero scrolling ~16 → ~37 fps, kitchen show ~20 → ~37 fps, shawarma builder ~15 → ~45 fps. Full mode also got cheaper: scroll effects no longer re-read the page layout or restyle whole sections on every frame.
+- **Kept at full quality:** the main animations — the hero deal being built on the tray, the kitchen show, and the burger, lavash, hot-dog and coffee builders (textures and shadows included, full frame rate).
+- **Calmer:** scroll effects. Instead of slides, 3D flips and tilts recalculated on every scroll frame, each block simply fades up once as it comes into view (one IntersectionObserver, no scroll loop). The floating sesame seeds, decorative loops, blur and the shadows/textures outside the main scenes are off.
 
 ## Shop details (from the owner, 1 Nov 2026)
 Boburshoh koʻchasi 48, Andijan (after the My Sports store), Plus Code Q8PJ+CWH; open every day 08:00–00:00, last order 23:40; own couriers, pickup, delivery from 50 000, free in the city from 100 000; halal (no certificate); Friday deal 4+1; running deal 1 kg KFC combo + 2 burgers free. Real items with the owner's prices: 1 kg KFC combo, Crunch duo, Yolgʻizlik, Madina, FFS boss burger, Cheese storm, FFS mega mix, Spicy bite; sauces 3 000.

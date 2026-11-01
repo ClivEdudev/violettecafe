@@ -2,7 +2,7 @@ import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, MIN_DELIVERY, FRIDAY_EVE
 import { svg, REAL_DEFS } from './art.js';
 import { initScroll } from './scroll.js';
 import { initAfk, showOrder } from './afk.js';
-import { initPerf, choosePerf, perfChoice, perf } from './perf.js';
+import { initPerf } from './perf.js';
 import { initTrack, startTrack, openTrack, langTrack } from './track.js';
 document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import { $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, plural, on, emit, cart, saveCart, setCart, addLine, unitPrice, lineName, lineSub, linePrep, subtotal, count, toast, openOverlay, closeOverlay, tashkentNow, hhmm, ddmmyyyy, pad, isLang, itemPic, lineVisual, addSavedLines, } from './shared.js';
@@ -973,18 +973,6 @@ initScroll();
 initAfk();
 initTrack();
 on('lang', langTrack);
-/* animations: full / light (automatic unless the visitor picks) */
-function renderPerf() {
-    const c = perfChoice();
-    $('#perfSeg').innerHTML = ['auto', 'full', 'lite'].map(k => `<button type="button" role="radio" data-perf="${k}" aria-checked="${(c ?? 'auto') === k}">${t('perf.' + k)}</button>`).join('');
-    $('#perfNow').textContent = c ? '' : t(perf.lite ? 'perf.nowLite' : 'perf.nowFull');
-}
-$('#perfSeg').addEventListener('click', e => { const b = e.target.closest('[data-perf]'); if (!b || b.getAttribute('aria-checked') === 'true')
-    return; const k = b.dataset.perf; choosePerf(k === 'auto' ? null : k); });
-on('lang', renderPerf);
-on('perf', renderPerf);
-renderPerf();
-on('perf-auto', () => toast(t('perf.switched')));
 if (reduced)
     root.classList.add('reduced');
 // iOS Safari brings pages back from its back/forward cache with frozen transitions, a stale scroll state and the pinned

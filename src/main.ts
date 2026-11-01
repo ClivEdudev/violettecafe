@@ -2,7 +2,7 @@ import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT, MIN_DEL
 import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } from './art.js';
 import { initScroll } from './scroll.js';
 import { initAfk, showOrder } from './afk.js';
-import { initPerf, choosePerf, perfChoice, perf } from './perf.js';
+import { initPerf } from './perf.js';
 import { initTrack, startTrack, openTrack, langTrack } from './track.js';
 document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import {
@@ -706,15 +706,6 @@ applyLang();
 initLab(); initBudget();
 initReveal(); initScroll(); initAfk(); initTrack();
 on('lang', langTrack);
-/* animations: full / light (automatic unless the visitor picks) */
-function renderPerf() {
-  const c = perfChoice();
-  $('#perfSeg').innerHTML = (['auto', 'full', 'lite'] as const).map(k => `<button type="button" role="radio" data-perf="${k}" aria-checked="${(c ?? 'auto') === k}">${t('perf.' + k)}</button>`).join('');
-  $('#perfNow').textContent = c ? '' : t(perf.lite ? 'perf.nowLite' : 'perf.nowFull');
-}
-$('#perfSeg').addEventListener('click', e => { const b = (e.target as Element).closest<HTMLElement>('[data-perf]'); if (!b || b.getAttribute('aria-checked') === 'true') return; const k = b.dataset.perf!; choosePerf(k === 'auto' ? null : (k as 'full' | 'lite')); });
-on('lang', renderPerf); on('perf', renderPerf); renderPerf();
-on('perf-auto', () => toast(t('perf.switched')));
 if (reduced) root.classList.add('reduced');
 // iOS Safari brings pages back from its back/forward cache with frozen transitions, a stale scroll state and the pinned
 // hero scene unpinned. Instead of patching that state, load the page fresh (from cache, so it's instant).

@@ -1,4 +1,4 @@
-// Light mode for slower phones and computers. The site starts in full mode unless the device says it's modest
+// Light mode (now always on for FFS — see initPerf). Originally for slower phones and computers. The site starts in full mode unless the device says it's modest
 // (Data Saver, a slow connection, little memory) or the first seconds on screen run slowly; it also steps down by
 // itself if scrolling keeps dropping frames. Light mode keeps everything working but drops what costs the most to
 // draw: SVG textures and shadows, blur, scroll-linked effects, floating beans, endless decorative loops and the
@@ -55,19 +55,10 @@ function watchScrolling() {
 }
 
 export function initPerf() {
-  const q = new URLSearchParams(location.search).get('lite');
-  const chosen: Choice = q === '1' ? 'lite' : q === '0' ? 'full' : (store.get('vc-perf') as Choice) ?? null;
-  perf.auto = !chosen;
-  if (chosen) { apply(chosen === 'lite'); return; }
-  apply(modestDevice());
-  if (perf.lite) return;
-  // a first look once the page has settled: the hero's ambient animations are running then
-  setTimeout(async () => {
-    if (document.hidden || perf.lite) return;
-    const r = await sample(1500);
-    if (r.n > 8 && (r.median > 28 || r.slow > .5)) { apply(true); emit('perf-auto'); }
-  }, 2600);
-  watchScrolling();
+  // FFS: light mode on every device — performance first. The main animations (hero, kitchen show, builders) keep their full look;
+  // what's dropped is the decorative, scroll-linked motion. ?lite=0 turns full mode back on for testing only.
+  perf.auto = false;
+  apply(new URLSearchParams(location.search).get('lite') !== '0');
 }
 
 /** The visitor's own choice (null = automatic). Reloads, so everything starts cleanly in the new mode. */

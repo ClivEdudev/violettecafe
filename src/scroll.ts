@@ -60,8 +60,22 @@ function stop() {
   tape?.style.removeProperty('--skew');
 }
 
+/** Light mode: no scroll loop at all; each block fades up once as it enters the screen (one observer, compositor-only). */
+function calm() {
+  const r = document.documentElement; r.classList.add('sr-off');
+  if (!('IntersectionObserver' in window)) return;
+  const io = new IntersectionObserver(es => es.forEach(en => { if (en.isIntersecting) { en.target.classList.add('seen'); io.unobserve(en.target); } }), { rootMargin: '0px 0px -8% 0px' });
+  const watch = () => $$<HTMLElement>('[data-sr]:not(.seen)').forEach(el => {
+    // anything already on screen (or above it) shows straight away
+    if (el.getBoundingClientRect().top < innerHeight) el.classList.add('seen'); else io.observe(el);
+  });
+  r.classList.add('sr-calm'); watch();
+  new MutationObserver(watch).observe($('#grid'), { childList: true });
+}
+
 export function initScroll() {
-  if (reduced || perf.lite) { document.documentElement.classList.add('sr-off'); return; }
+  if (reduced) { document.documentElement.classList.add('sr-off'); return; }
+  if (perf.lite) { calm(); return; }
   on = true;
   document.documentElement.classList.add('sr-on');
   collect(); makeBeans();
