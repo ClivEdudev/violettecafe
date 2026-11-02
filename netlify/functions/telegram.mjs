@@ -85,24 +85,113 @@ function bookingText(d) {
   ].join('\n');
 }
 /** Delivery orders get a button that opens the address on a map for the courier. */
-function buttons(d) {
-  if (d.method !== 'delivery' || !cut(d.address, MAX.address)) return undefined;
+function mapRow(d) {
+  if (d.method !== 'delivery' || !cut(d.address, MAX.address)) return [];
   const q = encodeURIComponent(`Andijon, ${cut(d.address, MAX.address)}`);
-  return { inline_keyboard: [[{ text: '🗺 Manzil xaritada', url: `https://yandex.uz/maps/?text=${q}` }]] };
+  return [[{ text: '🗺 Manzil xaritada', url: `https://yandex.uz/maps/?text=${q}` }]];
+}
+
+/* ---------- status buttons ----------
+   kind: d = delivery, p = pickup, t = table, b = booking. Callback data: "<step>|<kind>", or
+   "cx|<kind>|<current>" (ask to confirm a cancel), "cy|<kind>" (cancel confirmed), "cn|<kind>|<current>" (keep the order). */
+const KIND = { delivery: 'd', pickup: 'p', table: 't' };
+const DONE = { d: '📦 Yetkazildi', p: '🤝 Mijozga berildi', t: '🤝 Stolga berildi' };
+const label = (step, kind) => ({ acc: kind === 'b' ? '✅ Tasdiqlandi' : '✅ Qabul qilindi', rdy: '🔥 Tayyor', out: '🛵 Yoʻlga chiqdi', done: DONE[kind] ?? '✔️ Bajarildi', cy: '❌ Bekor qilindi' }[step]);
+function nextStep(cur, kind) {
+  if (kind === 'b') return cur === 'new' ? 'acc' : null;
+  return { new: 'acc', acc: 'rdy', rdy: kind === 'd' ? 'out' : 'done', out: 'done' }[cur] ?? null;
+}
+function statusRows(cur, kind) {
+  const nx = nextStep(cur, kind);
+  if (!nx) return [];
+  const go = { acc: kind === 'b' ? '✅ Tasdiqlash' : '✅ Qabul qilish', rdy: '🔥 Tayyor', out: '🛵 Yoʻlga chiqdi', done: DONE[kind] }[nx];
+  return [[{ text: go, callback_data: `${nx}|${kind}` }, { text: '❌ Bekor qilish', callback_data: `cx|${kind}|${cur}` }]];
+}
+
+const secretOf = async token => { const { createHash } = await import('node:crypto'); return createHash('sha256').update('ffs:' + token).digest('hex').slice(0, 48); };
+const tgCall = (token, method, params) => fetch(`https://api.telegram.org/bot${token}/${method}`, {
+  method: 'POST', headers: { 'content-type': 'application/json' }, body: JSON.stringify(params ?? {}),
+}).then(x => x.json()).catch(e => ({ ok: false, description: 'network: ' + e.message }));
+
+/** Points Telegram's button presses at this function. Skipped on deploy previews so they can't steal the hook. */
+let hooked = '';
+async function ensureWebhook(token, req) {
+  const url = new URL('/api/telegram', req.url);
+  if (url.hostname.includes('--') || url.hostname === 'localhost') return { ok: false, description: 'preview or local host' };
+  if (hooked === url.href) return { ok: true };
+  const info = await tgCall(token, 'getWebhookInfo');
+  if (info.ok && info.result?.url === url.href) { hooked = url.href; return { ok: true }; }
+  const r = await tgCall(token, 'setWebhook', { url: url.href, secret_token: await secretOf(token), allowed_updates: ['callback_query', 'message', 'my_chat_member'] });
+  if (r.ok) hooked = url.href;
+  return r;
+}
+
+/** Telegram → us: a staff member pressed a status button, typed /id, or the bot was added to a group. */
+async function onUpdate(u, token, chat) {
+  // helper for moving to the shop's group: the bot tells any chat its id
+  const m = u.message, added = u.my_chat_member;
+  if (m && /^\/(id|start)\b/.test(m.text ?? '')) {
+    await tgCall(token, 'sendMessage', { chat_id: m.chat.id, text: `Bu chat ID: <code>${m.chat.id}</code>\nBuyurtmalar shu yerga tushishi uchun Netlify’da TELEGRAM_CHAT_ID ga yozing.`, parse_mode: 'HTML' });
+    return;
+  }
+  if (added && ['member', 'administrator'].includes(added.new_chat_member?.status)) {
+    await tgCall(token, 'sendMessage', { chat_id: added.chat.id, text: `Salom! Bu guruh ID: <code>${added.chat.id}</code>`, parse_mode: 'HTML' });
+    return;
+  }
+  const q = u.callback_query;
+  if (!q?.message || !q.data) return;
+  const answer = text => tgCall(token, 'answerCallbackQuery', { callback_query_id: q.id, text });
+  if (String(q.message.chat.id) !== String(chat)) return answer('Bu chat ulanmagan');
+  const [step, kind, cur] = q.data.split('|');
+  if (!['d', 'p', 't', 'b'].includes(kind)) return answer('');
+  const keep = (q.message.reply_markup?.inline_keyboard ?? []).filter(row => row.every(b => b.url)); // map button stays
+  const msg = { chat_id: q.message.chat.id, message_id: q.message.message_id };
+
+  if (step === 'cx' || step === 'cn') {
+    const rows = step === 'cx'
+      ? [[{ text: '❌ Ha, bekor qilinsin', callback_data: `cy|${kind}` }, { text: '↩️ Yoʻq', callback_data: `cn|${kind}|${cur}` }]]
+      : statusRows(cur, kind);
+    await tgCall(token, 'editMessageReplyMarkup', { ...msg, reply_markup: { inline_keyboard: [...rows, ...keep] } });
+    return answer(step === 'cx' ? 'Bekor qilishni tasdiqlang' : '');
+  }
+  const name = label(step, kind);
+  if (!name) return answer('');
+  const text = q.message.text ?? '';
+  if (text.includes(`\n${name} ·`)) return answer('Allaqachon belgilangan');
+  if (text.includes(`\n${label('cy', kind)} ·`)) return answer('Buyurtma bekor qilingan');
+
+  const who = [q.from?.first_name, q.from?.last_name].filter(Boolean).join(' ').slice(0, 40) || 'Xodim';
+  const add = `${text.includes('\n📋 HOLAT') ? '' : '\n\n📋 HOLAT'}\n${name} · ${who} · ${now()}`;
+  const rows = step === 'cy' ? [] : statusRows(step, kind);
+  const r = await tgCall(token, 'editMessageText', {
+    ...msg, text: (text + add).slice(0, 4096), entities: q.message.entities ?? [],
+    link_preview_options: { is_disabled: true }, reply_markup: { inline_keyboard: [...rows, ...keep] },
+  });
+  return answer(r.ok ? name : 'Xatolik, qayta bosing');
 }
 
 export default async (req, context) => {
   const token = env('TELEGRAM_BOT_TOKEN'), chat = env('TELEGRAM_CHAT_ID');
 
+  // Telegram's own calls carry the secret we gave it in setWebhook
+  const hookSecret = req.headers.get('x-telegram-bot-api-secret-token');
+  if (req.method === 'POST' && hookSecret !== null) {
+    if (!token || hookSecret !== await secretOf(token)) return json({ ok: false }, 403);
+    try { await onUpdate(await req.json(), token, chat); } catch { /* always 200, or Telegram retries the same update */ }
+    return json({ ok: true });
+  }
+
   if (req.method === 'GET') {
-    // setup helper: only while the group isn't chosen yet
     if (!token) return json({ ok: false, step: 'Set TELEGRAM_BOT_TOKEN in Netlify, then redeploy.' });
-    if (chat) return json({ ok: true, ready: true });
-    const tg = m => fetch(`https://api.telegram.org/bot${token}/${m}`).then(x => x.json()).catch(e => ({ ok: false, description: 'network: ' + e.message }));
+    if (chat) {
+      const h = await ensureWebhook(token, req);
+      return json({ ok: true, ready: true, buttons: h.ok ? 'on' : `off (${h.description ?? 'error'})` });
+    }
+    const tg = m => tgCall(token, m);
     const me = await tg('getMe');
     if (!me.ok) return json({ ok: false, step: 'Telegram rejected the token. Check TELEGRAM_BOT_TOKEN (no spaces, whole token) and redeploy.', telegram: me.description });
     let r = await tg('getUpdates');
-    if (!r.ok && /webhook/i.test(r.description ?? '')) { await tg('deleteWebhook'); r = await tg('getUpdates'); }
+    if (!r.ok && /webhook/i.test(r.description ?? '')) { await tg('deleteWebhook'); hooked = ''; r = await tg('getUpdates'); }
     if (!r.ok) return json({ ok: false, bot: '@' + me.result.username, telegram: r.description });
     const chats = new Map();
     for (const u of r?.result ?? []) { const c = (u.message ?? u.my_chat_member ?? u.channel_post)?.chat; if (c) chats.set(c.id, { title: c.title ?? [c.first_name, c.last_name].filter(Boolean).join(' '), type: c.type }); }
@@ -125,12 +214,14 @@ export default async (req, context) => {
   if (kind === 'order' && !cut(d.items, MAX.items)) return json({ ok: false, error: 'empty' }, 400);
 
   const text = kind === 'order' ? orderText(d) : bookingText(d);
-  // Telegram turns the phone number into a tappable link by itself
-  const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
-    method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ chat_id: chat, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: kind === 'order' ? buttons(d) : undefined }),
-  }).then(x => x.json()).catch(() => null);
+  const k = kind === 'order' ? (KIND[d.method] ?? 'p') : 'b';
+  const res = await tgCall(token, 'sendMessage', {
+    chat_id: chat, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true },
+    reply_markup: { inline_keyboard: [...statusRows('new', k), ...(kind === 'order' ? mapRow(d) : [])] },
+  });
   if (!res?.ok) return json({ ok: false, error: 'telegram' }, 502);
+  // first order after a deploy switches the buttons on by itself
+  await ensureWebhook(token, req).catch(() => null);
   return json({ ok: true });
 };
 
