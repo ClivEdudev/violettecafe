@@ -52,8 +52,8 @@ export default async (req, context) => {
     if (chat) return json({ ok: true, ready: true });
     const r = await fetch(`https://api.telegram.org/bot${token}/getUpdates`).then(x => x.json()).catch(() => null);
     const chats = new Map();
-    for (const u of r?.result ?? []) { const c = (u.message ?? u.my_chat_member ?? u.channel_post)?.chat; if (c && c.type !== 'private') chats.set(c.id, c.title); }
-    return json({ ok: true, step: 'Copy your group id into TELEGRAM_CHAT_ID and redeploy. If the list is empty, add the bot to the group and send any message there, then reload.', groups: [...chats].map(([id, title]) => ({ id, title })) });
+    for (const u of r?.result ?? []) { const c = (u.message ?? u.my_chat_member ?? u.channel_post)?.chat; if (c) chats.set(c.id, { title: c.title ?? [c.first_name, c.last_name].filter(Boolean).join(' '), type: c.type }); }
+    return json({ ok: true, step: 'Copy an id into TELEGRAM_CHAT_ID and redeploy. Groups have negative ids; "private" is a chat with the bot itself (good for testing). If the list is empty, send any message to the bot or in the group, then reload.', chats: [...chats].map(([id, c]) => ({ id, ...c })) });
   }
   if (req.method !== 'POST') return json({ ok: false }, 405);
   if (!token || !chat) return json({ ok: false, error: 'not-configured' }, 503);
