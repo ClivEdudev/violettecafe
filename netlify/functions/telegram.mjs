@@ -50,10 +50,15 @@ export default async (req, context) => {
     // setup helper: only while the group isn't chosen yet
     if (!token) return json({ ok: false, step: 'Set TELEGRAM_BOT_TOKEN in Netlify, then redeploy.' });
     if (chat) return json({ ok: true, ready: true });
-    const r = await fetch(`https://api.telegram.org/bot${token}/getUpdates`).then(x => x.json()).catch(() => null);
+    const tg = m => fetch(`https://api.telegram.org/bot${token}/${m}`).then(x => x.json()).catch(e => ({ ok: false, description: 'network: ' + e.message }));
+    const me = await tg('getMe');
+    if (!me.ok) return json({ ok: false, step: 'Telegram rejected the token. Check TELEGRAM_BOT_TOKEN (no spaces, whole token) and redeploy.', telegram: me.description });
+    let r = await tg('getUpdates');
+    if (!r.ok && /webhook/i.test(r.description ?? '')) { await tg('deleteWebhook'); r = await tg('getUpdates'); }
+    if (!r.ok) return json({ ok: false, bot: '@' + me.result.username, telegram: r.description });
     const chats = new Map();
     for (const u of r?.result ?? []) { const c = (u.message ?? u.my_chat_member ?? u.channel_post)?.chat; if (c) chats.set(c.id, { title: c.title ?? [c.first_name, c.last_name].filter(Boolean).join(' '), type: c.type }); }
-    return json({ ok: true, step: 'Copy an id into TELEGRAM_CHAT_ID and redeploy. Groups have negative ids; "private" is a chat with the bot itself (good for testing). If the list is empty, send any message to the bot or in the group, then reload.', chats: [...chats].map(([id, c]) => ({ id, ...c })) });
+    return json({ ok: true, bot: '@' + me.result.username, step: 'Copy an id into TELEGRAM_CHAT_ID and redeploy. Groups have negative ids; "private" is a chat with the bot itself (good for testing). If the list is empty, send any message to the bot or in the group, then reload.', chats: [...chats].map(([id, c]) => ({ id, ...c })) });
   }
   if (req.method !== 'POST') return json({ ok: false }, 405);
   if (!token || !chat) return json({ ok: false, error: 'not-configured' }, 503);
