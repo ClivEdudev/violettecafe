@@ -243,7 +243,9 @@ export default async (req, context) => {
       const h = await ensureWebhook(token, req);
       const probe = { t: Date.now() };
       const stored = (await blobSet('SELFTEST', probe)) && (await blobGet('SELFTEST'))?.t === probe.t;
-      return json({ ok: true, ready: true, buttons: h.ok ? 'on' : `off (${h.description ?? 'error'})`,
+      const c = await tgCall(token, 'getChat', { chat_id: chat });
+      const sendsTo = c.ok ? `${c.result.title ?? [c.result.first_name, c.result.last_name].filter(Boolean).join(' ')} (${c.result.type})` : `NOT FOUND — ${c.description ?? 'check TELEGRAM_CHAT_ID'}`;
+      return json({ ok: true, ready: true, sends_to: sendsTo, buttons: h.ok ? 'on' : `off (${h.description ?? 'error'})`,
         website_status: stored ? `on (${blobShape})` : blobCtx() ? 'off (storage refused)' : 'off (no storage context)' });
     }
     const tg = m => tgCall(token, m);
