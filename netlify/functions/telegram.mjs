@@ -147,10 +147,36 @@ function kitchen(d) {
   return { text: out.join('\n'), count };
 }
 
+/* ---------- the big status line at the top of each order in the group ----------
+   It's the first thing staff see, and Telegram shows it in the chat preview, so open orders stand out from finished ones. */
+const STATUS_LINE = {
+  new: '❓❓❓ TASDIQLANMAGAN', acc: '👨‍🍳 TAYYORLANMOQDA',
+  rdy_d: '🔔 TAYYOR — KURYERGA BERING', rdy_p: '🔔 TAYYOR — MIJOZ OLIB KETADI', rdy_t: '🔔 TAYYOR — STOLGA OLIB BORING',
+  out: '🚀 YOʻLDA — KURYERDA', done_d: '✅✅✅ YETKAZILDI', done_p: '✅✅✅ BERILDI', done_t: '✅✅✅ BERILDI',
+  acc_b: '✅✅✅ TASDIQLANDI', cy: '❌❌❌ BEKOR QILINDI',
+};
+const statusLine = (st, kind) => STATUS_LINE[`${st}_${kind}`] ?? STATUS_LINE[st] ?? STATUS_LINE.new;
+const KNOWN_LINES = new Set(Object.values(STATUS_LINE));
+// a reaction on the message too, so the state shows while scrolling (best effort: groups can switch reactions off)
+const REACTION = { acc: '✍', rdy: '🔥', out: '⚡', done: '👍', cy: '👎' };
+
+/** Swaps the status line at the top (or adds one to older messages) and keeps Telegram's formatting offsets right. */
+function withStatus(text, entities, st, kind) {
+  const nl = text.indexOf('\n'), first = nl < 0 ? text : text.slice(0, nl);
+  const line = statusLine(st, kind);
+  const oldLen = KNOWN_LINES.has(first) ? first.length : 0;
+  const body = oldLen ? text.slice(oldLen) : '\n' + text;
+  const delta = line.length - oldLen + (oldLen ? 0 : 1);
+  const ents = (entities ?? []).filter(e => e.offset >= oldLen).map(e => ({ ...e, offset: e.offset + delta }));
+  const word = line.search(/[A-ZÀ-ÿА-Я]/);
+  return { text: line + body, entities: [{ type: 'bold', offset: Math.max(0, word), length: line.length - Math.max(0, word) }, ...ents] };
+}
+
 function orderText(d) {
   const k = kitchen(d);
   const head = METHOD[d.method] ?? esc(cut(d.method, 20));
   const L = [
+    `❓❓❓ <b>TASDIQLANMAGAN</b>`,
     `${head}${d.method === 'table' && d.table ? ` · STOL ${esc(cut(d.table, 6))}` : ''}`,
     `<b>Buyurtma <code>${esc(cut(d.order_id, 12))}</code></b>`,
     `⏰ <b>${esc(whenText(d.time))}</b>`,
@@ -171,6 +197,7 @@ function orderText(d) {
 }
 function bookingText(d) {
   return [
+    `❓❓❓ <b>TASDIQLANMAGAN</b>`,
     `📅 <b>STOL BAND QILISH</b>`,
     `🗓 <b>${esc(cut(d.date, 20))}, ${esc(cut(d.time, 10))}</b> · 👥 <b>${esc(cut(d.guests, 3))} kishi</b>`,
     '',
@@ -323,13 +350,15 @@ async function onUpdate(u, token) {
   if (rec) { rec.st = step; rec.h = { ...(rec.h ?? {}), [step]: Date.now() }; await blobSet(id, rec); }
   const who = [q.from?.first_name, q.from?.last_name].filter(Boolean).join(' ').slice(0, 40) || 'Xodim';
   const add = `${text.includes('\n📋 HOLAT') ? '' : '\n\n📋 HOLAT'}\n${name} · ${who} · ${now()}`;
+  const next = withStatus((text + add).slice(0, 4000), q.message.entities, step, kind);
   const rows = step === 'cy' ? [] : statusRows(step, kind, id);
   const r = await tgSafe(token, 'editMessageText', {
-    ...msg, text: (text + add).slice(0, 4096), entities: q.message.entities ?? [],
+    ...msg, text: next.text, entities: next.entities,
     link_preview_options: { is_disabled: true }, reply_markup: { inline_keyboard: [...rows, ...keep] },
   });
   if (!r.ok && rec) { delete rec.h[step]; rec.st = prevStep(rec.h); await blobSet(id, rec); } // the group didn't change, so neither does the customer's page
   const done = answer(r.ok ? name : 'Xatolik, qayta bosing');
+  if (r.ok && REACTION[step]) later(tgCall(token, 'setMessageReaction', { ...msg, reaction: [{ type: 'emoji', emoji: REACTION[step] }] }));
   // the customer's own Telegram, if they linked it (in the background: the cook doesn't wait for it)
   if (r.ok && rec) { const c = await blobGet('cust:' + id); if (c?.chat) later(tgSafe(token, 'sendMessage', { chat_id: c.chat, text: custText(rec, custKey(step, rec.kind ?? kind), id) }, 3000)); }
   return done;
