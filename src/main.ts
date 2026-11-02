@@ -1,4 +1,4 @@
-import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, ZONES, STAMPS_FOR_GIFT, MIN_DELIVERY, FRIDAY_EVERY, SET_DRINKS, SET_BURGERS, SET_DISCOUNTS, setFull, setPrice, isVeg, isSpicy, allergens, type World, type CatId, type Item, type ExtraId, type Lang } from './data.js';
+import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, BUNS, FILLINGS, WRAP_BASES, WRAP_MEATS, WRAP_ADDS, WRAP_SAUCES, HD_SAUSAGES, HD_TOPS, HD_SAUCES, ZONES, STAMPS_FOR_GIFT, MIN_DELIVERY, FRIDAY_EVERY, SET_DRINKS, SET_BURGERS, SET_DISCOUNTS, setFull, setPrice, isVeg, isSpicy, allergens, type World, type CatId, type Item, type ExtraId, type Lang } from './data.js';
 import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } from './art.js';
 import { initScroll } from './scroll.js';
 import { initAfk, showOrder } from './afk.js';
@@ -377,6 +377,49 @@ $('#cart').addEventListener('click', e => {
   const sn = tg.closest<HTMLElement>('#splitN [data-d]');
   if (sn) { split.n = clamp(split.n + Number(sn.dataset.d), 2, 8); renderCart(); }
 });
+/** The order as the kitchen needs it: always in Uzbek, with every custom build spelled out. */
+function kitchenLines() {
+  const was = state.lang; state.lang = 'uz';
+  const nm = (list: { id: string; name: Record<Lang, string> }[], id: string) => list.find(p => p.id === id)?.name.uz ?? id;
+  const counted = (ids: string[], list: { id: string; name: Record<Lang, string> }[]) => {
+    const out: string[] = [];
+    ids.forEach((id, i) => { if (ids.indexOf(id) !== i) return; const c = ids.filter(x => x === id).length; out.push(nm(list, id) + (c > 1 ? ` ×${c}` : '')); });
+    return out;
+  };
+  try {
+    return cart.map(l => {
+      const d: string[] = [];
+      if (l.kind === 'burger') {
+        const b = l.burger!;
+        d.push(`Non: ${nm(BUNS, b.bun)}`, `Pastdan yuqoriga: ${b.fill.map(f => nm(FILLINGS, f)).join(' → ') || '—'}`);
+      } else if (l.kind === 'coffee') {
+        const c = l.coffee!;
+        d.push(`${c.size} · ${t('lab.temp.' + c.temp)} · ${c.shots} shot`);
+        d.push(c.milk === 'none' ? t('milk.none') : `${t('milk.' + c.milk)} ${c.milkAmt}%${c.temp === 'hot' && c.foam !== 'none' ? ` · koʻpik: ${t('foam.' + c.foam).toLowerCase()}` : ''}`);
+        if (c.syrup !== 'none') d.push(`Sirop: ${t('syrup.' + c.syrup)}`);
+        if (c.topping !== 'none') d.push(`Ustiga: ${t('top.' + c.topping)}`);
+      } else if (l.kind === 'wrap') {
+        const w = l.wrap!;
+        d.push(`${nm(WRAP_BASES, w.base)} · ${nm(WRAP_MEATS, w.meat)}${w.double ? ' ×2' : ''}`);
+        if (w.add.length) d.push(counted(w.add, WRAP_ADDS).join(', '));
+        if (w.sauces.length) d.push(`Sous: ${counted(w.sauces, WRAP_SAUCES).join(', ')}`);
+      } else if (l.kind === 'hotdog') {
+        const h = l.hotdog!;
+        d.push(`${nm(BUNS, h.bun)} non · ${nm(HD_SAUSAGES, h.sausage)} sosiska${h.xl ? ' XL' : ''}`);
+        if (h.tops.length) d.push(counted(h.tops, HD_TOPS).join(', '));
+        if (h.sauces.length) d.push(`Sous: ${counted(h.sauces, HD_SAUCES).join(', ')}`);
+      } else if (l.kind === 'set') {
+        d.push(`${ITEM(l.set!.burger)!.name.uz} + ${ITEM(l.set!.drink)!.name.uz}${ITEM(l.set!.drink)!.sized ? ' (M)' : ''}`);
+      } else {
+        if (l.size) d.push(`Hajmi: ${l.size}`);
+        (l.extras ?? []).forEach(e => d.push('+ ' + EXTRAS[e].name.uz));
+        if (l.item === 'kfc-1kg') d.push(t('promo.kfcGift'));
+      }
+      const custom = ['burger', 'coffee', 'wrap', 'hotdog'].includes(l.kind ?? '');
+      return { q: l.qty, n: lineName(l), c: custom, d, p: unitPrice(l) * l.qty, w: split.on && l.who >= 0 && l.who < split.n ? l.who + 1 : 0 };
+    });
+  } finally { state.lang = was; }
+}
 function repeatLast() {
   const last = store.get('vc-last') as { lines?: unknown } | null;
   const n = addSavedLines(last?.lines);
@@ -565,6 +608,7 @@ async function sendOrder() {
     zone: order.method === 'delivery' ? (ZONES.find(z => z.id === order.zone) ?? ZONES[0]).name.uz : '', time: order.time === 'asap' ? `ASAP ~${due}` : `${order.tomorrow ? 'ERTAGA / TOMORROW ' : ''}${order.time}`,
     payment: order.payment, comment: order.comment, items: itemsText, split: split.on ? splitShares().map((s, i) => `${i + 1}: ${money(Math.ceil(s / 500) * 500)}`).join('; ') : '',
     subtotal: String(subtotal()), delivery: String(deliveryFee()), total: String(orderTotal()), lang: state.lang,
+    kitchen: JSON.stringify(kitchenLines()), gifts: String(gifts),
   };
   try {
     const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 12000);

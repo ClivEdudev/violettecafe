@@ -5,7 +5,7 @@
 // While TELEGRAM_CHAT_ID is empty, opening /api/telegram in a browser lists the groups the bot has seen,
 // so you can copy the id from there. No packages needed: Node's own fetch talks to the Bot API.
 
-const MAX = { name: 60, phone: 30, address: 200, comment: 400, items: 3500, short: 80 };
+const MAX = { name: 60, phone: 30, address: 200, comment: 400, items: 3500, short: 80 }; // kitchen list: max 40 lines × 8 details
 const hits = new Map(); // best-effort rate limit per visitor (per function instance)
 
 const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;' }[c]));
@@ -14,33 +14,81 @@ const json = (body, status = 200) => new Response(JSON.stringify(body), { status
 const env = k => (globalThis.Netlify?.env?.get(k) ?? process.env[k] ?? '').trim();
 const som = n => `${Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/\s/g, ' ')} soʻm`;
 
-const METHOD = { delivery: '🛵 Yetkazib berish', pickup: '🥡 Olib ketish', table: '🍽 Stolga' };
-const PAY = { cash: 'Naqd', card: 'Karta', click: 'Click / Payme / Uzum' };
+const METHOD = { delivery: '🛵 YETKAZIB BERISH', pickup: '🥡 OLIB KETISH', table: '🍽 ZALDA' };
+const PAY = { cash: '💵 Naqd', card: '💳 Karta', click: '📲 Click / Payme / Uzum' };
+const LINE = '────────────';
+const now = () => new Intl.DateTimeFormat('ru-RU', { timeZone: 'Asia/Tashkent', hour: '2-digit', minute: '2-digit' }).format(new Date());
+const phoneLink = p => String(p ?? '').replace(/[^\d+]/g, '').slice(0, 16); // Telegram makes +998901234567 tappable
+
+/** "ASAP ~19:25" → "Imkon qadar tez · ~19:25"; "ERTAGA / TOMORROW 14:00" → "ERTAGA 14:00" */
+function whenText(t) {
+  const s = cut(t, MAX.short);
+  const asap = s.match(/^ASAP\s*~?\s*(\d{1,2}:\d{2})?/i);
+  if (asap) return `Imkon qadar tez${asap[1] ? ` · ~${asap[1]}` : ''}`;
+  return s.replace(/ERTAGA\s*\/\s*TOMORROW/i, 'ERTAGA');
+}
+
+/** The kitchen list the site sends (already in Uzbek); falls back to the plain items text. */
+function kitchen(d) {
+  let lines;
+  try { lines = JSON.parse(String(d.kitchen ?? '')); } catch { lines = null; }
+  if (!Array.isArray(lines) || !lines.length) return { text: esc(cut(d.items, MAX.items)), count: 0 };
+  lines = lines.slice(0, 40);
+  let count = 0, size = 0, hidden = 0;
+  const out = [];
+  for (const l of lines) {
+    const q = Math.max(1, Math.min(99, Math.round(Number(l?.q) || 1))); count += q;
+    const head = `<b>${q} ×  ${esc(cut(l?.n, 80))}</b>${l?.c ? '  ✏️' : ''}${Number(l?.w) > 0 ? `  [${Math.round(l.w)}]` : ''}`;
+    const det = (Array.isArray(l?.d) ? l.d : []).slice(0, 8).map(x => `      ▸ ${esc(cut(x, 160))}`);
+    const block = [head, ...det].join('\n');
+    // Telegram allows 4096 characters per message; keep room for the rest of the order
+    if (size + block.length > 2600) { hidden++; continue; }
+    size += block.length + 1; out.push(block);
+  }
+  if (hidden) out.push(`<i>… yana ${hidden} ta qator — toʻliq roʻyxat Netlify Forms da</i>`);
+  const g = Math.max(0, Math.round(Number(d.gifts) || 0));
+  if (g) out.push(`🎁 <b>Juma 4+1: +${g} ta bepul taom</b> (mijoz bilan kelishing)`);
+  return { text: out.join('\n'), count };
+}
 
 function orderText(d) {
+  const k = kitchen(d);
+  const head = METHOD[d.method] ?? esc(cut(d.method, 20));
   const L = [
-    `🍗 <b>Yangi buyurtma ${esc(cut(d.order_id, 12))}</b>`,
-    `${METHOD[d.method] ?? esc(cut(d.method, 20))}${d.method === 'table' && d.table ? ` — stol ${esc(cut(d.table, 6))}` : ''}`,
+    `${head}${d.method === 'table' && d.table ? ` · STOL ${esc(cut(d.table, 6))}` : ''}`,
+    `<b>Buyurtma <code>${esc(cut(d.order_id, 12))}</code></b>`,
+    `⏰ <b>${esc(whenText(d.time))}</b>`,
     '',
-    `👤 ${esc(cut(d.name, MAX.name))}`,
-    `📞 ${esc(cut(d.phone, MAX.phone))}`,
+    `🍳 <b>OSHXONA${k.count ? ` — ${k.count} ta` : ''}</b>`,
+    LINE,
+    k.text,
   ];
-  if (d.method === 'delivery') L.push(`📍 ${esc(cut(d.address, MAX.address))}${d.zone ? ` (${esc(cut(d.zone, MAX.short))})` : ''}`);
-  L.push(`⏰ ${esc(cut(d.time, MAX.short))}`, `💳 ${PAY[d.payment] ?? esc(cut(d.payment, 20))}`, '', esc(cut(d.items, MAX.items)), '');
-  if (Number(d.delivery) > 0) L.push(`Taomlar: ${som(d.subtotal)}`, `Yetkazish: ${som(d.delivery)}`);
-  L.push(`<b>Jami: ${som(d.total)}</b>`);
-  if (d.split) L.push(`Boʻlib toʻlash: ${esc(cut(d.split, 300))}`);
-  if (d.comment) L.push('', `💬 ${esc(cut(d.comment, MAX.comment))}`);
-  L.push('', `<i>Sayt tili: ${esc(cut(d.lang, 4))}</i>`);
+  if (d.comment) L.push('', `⚠️ <b>Izoh:</b>`, `<blockquote>${esc(cut(d.comment, MAX.comment))}</blockquote>`);
+  L.push('', `👤 <b>MIJOZ</b>`, LINE, `${esc(cut(d.name, MAX.name))}`, `📞 ${esc(phoneLink(d.phone))}`);
+  if (d.method === 'delivery') L.push(`📍 ${esc(cut(d.address, MAX.address))}`, ...(d.zone ? [`🗺 Hudud: ${esc(cut(d.zone, MAX.short))}`] : []));
+  L.push('', `💰 <b>TOʻLOV</b> · ${PAY[d.payment] ?? esc(cut(d.payment, 20))}`, LINE);
+  if (Number(d.delivery) > 0) L.push(`Taomlar:  ${som(d.subtotal)}`, `Yetkazish:  ${som(d.delivery)}`);
+  L.push(`<b>JAMI:  ${som(d.total)}</b>`);
+  if (d.split) L.push(`👥 Boʻlib toʻlash: ${esc(cut(d.split, 300))}`);
+  L.push('', `<i>🕒 ${now()} · saytdan · ${esc(cut(d.lang, 4).toUpperCase())}</i>`);
   return L.join('\n');
 }
 function bookingText(d) {
   return [
-    `📅 <b>Stol band qilish</b>`, '',
-    `👤 ${esc(cut(d.name, MAX.name))}`, `📞 ${esc(cut(d.phone, MAX.phone))}`,
-    `🗓 ${esc(cut(d.date, 20))}, ${esc(cut(d.time, 10))}`, `👥 ${esc(cut(d.guests, 3))} kishi`,
-    ...(d.comment ? ['', `💬 ${esc(cut(d.comment, MAX.comment))}`] : []),
+    `📅 <b>STOL BAND QILISH</b>`,
+    `🗓 <b>${esc(cut(d.date, 20))}, ${esc(cut(d.time, 10))}</b> · 👥 <b>${esc(cut(d.guests, 3))} kishi</b>`,
+    '',
+    `👤 ${esc(cut(d.name, MAX.name))}`,
+    `📞 ${esc(phoneLink(d.phone))}`,
+    ...(d.comment ? ['', `⚠️ <b>Izoh:</b>`, `<blockquote>${esc(cut(d.comment, MAX.comment))}</blockquote>`] : []),
+    '', `<i>🕒 ${now()} · saytdan</i>`,
   ].join('\n');
+}
+/** Delivery orders get a button that opens the address on a map for the courier. */
+function buttons(d) {
+  if (d.method !== 'delivery' || !cut(d.address, MAX.address)) return undefined;
+  const q = encodeURIComponent(`Andijon, ${cut(d.address, MAX.address)}`);
+  return { inline_keyboard: [[{ text: '🗺 Manzil xaritada', url: `https://yandex.uz/maps/?text=${q}` }]] };
 }
 
 export default async (req, context) => {
@@ -63,10 +111,10 @@ export default async (req, context) => {
   if (req.method !== 'POST') return json({ ok: false }, 405);
   if (!token || !chat) return json({ ok: false, error: 'not-configured' }, 503);
 
-  const ip = context?.ip ?? req.headers.get('x-nf-client-connection-ip') ?? 'x', now = Date.now();
-  const recent = (hits.get(ip) ?? []).filter(t => now - t < 10 * 60000);
+  const ip = context?.ip ?? req.headers.get('x-nf-client-connection-ip') ?? 'x', nowMs = Date.now();
+  const recent = (hits.get(ip) ?? []).filter(t => nowMs - t < 10 * 60000);
   if (recent.length >= 8) return json({ ok: false, error: 'too-many' }, 429);
-  hits.set(ip, [...recent, now]);
+  hits.set(ip, [...recent, nowMs]);
 
   let d;
   try { d = await req.json(); } catch { return json({ ok: false, error: 'bad-json' }, 400); }
@@ -80,7 +128,7 @@ export default async (req, context) => {
   // Telegram turns the phone number into a tappable link by itself
   const res = await fetch(`https://api.telegram.org/bot${token}/sendMessage`, {
     method: 'POST', headers: { 'content-type': 'application/json' },
-    body: JSON.stringify({ chat_id: chat, text, parse_mode: 'HTML', disable_web_page_preview: true }),
+    body: JSON.stringify({ chat_id: chat, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true }, reply_markup: kind === 'order' ? buttons(d) : undefined }),
   }).then(x => x.json()).catch(() => null);
   if (!res?.ok) return json({ ok: false, error: 'telegram' }, 502);
   return json({ ok: true });
