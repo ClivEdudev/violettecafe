@@ -76,13 +76,133 @@ function closeTrack() {
 }
 function finish() { const was = tr; store.set('vc-track', null); tr = null; closeTrack(); refresh(); if (was?.st === 'done' || was?.st === 'out')
     toast(t('tk.enjoy')); }
+/* ---------- telling the customer: sound + vibration, a system notification, and the tab title ---------- */
+let actx = null, baseTitle = '';
+/** Call from a tap (sending the order): browsers only allow sound after one. */
+export function unlockSound() {
+    try {
+        const A = window.AudioContext ?? window.webkitAudioContext;
+        if (A && !actx)
+            actx = new A();
+        void actx?.resume();
+    }
+    catch {
+        actx = null;
+    }
+}
+function chime(strong) {
+    if (!actx)
+        return;
+    try {
+        void actx.resume();
+        const t0 = actx.currentTime, notes = strong ? [784, 1047, 1319] : [880, 1175];
+        notes.forEach((f, i) => {
+            const o = actx.createOscillator(), g = actx.createGain(), at = t0 + i * .16;
+            o.type = 'sine';
+            o.frequency.value = f;
+            g.gain.setValueAtTime(.0001, at);
+            g.gain.exponentialRampToValueAtTime(.22, at + .02);
+            g.gain.exponentialRampToValueAtTime(.0001, at + .55);
+            o.connect(g).connect(actx.destination);
+            o.start(at);
+            o.stop(at + .6);
+        });
+    }
+    catch { /* no sound is fine */ }
+}
+const canSystem = () => 'Notification' in window && 'serviceWorker' in navigator && isSecureContext;
+async function systemNote(x) {
+    if (!x.notify || !canSystem() || Notification.permission !== 'granted')
+        return;
+    const opts = { body: tf('tr.order', { id: x.id }), icon: '/icon-192.png', badge: '/icon-192.png', tag: 'ffs-' + x.id, renotify: true, vibrate: [200, 100, 200] };
+    try {
+        const reg = await navigator.serviceWorker.ready;
+        await reg.showNotification('FFS · ' + title(x), opts);
+    }
+    catch {
+        try {
+            new Notification('FFS · ' + title(x), opts);
+        }
+        catch { /* not allowed here */ }
+    }
+}
+/** The big moments: ready to pick up / at the table, courier left, delivered, cancelled. */
+function alertUser(x) {
+    const big = (x.st === 'rdy' && x.kind !== 'd') || x.st === 'out' || x.st === 'done' || x.st === 'cy';
+    chime(big);
+    try {
+        navigator.vibrate?.(big ? [250, 120, 250, 120, 400] : [150]);
+    }
+    catch { /* no vibration */ }
+    void systemNote(x);
+    if (document.hidden) {
+        baseTitle = baseTitle || document.title;
+        document.title = '🔔 ' + title(x);
+    }
+}
+async function enableSystem() {
+    if (!tr || !canSystem())
+        return;
+    unlockSound();
+    const p = Notification.permission === 'default' ? await Notification.requestPermission() : Notification.permission;
+    if (p !== 'granted') {
+        toast(t('nt.denied'));
+        renderNotify();
+        return;
+    }
+    try {
+        await navigator.serviceWorker.register('/sw.js');
+    }
+    catch { /* page notifications still work on desktop */ }
+    tr.notify = true;
+    save();
+    renderNotify();
+    toast(t('nt.webDone'));
+}
+/** The "tell me when it's ready" box: on the order-sent screen and in the tracker. */
+function notifyHTML(x) {
+    if (x.demo || ended(x))
+        return '';
+    const tgHref = x.bot ? `https://t.me/${encodeURIComponent(x.bot)}?start=o_${x.id}_${x.key.slice(0, 16)}` : '';
+    const sys = canSystem() ? (x.notify && Notification.permission === 'granted'
+        ? `<span class="nt-on">${t('nt.webOn')}</span>`
+        : Notification.permission === 'denied' ? `<span class="nt-off">${t('nt.denied')}</span>`
+            : `<button type="button" class="btn btn-line" data-nt-web>${t('nt.web')}</button>`) : '';
+    if (!tgHref && !sys)
+        return '';
+    return `<div class="nt"><b>${t('nt.title')}</b><small>${t('nt.sub.' + x.kind)}</small>
+    <div class="nt-btns">${tgHref ? `<a class="btn btn-ink nt-tg" href="${tgHref}" target="_blank" rel="noopener" data-nt-tg><svg viewBox="0 0 24 24" aria-hidden="true"><path d="M21.5 4.3 2.9 11.5c-1 .4-1 1.8.1 2.1l4.6 1.5 1.8 5.5c.3.8 1.3 1 1.9.4l2.6-2.5 4.6 3.4c.7.5 1.7.1 1.9-.7l3.2-15c.2-1.1-.9-2-2-1.4Z" fill="currentColor"/></svg>${t(x.tg ? 'nt.tgAgain' : 'nt.tg')}</a>` : ''}${sys}</div>
+    ${tgHref ? `<small class="nt-tip">${t(x.tg ? 'nt.tgOn' : 'nt.tip')}</small>` : ''}</div>`;
+}
+const notifySlots = new Set();
+function renderNotify() { notifySlots.forEach(el => { if (!el.isConnected) {
+    notifySlots.delete(el);
+    return;
+} if (tr)
+    el.innerHTML = notifyHTML(tr); }); }
+/** Puts the notify box into an element (the order-sent screen) and keeps it up to date. */
+export function mountNotify(el) { notifySlots.add(el); bindNotify(el); renderNotify(); }
+function bindNotify(el) {
+    el.addEventListener('click', e => {
+        const tg = e.target;
+        if (tg.closest('[data-nt-web]')) {
+            e.preventDefault();
+            void enableSystem();
+        }
+        else if (tg.closest('[data-nt-tg]') && tr) {
+            tr.tg = true;
+            save();
+            setTimeout(renderNotify, 300);
+        }
+    });
+}
 /** Lets the order screen show the same status. */
 export const onStatus = (fn) => addEventListener('ffs-status', e => fn(e.detail));
 const announce = () => { if (tr)
     dispatchEvent(new CustomEvent('ffs-status', { detail: tr })); };
 /* ---------- asking the bot ---------- */
 async function poll() {
-    if (!tr || tr.demo || ended(tr) || polling || document.hidden)
+    if (!tr || tr.demo || ended(tr) || polling || (document.hidden && !tr.notify))
         return;
     polling = true;
     try {
@@ -98,8 +218,10 @@ async function poll() {
         save();
         if (changed) {
             toast(t('tk.toast.' + j.st));
+            alertUser(tr);
             announce();
             refresh();
+            renderNotify();
             if (panel && !panel.hidden)
                 render();
         }
@@ -141,6 +263,7 @@ function build() {
     panel.setAttribute('aria-labelledby', 'tkTitle');
     panel.innerHTML = `<div class="scrim" data-tk-close></div><div class="sheet tk-sheet"><button class="x tk-x" data-tk-close>×</button><div id="tkBody" aria-live="polite"></div></div>`;
     document.body.appendChild(panel);
+    bindNotify(panel);
     panel.addEventListener('click', e => {
         const tg = e.target;
         if (tg.closest('[data-tk-close]'))
@@ -190,12 +313,16 @@ function render() {
     <h3 id="tkTitle" class="tk-st tk-st-${x.st}">${title(x)}</h3>
     <div class="tk-eta">${lead(x)}</div>
     ${x.kind === 'd' && x.st !== 'cy' ? `<div class="tk-map">${mapSVG(x.zone)}<span class="tk-dist" id="tkDist"></span></div>` : ''}
+    <div class="tk-nt" id="tkNotify"></div>
     <ol class="tk-steps">${steps}</ol>
     ${x.kind === 'd' ? `<p class="tk-addr"><span>${t('tr.to')}</span> ${esc(x.address)} <small>· ${esc(zoneOf(x).name[state.lang])}</small></p>` : ''}
     <div class="tk-acts">${x.st !== 'done' ? `<a class="btn btn-line" href="${contactHref()}" target="_blank" rel="noopener">${t('tr.call')}</a>` : ''}
       ${canGot ? `<button type="button" class="btn btn-acc" data-tk-got>${t('tr.got')}</button>` : ended(x) ? `<button type="button" class="btn btn-acc" data-tk-got>${t('tk.close')}</button>` : ''}</div>
     <p class="hint tk-note">${t(x.kind === 'd' ? 'tk.note' : 'tk.noteShort')}</p>`;
     renderedSt = x.st;
+    const slot = $('#tkNotify', panel);
+    notifySlots.add(slot);
+    slot.innerHTML = notifyHTML(x);
     frame();
 }
 /** Countdown, the courier on the map and the steam: drawn every frame while the tracker is open. */
@@ -267,7 +394,7 @@ function tick() {
         render();
     void poll();
     // quick while waiting for the kitchen to answer, slower once it's cooking
-    const wait = !tr || ended(tr) ? 30000 : tr.st === 'new' ? 5000 : 10000;
+    const wait = !tr || ended(tr) ? 30000 : document.hidden ? 15000 : tr.st === 'new' ? 5000 : 10000;
     timer = window.setTimeout(tick, wait);
 }
 export function currentTrack() { return tr; }
@@ -294,8 +421,20 @@ export function initTrack() {
         tr = { id: 'DEMO1', key: 'demo', kind, placed: now - 9 * MIN, zone: 'near', address: 'Bobur shoh koʻchasi, 12', total: 96000, cookMin: 14, st, h, demo: true,
             lines: [{ sig: 'd1', kind: 'item', item: 'ffs-boss-burger', extras: [], qty: 1, who: -1 }, { sig: 'd2', kind: 'item', item: 'fries', extras: [], qty: 1, who: -1 }, { sig: 'd3', kind: 'item', item: 'turkish-tea', extras: [], qty: 1, who: -1 }] };
     }
-    document.addEventListener('visibilitychange', () => { if (!document.hidden)
-        tick(); });
+    document.addEventListener('visibilitychange', () => { if (!document.hidden) {
+        if (baseTitle) {
+            document.title = baseTitle;
+            baseTitle = '';
+        }
+        tick();
+    } });
+    navigator.serviceWorker?.addEventListener('message', e => { if (e.data?.type === 'open-track')
+        openTrack(); });
+    if (qs.has('track'))
+        setTimeout(openTrack, 600);
+    // keep the notification helper alive on later visits
+    if (load()?.notify && canSystem())
+        navigator.serviceWorker.register('/sw.js').catch(() => null);
     addEventListener('pageshow', () => { if (panel && !panel.classList.contains('open'))
         panel.hidden = true; tick(); });
     addEventListener('storage', e => { if (e.key === 'vc-track') {

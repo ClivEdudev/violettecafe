@@ -165,10 +165,46 @@ async function ensureWebhook(token, req) {
   return r;
 }
 
+/* ---------- messages to the customer (they link their Telegram from the order page) ---------- */
+const CUST = {
+  uz: { link: '🔔 Tayyor! Buyurtma {id} holati shu yerga keladi.', bad: 'Bu havola eskirgan. Buyurtma sahifasidan qayta oching.', hello: 'Salom! Bu FFS buyurtmalar boti. Buyurtma holatini olish uchun saytdagi buyurtma sahifasida «Telegram orqali» tugmasini bosing.',
+    acc: '✅ Buyurtma {id} qabul qilindi. Oshxona tayyorlashni boshladi.', rdy_d: '🔥 Buyurtma {id} tayyor, kuryerga berilmoqda.', rdy_p: '🔔 Buyurtma {id} tayyor! Kassadan olib ketishingiz mumkin.', rdy_t: '🔔 Buyurtma {id} tayyor — stolingizga olib kelinmoqda.',
+    out: '🛵 Kuryer yoʻlga chiqdi. Buyurtma {id} tez orada yetib keladi.', done_d: '📦 Buyurtma {id} yetkazildi. Yoqimli ishtaha!', done_p: '🍗 Yoqimli ishtaha! Buyurtma {id} berildi.', done_t: '🍗 Yoqimli ishtaha!', cy: '❌ Buyurtma {id} bekor qilindi. Savollar boʻlsa, FFS bilan bogʻlaning.' },
+  ru: { link: '🔔 Готово! Статус заказа {id} будет приходить сюда.', bad: 'Ссылка устарела. Откройте её заново со страницы заказа.', hello: 'Здравствуйте! Это бот заказов FFS. Чтобы получать статус заказа, нажмите «Через Telegram» на странице заказа на сайте.',
+    acc: '✅ Заказ {id} принят. Кухня начала готовить.', rdy_d: '🔥 Заказ {id} готов, передаём курьеру.', rdy_p: '🔔 Заказ {id} готов! Можно забирать на кассе.', rdy_t: '🔔 Заказ {id} готов — несём к вашему столу.',
+    out: '🛵 Курьер выехал. Заказ {id} скоро будет у вас.', done_d: '📦 Заказ {id} доставлен. Приятного аппетита!', done_p: '🍗 Приятного аппетита! Заказ {id} выдан.', done_t: '🍗 Приятного аппетита!', cy: '❌ Заказ {id} отменён. Если есть вопросы, свяжитесь с FFS.' },
+  en: { link: '🔔 Done! Updates for order {id} will come here.', bad: 'This link has expired. Open it again from your order page.', hello: 'Hi! This is the FFS order bot. To get your order status, tap “Via Telegram” on your order page on the website.',
+    acc: '✅ Order {id} accepted. The kitchen has started cooking.', rdy_d: '🔥 Order {id} is ready and going to the courier.', rdy_p: '🔔 Order {id} is ready! Pick it up at the counter.', rdy_t: '🔔 Order {id} is ready — on its way to your table.',
+    out: '🛵 The courier is on the way. Order {id} will arrive soon.', done_d: '📦 Order {id} delivered. Enjoy your meal!', done_p: '🍗 Enjoy your meal! Order {id} picked up.', done_t: '🍗 Enjoy your meal!', cy: '❌ Order {id} was cancelled. If you have questions, contact FFS.' },
+};
+const custText = (rec, key, id) => { const L = CUST[rec?.lang] ?? CUST.uz; return (L[key] ?? CUST.uz[key] ?? '').replace('{id}', id); };
+const custKey = (step, kind) => (step === 'rdy' || step === 'done' ? `${step}_${kind}` : step);
+let botName = '';
+async function getBotName(token) {
+  if (botName) return botName;
+  const me = await tgCall(token, 'getMe');
+  if (me.ok) botName = me.result.username;
+  return botName;
+}
+
 /** Telegram → us: a staff member pressed a status button, typed /id, or the bot was added to a group. */
 async function onUpdate(u, token, chat) {
   // helper for moving to the shop's group: the bot tells any chat its id
   const m = u.message, added = u.my_chat_member;
+  // a customer opened the bot from their order page: t.me/<bot>?start=o_<id>_<first 16 of the key>
+  const link = m?.chat?.type === 'private' ? (m.text ?? '').match(/^\/start\s+o_([A-Z0-9]{4,12})_([a-f0-9]{16})$/) : null;
+  if (link) {
+    const [, id, k] = link, rec = await blobGet(id);
+    if (!rec || !String(rec.k).startsWith(k)) { await tgCall(token, 'sendMessage', { chat_id: m.chat.id, text: CUST.uz.bad }); return; }
+    rec.cust = m.chat.id; await blobSet(id, rec);
+    const now = rec.st && rec.st !== 'new' ? '\n\n' + custText(rec, custKey(rec.st, rec.kind), id) : '';
+    await tgCall(token, 'sendMessage', { chat_id: m.chat.id, text: custText(rec, 'link', id) + now });
+    return;
+  }
+  if (m?.chat?.type === 'private' && /^\/start\s*$/.test(m.text ?? '') && String(m.chat.id) !== String(chat)) {
+    await tgCall(token, 'sendMessage', { chat_id: m.chat.id, text: `${CUST.uz.hello}\n\n${CUST.ru.hello}\n\nBu chat ID: ${m.chat.id}` });
+    return;
+  }
   if (m && /^\/(id|start)\b/.test(m.text ?? '')) {
     await tgCall(token, 'sendMessage', { chat_id: m.chat.id, text: `Bu chat ID: <code>${m.chat.id}</code>\nBuyurtmalar shu yerga tushishi uchun Netlify’da TELEGRAM_CHAT_ID ga yozing.`, parse_mode: 'HTML' });
     return;
@@ -213,7 +249,11 @@ async function onUpdate(u, token, chat) {
   if (r.ok && ID_RE.test(id)) {
     // tell the customer's page: the status and when each step happened
     const rec = await blobGet(id);
-    if (rec) { rec.st = step; rec.h = { ...(rec.h ?? {}), [step]: Date.now() }; await blobSet(id, rec); }
+    if (rec) {
+      rec.st = step; rec.h = { ...(rec.h ?? {}), [step]: Date.now() }; await blobSet(id, rec);
+      // and the customer's own Telegram, if they linked it
+      if (rec.cust) await tgCall(token, 'sendMessage', { chat_id: rec.cust, text: custText(rec, custKey(step === 'cy' ? 'cy' : step, rec.kind ?? kind), id) });
+    }
   }
   return answer(r.ok ? name : 'Xatolik, qayta bosing');
 }
@@ -286,8 +326,9 @@ export default async (req, context) => {
   const hook = await ensureWebhook(token, req).catch(() => ({ ok: false }));
   // live status on the customer's page needs both: the buttons reaching us, and somewhere to keep the status
   let live = false;
-  if (id && KEY_RE.test(String(d.track_key ?? '')) && hook.ok) live = await blobSet(id, { k: String(d.track_key), kind: k, st: 'new', h: { new: Date.now() } });
-  return json({ ok: true, live });
+  const lang = ['uz', 'ru', 'en'].includes(d.lang) ? d.lang : 'uz';
+  if (id && KEY_RE.test(String(d.track_key ?? '')) && hook.ok) live = await blobSet(id, { k: String(d.track_key), kind: k, st: 'new', h: { new: Date.now() }, lang });
+  return json({ ok: true, live, bot: live ? await getBotName(token) : '' });
 };
 
 export const config = { path: '/api/telegram' };

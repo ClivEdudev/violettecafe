@@ -971,3 +971,14 @@ img { max-width: 100%; }
 .tk-steps li.tk-cy i { border-color: var(--acc); background: var(--acc); box-shadow: none; }
 .tk-eta span:only-child { font-weight: 700; color: var(--ink2); }
 @media (prefers-reduced-motion: reduce) { .co-live i { animation: none; } }
+
+/* "tell me when it's ready" box */
+.nt { display: grid; gap: 6px; margin: 14px 0 6px; padding: 14px 16px; border: 2px dashed var(--line); border-radius: 16px; text-align: left; background: var(--paper); }
+.nt > b { font-size: 1rem; } .nt > small { color: var(--ink2); font-size: .84rem; line-height: 1.4; }
+.nt-btns { display: flex; flex-wrap: wrap; gap: 8px; margin-top: 4px; align-items: center; }
+.nt-btns .btn { flex: 1 1 160px; display: inline-flex; align-items: center; justify-content: center; gap: 8px; }
+.nt-tg { background: #229ED9 !important; border-color: #1A7DB0 !important; color: #fff !important; }
+.nt-tg svg { width: 18px; height: 18px; }
+.nt-on { font-weight: 800; color: #1F7A44; } .nt-off { font-size: .84rem; color: var(--ink2); }
+.nt-tip { font-size: .76rem !important; opacity: .8; }
+.co-nt .nt { max-width: 440px; margin-inline: auto; }

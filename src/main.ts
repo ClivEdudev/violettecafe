@@ -3,7 +3,7 @@ import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } 
 import { initScroll } from './scroll.js';
 import { initAfk, showOrder } from './afk.js';
 import { initPerf } from './perf.js';
-import { initTrack, startTrack, openTrack, langTrack, onStatus, statusTitle } from './track.js';
+import { initTrack, startTrack, openTrack, langTrack, onStatus, statusTitle, unlockSound, mountNotify } from './track.js';
 document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import {
   $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, plural, on, emit, cart, saveCart, setCart, addLine,
@@ -582,14 +582,14 @@ $('#coForm').addEventListener('submit', async e => {
 /* Orders and bookings go to the shop's Telegram group (netlify/functions/telegram.mjs); a copy is also kept in
    Netlify Forms, so nothing is lost if Telegram isn't set up yet or is briefly unreachable. Either one landing counts. */
 /** Sends to the Telegram bot and to Netlify Forms (backup). ok: at least one got it; live: the bot will report the kitchen's status. */
-async function sendBoth(data: Record<string, string>, signal?: AbortSignal): Promise<{ ok: boolean; live: boolean }> {
+async function sendBoth(data: Record<string, string>, signal?: AbortSignal): Promise<{ ok: boolean; live: boolean; bot: string }> {
   const [tg, nf] = await Promise.allSettled([
     fetch('/api/telegram', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data), signal }),
     fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(data).toString(), signal }),
   ]);
-  let live = false;
-  if (tg.status === 'fulfilled' && tg.value.ok) { try { live = !!(await tg.value.json() as { live?: boolean }).live; } catch { /* plain ok */ } }
-  return { ok: (tg.status === 'fulfilled' && tg.value.ok) || (nf.status === 'fulfilled' && nf.value.ok), live };
+  let live = false, bot = '';
+  if (tg.status === 'fulfilled' && tg.value.ok) { try { const j = await tg.value.json() as { live?: boolean; bot?: string }; live = !!j.live; bot = /^[A-Za-z0-9_]{5,40}$/.test(j.bot ?? '') ? j.bot! : ''; } catch { /* plain ok */ } }
+  return { ok: (tg.status === 'fulfilled' && tg.value.ok) || (nf.status === 'fulfilled' && nf.value.ok), live, bot };
 }
 async function submitForm(data: Record<string, string>, signal?: AbortSignal): Promise<boolean> { return (await sendBoth(data, signal)).ok; }
 const trackKey = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(16).padStart(2, '0')).join('');
@@ -601,6 +601,7 @@ async function sendOrder() {
   // the cafe may have closed while the form was open
   if (order.time === 'asap' && !acceptingNow()) { sending = false; order.step = order.method === 'table' ? 1 : 2; renderCheckout(); return fail(t(order.method === 'table' ? 'err.tableClosed' : 'err.closedNow')); }
   sending = true;
+  unlockSound(); // this tap is what allows the "it's ready" chime later
   const btn = $<HTMLButtonElement>('#coNext');
   btn.disabled = true; btn.textContent = t('co.sending');
   const id = 'F' + Date.now().toString(36).slice(-5).toUpperCase();
@@ -619,7 +620,7 @@ async function sendOrder() {
   };
   try {
     const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 12000);
-    const { ok, live } = await sendBoth(data, ctl.signal);
+    const { ok, live, bot } = await sendBoth(data, ctl.signal);
     clearTimeout(tm);
     if (!ok) throw new Error('send');
     store.set('vc-last', { at: Date.now(), n: count(), total: subtotal(), lines: cart.map(({ sig: _s, who: _w, ...l }) => l) });
@@ -627,7 +628,7 @@ async function sendOrder() {
     // the tracker follows only what the kitchen presses in Telegram; without that link there is nothing honest to show
     if (live) {
       const cookMin = Math.max(...made.map(linePrep)) + 5 + Math.min(10, Math.floor(count() / 4) * 2);
-      startTrack({ id, key: data.track_key, kind: order.method === 'delivery' ? 'd' : order.method === 'table' ? 't' : 'p', placed: Date.now(), zone: order.zone, address: order.address, total: orderTotal(), lines: made, cookMin });
+      startTrack({ id, key: data.track_key, kind: order.method === 'delivery' ? 'd' : order.method === 'table' ? 't' : 'p', placed: Date.now(), zone: order.zone, address: order.address, total: orderTotal(), lines: made, cookMin, bot });
     }
     setCart([]);
     $('#coForm').hidden = true; $('#coSteps').hidden = true;
@@ -635,12 +636,13 @@ async function sendOrder() {
     done.hidden = false;
     done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('kfc-1kg')!.art)}</div><h4>${t('done.sent')}</h4>
       <p>${tf('done.no', { id })}</p>
-      ${live ? `<p class="co-live" data-st="new" aria-live="polite"><i aria-hidden="true"></i><span>${t('tk.t.new')}</span></p><p class="hint">${t('done.live')}</p>` : `<p>${tf('done.call', { phone: '+998 ' + fmtPhone(order.phone) })}</p>`}<p class="eta-big">${tf((order.method === 'delivery' ? 'done.etaDelivery' : 'done.eta') + (order.time !== 'asap' && order.method !== 'table' && order.tomorrow ? 'Tm' : ''), { t: due })}</p>
+      ${live ? `<p class="co-live" data-st="new" aria-live="polite"><i aria-hidden="true"></i><span>${t('tk.t.new')}</span></p><p class="hint">${t('done.live')}</p><div class="co-nt" data-nt-slot></div>` : `<p>${tf('done.call', { phone: '+998 ' + fmtPhone(order.phone) })}</p>`}<p class="eta-big">${tf((order.method === 'delivery' ? 'done.etaDelivery' : 'done.eta') + (order.time !== 'asap' && order.method !== 'table' && order.tomorrow ? 'Tm' : ''), { t: due })}</p>
       ${gifts ? `<p class="stamp-plus">${tf('fri.got', { g: gifts })}</p>` : ''}
       ${live ? `<button type="button" class="btn btn-ink tk-done-btn" data-track>${t('tk.open')}</button>` : ''}
       <button type="button" class="watch-btn" data-watch><span class="wb-play" aria-hidden="true"></span><span><b>${t('afk.watch')}</b><small>${t('afk.watchSub')}</small></span></button>
       <button class="btn btn-acc" data-close>${t('done.close')}</button>`;
     $('[data-watch]', done).addEventListener('click', () => showOrder(made, dueLabel));
+    const slot = done.querySelector<HTMLElement>('[data-nt-slot]'); if (slot) mountNotify(slot);
     done.querySelector('[data-track]')?.addEventListener('click', () => { closeOverlay($('#checkout')); setTimeout(openTrack, 250); });
     $<HTMLElement>('[data-close].btn', done).focus();
   } catch {
