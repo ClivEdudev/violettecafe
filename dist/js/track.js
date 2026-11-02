@@ -13,7 +13,7 @@ const SLOW = 8 * MIN; // no answer from the kitchen after this → suggest calli
 const FLOW = { d: ['new', 'acc', 'rdy', 'out', 'done'], p: ['new', 'acc', 'rdy', 'done'], t: ['new', 'acc', 'rdy', 'done'] };
 const ST_OK = new Set(['new', 'acc', 'rdy', 'out', 'done', 'cy']);
 let tr = null, pill = null, panel = null;
-let timer = 0, anim = 0, polling = false, renderedSt = null;
+let timer = 0, anim = 0, polling = false, renderedSt = null, fails = 0;
 const load = () => {
     const v = store.get('vc-track');
     return v && typeof v.id === 'string' && typeof v.key === 'string' && ST_OK.has(v.st) && v.h && typeof v.placed === 'number' ? v : null;
@@ -207,14 +207,25 @@ async function poll() {
     polling = true;
     try {
         const r = await fetch(`/api/telegram?order=${encodeURIComponent(tr.id)}&k=${encodeURIComponent(tr.key)}`, { cache: 'no-store' });
-        if (!r.ok)
+        if (!r.ok) {
+            fails++;
             return;
+        }
         const j = await r.json();
-        if (!tr || !j.ok || !j.st || !ST_OK.has(j.st))
+        if (!tr || !j.ok || !j.st || !ST_OK.has(j.st)) {
+            fails++;
             return;
+        }
+        fails = 0;
+        // the kitchen's times are server times; shift them onto this phone's clock (which may be minutes off)
+        const skew = typeof j.now === 'number' ? Date.now() - j.now : 0;
+        const h = {};
+        for (const [k, v] of Object.entries(j.h ?? {}))
+            if (typeof v === 'number')
+                h[k] = v + skew;
         const changed = j.st !== tr.st;
         tr.st = j.st;
-        tr.h = { ...tr.h, ...(j.h ?? {}) };
+        tr.h = { ...tr.h, ...h };
         save();
         if (changed) {
             toast(t('tk.toast.' + j.st));
@@ -226,7 +237,9 @@ async function poll() {
                 render();
         }
     }
-    catch { /* offline for a moment: try again next round */ }
+    catch {
+        fails++; /* offline for a moment: try again next round */
+    }
     finally {
         polling = false;
     }
@@ -394,7 +407,11 @@ function tick() {
         render();
     void poll();
     // quick while waiting for the kitchen to answer, slower once it's cooking
-    const wait = !tr || ended(tr) ? 30000 : document.hidden ? 15000 : tr.st === 'new' ? 5000 : 10000;
+    // quick while waiting for the kitchen's first answer, calmer after; back off when the server is struggling;
+    // a little randomness so thousands of phones don't all ask in the same second
+    const age = tr ? Date.now() - tr.placed : 0;
+    const base = !tr || ended(tr) ? 30000 : document.hidden ? 20000 : tr.st === 'new' ? (age < 2 * MIN ? 5000 : 8000) : 12000;
+    const wait = Math.min(60000, base * 2 ** Math.min(fails, 3)) * (0.85 + Math.random() * 0.3);
     timer = window.setTimeout(tick, wait);
 }
 export function currentTrack() { return tr; }

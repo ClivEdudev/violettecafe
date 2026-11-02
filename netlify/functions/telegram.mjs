@@ -51,6 +51,63 @@ async function blobSet(key, value) {
 }
 const ID_RE = /^[A-Z0-9]{4,12}$/, KEY_RE = /^[a-f0-9]{16,40}$/;
 
+/* ---------- shop settings the kitchen changes from Telegram (/pauza, /davom, /kutish N) ----------
+   Also remembers the group's new id if Telegram upgrades the group (its id changes when that happens). */
+let cfgCache = null, cfgAt = 0;
+async function getCfg(fresh = false) {
+  if (!fresh && cfgCache && Date.now() - cfgAt < 15000) return cfgCache;
+  cfgCache = (await blobGet('CONFIG')) ?? {}; cfgAt = Date.now();
+  return cfgCache;
+}
+async function setCfg(patch) { const c = { ...(await getCfg(true)), ...patch }; cfgCache = c; cfgAt = Date.now(); await blobSet('CONFIG', c); return c; }
+const chatOf = async () => (await getCfg()).chat ?? env('TELEGRAM_CHAT_ID');
+const sleep = ms => new Promise(r => setTimeout(r, ms));
+
+/** Telegram call that survives the usual trouble at busy times: "too many requests" (waits as told, if short),
+    a network blip (one quick retry) and a group that was upgraded to a supergroup (follows the new id). */
+async function tgSafe(token, method, params, budgetMs = 6000) {
+  const until = Date.now() + budgetMs;
+  for (let attempt = 0; attempt < 4; attempt++) {
+    const r = await tgCall(token, method, params);
+    if (r.ok) return r;
+    const wait = (r.parameters?.retry_after ?? 0) * 1000;
+    const moved = r.parameters?.migrate_to_chat_id;
+    if (moved && params?.chat_id) {
+      if (String(params.chat_id) === String(await chatOf())) await setCfg({ chat: String(moved) });
+      params = { ...params, chat_id: moved }; continue;
+    }
+    if (r.error_code === 429 && Date.now() + wait < until) { await sleep(wait + 50); continue; }
+    if (String(r.description ?? '').startsWith('network') && attempt === 0 && Date.now() + 400 < until) { await sleep(300); continue; }
+    return r;
+  }
+  return { ok: false, description: 'gave up' };
+}
+
+/* ---------- open orders: a small list the every-minute check walks (resend if Telegram was down, remind if nobody accepted) ---------- */
+// split into 16 small lists so a rush of orders doesn't fight over one
+const SHARDS = 16;
+const shardOf = id => 'OPEN-' + ([...id].reduce((a, c) => (a * 31 + c.charCodeAt(0)) >>> 0, 7) % SHARDS);
+async function shardGet(name) { const v = await blobGet(name); return Array.isArray(v) ? v : []; }
+async function openList() { return (await Promise.all(Array.from({ length: SHARDS }, (_, i) => shardGet('OPEN-' + i)))).flat(); }
+async function openAdd(id) {
+  // read-change-write can lose an entry if two orders land in the same instant, so check and retry
+  const name = shardOf(id);
+  for (let i = 0; i < 8; i++) {
+    const list = (await shardGet(name)).filter(x => x.id !== id);
+    list.push({ id, t: Date.now() });
+    await blobSet(name, list.slice(-100));
+    await sleep(30 + Math.random() * 60);
+    if ((await shardGet(name)).some(x => x.id === id)) return true;
+    await sleep(50 + Math.random() * 250 * (i + 1));
+  }
+  return false;
+}
+/** Writes a shard back without dropping entries another order added meanwhile. */
+async function shardPut(name, keep, seenIds) {
+  const latest = await shardGet(name);
+  await blobSet(name, [...keep, ...latest.filter(x => !seenIds.has(x.id))].slice(-100));
+}
+
 const som = n => `${Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/\s/g, ' ')} soʻm`;
 
 const METHOD = { delivery: '🛵 YETKAZIB BERISH', pickup: '🥡 OLIB KETISH', table: '🍽 ZALDA' };
@@ -165,6 +222,11 @@ async function ensureWebhook(token, req) {
   return r;
 }
 
+const ORDER_STEPS = ['new', 'acc', 'rdy', 'out', 'done', 'cy'];
+const prevStep = h => ORDER_STEPS.filter(s => h?.[s]).pop() ?? 'new';
+/** Work that can finish after the answer is sent (Netlify keeps the function alive for it). */
+let later = p => p;
+
 /* ---------- messages to the customer (they link their Telegram from the order page) ---------- */
 const CUST = {
   uz: { link: '🔔 Tayyor! Buyurtma {id} holati shu yerga keladi.', bad: 'Bu havola eskirgan. Buyurtma sahifasidan qayta oching.', hello: 'Salom! Bu FFS buyurtmalar boti. Buyurtma holatini olish uchun saytdagi buyurtma sahifasida «Telegram orqali» tugmasini bosing.',
@@ -188,7 +250,7 @@ async function getBotName(token) {
 }
 
 /** Telegram → us: a staff member pressed a status button, typed /id, or the bot was added to a group. */
-async function onUpdate(u, token, chat) {
+async function onUpdate(u, token) {
   // helper for moving to the shop's group: the bot tells any chat its id
   const m = u.message, added = u.my_chat_member;
   // a customer opened the bot from their order page: t.me/<bot>?start=o_<id>_<first 16 of the key>
@@ -196,13 +258,28 @@ async function onUpdate(u, token, chat) {
   if (link) {
     const [, id, k] = link, rec = await blobGet(id);
     if (!rec || !String(rec.k).startsWith(k)) { await tgCall(token, 'sendMessage', { chat_id: m.chat.id, text: CUST.uz.bad }); return; }
-    rec.cust = m.chat.id; await blobSet(id, rec);
+    await blobSet('cust:' + id, { chat: m.chat.id });
     const now = rec.st && rec.st !== 'new' ? '\n\n' + custText(rec, custKey(rec.st, rec.kind), id) : '';
     await tgCall(token, 'sendMessage', { chat_id: m.chat.id, text: custText(rec, 'link', id) + now });
     return;
   }
-  if (m?.chat?.type === 'private' && /^\/start\s*$/.test(m.text ?? '') && String(m.chat.id) !== String(chat)) {
+  if (m?.chat?.type === 'private' && /^\/start\s*$/.test(m.text ?? '') && String(m.chat.id) !== String(await chatOf())) {
     await tgCall(token, 'sendMessage', { chat_id: m.chat.id, text: `${CUST.uz.hello}\n\n${CUST.ru.hello}\n\nBu chat ID: ${m.chat.id}` });
+    return;
+  }
+  const fromShop = m && String(m.chat.id) === String(await chatOf());
+  const cmd = fromShop ? (m.text ?? '').trim().match(/^\/(pauza|davom|kutish|holat)(?:@\w+)?(?:\s+(\d{1,3}))?$/i) : null;
+  if (cmd) {
+    const c = cmd[1].toLowerCase(), n = Math.min(180, Number(cmd[2] ?? 0));
+    let text = '';
+    if (c === 'pauza') { await setCfg({ paused: true }); text = '⏸ Onlayn buyurtmalar toʻxtatildi. Saytda «hozir qabul qilinmayapti» deb chiqadi.\nQayta ochish: /davom'; }
+    if (c === 'davom') { await setCfg({ paused: false }); text = '▶️ Onlayn buyurtmalar yana qabul qilinmoqda.'; }
+    if (c === 'kutish') { await setCfg({ extra: n }); text = n ? `⏳ Saytdagi tayyor boʻlish vaqtiga +${n} daqiqa qoʻshildi.\nOlib tashlash: /kutish 0` : '⏳ Qoʻshimcha kutish olib tashlandi.'; }
+    if (c === 'holat') {
+      const cfg = await getCfg(true), open = await openList();
+      text = `📊 Holat\nOnlayn buyurtma: ${cfg.paused ? '⏸ toʻxtatilgan' : '▶️ ochiq'}\nQoʻshimcha kutish: ${cfg.extra ? `+${cfg.extra} daq` : 'yoʻq'}\nQabul qilinmagan buyurtmalar: ${open.length}`;
+    }
+    await tgSafe(token, 'sendMessage', { chat_id: m.chat.id, text, reply_to_message_id: m.message_id });
     return;
   }
   if (m && /^\/(id|start)\b/.test(m.text ?? '')) {
@@ -216,7 +293,7 @@ async function onUpdate(u, token, chat) {
   const q = u.callback_query;
   if (!q?.message || !q.data) return;
   const answer = text => tgCall(token, 'answerCallbackQuery', { callback_query_id: q.id, text });
-  if (String(q.message.chat.id) !== String(chat)) return answer('Bu chat ulanmagan');
+  if (String(q.message.chat.id) !== String(await chatOf())) return answer('Bu chat ulanmagan');
   const parts = q.data.split('|');
   const [step, kind] = parts;
   // "<step>|<kind>|<id>" or "cx|<kind>|<current>|<id>" / "cn|<kind>|<current>|<id>" / "cy|<kind>|<id>"
@@ -239,33 +316,70 @@ async function onUpdate(u, token, chat) {
   if (text.includes(`\n${name} ·`)) return answer('Allaqachon belgilangan');
   if (text.includes(`\n${label('cy', kind)} ·`)) return answer('Buyurtma bekor qilingan');
 
+  // two people pressing the same button at once: the first one to reach storage wins
+  const rec = ID_RE.test(id) ? await blobGet(id) : null;
+  if (rec?.h?.[step]) return answer('Allaqachon belgilangan');
+  if (rec?.st === 'cy') return answer('Buyurtma bekor qilingan');
+  if (rec) { rec.st = step; rec.h = { ...(rec.h ?? {}), [step]: Date.now() }; await blobSet(id, rec); }
   const who = [q.from?.first_name, q.from?.last_name].filter(Boolean).join(' ').slice(0, 40) || 'Xodim';
   const add = `${text.includes('\n📋 HOLAT') ? '' : '\n\n📋 HOLAT'}\n${name} · ${who} · ${now()}`;
   const rows = step === 'cy' ? [] : statusRows(step, kind, id);
-  const r = await tgCall(token, 'editMessageText', {
+  const r = await tgSafe(token, 'editMessageText', {
     ...msg, text: (text + add).slice(0, 4096), entities: q.message.entities ?? [],
     link_preview_options: { is_disabled: true }, reply_markup: { inline_keyboard: [...rows, ...keep] },
   });
-  if (r.ok && ID_RE.test(id)) {
-    // tell the customer's page: the status and when each step happened
-    const rec = await blobGet(id);
-    if (rec) {
-      rec.st = step; rec.h = { ...(rec.h ?? {}), [step]: Date.now() }; await blobSet(id, rec);
-      // and the customer's own Telegram, if they linked it
-      if (rec.cust) await tgCall(token, 'sendMessage', { chat_id: rec.cust, text: custText(rec, custKey(step === 'cy' ? 'cy' : step, rec.kind ?? kind), id) });
+  if (!r.ok && rec) { delete rec.h[step]; rec.st = prevStep(rec.h); await blobSet(id, rec); } // the group didn't change, so neither does the customer's page
+  const done = answer(r.ok ? name : 'Xatolik, qayta bosing');
+  // the customer's own Telegram, if they linked it (in the background: the cook doesn't wait for it)
+  if (r.ok && rec) { const c = await blobGet('cust:' + id); if (c?.chat) later(tgSafe(token, 'sendMessage', { chat_id: c.chat, text: custText(rec, custKey(step, rec.kind ?? kind), id) }, 3000)); }
+  return done;
+}
+
+/** Runs every minute (netlify/functions/watch.mjs): sends orders Telegram refused earlier, and nudges the
+    group about orders nobody has accepted for a few minutes. */
+export async function watchOrders() {
+  const token = env('TELEGRAM_BOT_TOKEN'), chat = await chatOf();
+  if (!token || !chat) return { ok: false };
+  const now = Date.now();
+  let resent = 0, nudged = 0, open = 0, slowDown = false;
+  for (let sh = 0; sh < SHARDS; sh++) {
+    const name = 'OPEN-' + sh, list = await shardGet(name);
+    if (!list.length) continue;
+    const keep = [];
+    let changed = false;
+    for (const x of list) {
+      const rec = await blobGet(x.id);
+      if (!rec || rec.st !== 'new' || now - x.t > 3 * 3600000) { changed = true; continue; }
+      if (!rec.msg && rec.payload) {
+        if (!slowDown) {
+          const r = await tgSafe(token, 'sendMessage', { ...rec.payload, chat_id: chat }, 2500);
+          if (r.ok) { rec.msg = r.result.message_id; delete rec.payload; await blobSet(x.id, rec); resent++; }
+          else if (r.error_code === 429) slowDown = true; // Telegram says wait: the rest go next minute
+        }
+        keep.push(x); continue;
+      }
+      const mins = Math.floor((now - x.t) / 60000);
+      if (rec.msg && mins >= 4 && (!x.n || now - x.n > 5 * 60000) && !slowDown) {
+        const r = await tgSafe(token, 'sendMessage', { chat_id: chat, text: `⏰ Buyurtma ${x.id} ${mins} daqiqadan beri qabul qilinmadi! Mijoz kutmoqda.`, reply_to_message_id: rec.msg }, 2500);
+        if (r.ok) { x.n = now; nudged++; changed = true; } else if (r.error_code === 429) slowDown = true;
+      }
+      keep.push(x);
     }
+    open += keep.length;
+    if (changed) await shardPut(name, keep, new Set(list.map(x => x.id)));
   }
-  return answer(r.ok ? name : 'Xatolik, qayta bosing');
+  return { ok: true, open, resent, nudged };
 }
 
 export default async (req, context) => {
-  const token = env('TELEGRAM_BOT_TOKEN'), chat = env('TELEGRAM_CHAT_ID');
+  later = p => { if (context?.waitUntil) { context.waitUntil(p.catch(() => null)); return p; } return p; };
+  const token = env('TELEGRAM_BOT_TOKEN');
 
   // Telegram's own calls carry the secret we gave it in setWebhook
   const hookSecret = req.headers.get('x-telegram-bot-api-secret-token');
   if (req.method === 'POST' && hookSecret !== null) {
     if (!token || hookSecret !== await secretOf(token)) return json({ ok: false }, 403);
-    try { await onUpdate(await req.json(), token, chat); } catch { /* always 200, or Telegram retries the same update */ }
+    try { await onUpdate(await req.json(), token); } catch { /* always 200, or Telegram retries the same update */ }
     return json({ ok: true });
   }
 
@@ -276,16 +390,25 @@ export default async (req, context) => {
       if (!ID_RE.test(id) || !KEY_RE.test(k)) return json({ ok: false }, 400);
       const rec = await blobGet(id);
       if (!rec || rec.k !== k) return json({ ok: false, st: 'unknown' }, 404);
-      return json({ ok: true, st: rec.st, h: rec.h ?? {} });
+      return json({ ok: true, st: rec.st, h: rec.h ?? {}, now: Date.now(), extra: (await getCfg()).extra ?? 0 });
+    }
+    if (qs.has('cfg')) {
+      const c = await getCfg();
+      return new Response(JSON.stringify({ paused: !!c.paused, extra: c.extra ?? 0 }), { headers: {
+        'content-type': 'application/json; charset=utf-8', 'cache-control': 'public, max-age=10',
+        'netlify-cdn-cache-control': 'public, s-maxage=15, stale-while-revalidate=30' } });
     }
     if (!token) return json({ ok: false, step: 'Set TELEGRAM_BOT_TOKEN in Netlify, then redeploy.' });
+    const chat = await chatOf();
     if (chat) {
       const h = await ensureWebhook(token, req);
       const probe = { t: Date.now() };
       const stored = (await blobSet('SELFTEST', probe)) && (await blobGet('SELFTEST'))?.t === probe.t;
       const c = await tgCall(token, 'getChat', { chat_id: chat });
       const sendsTo = c.ok ? `${c.result.title ?? [c.result.first_name, c.result.last_name].filter(Boolean).join(' ')} (${c.result.type})` : `NOT FOUND — ${c.description ?? 'check TELEGRAM_CHAT_ID'}`;
-      return json({ ok: true, ready: true, sends_to: sendsTo, buttons: h.ok ? 'on' : `off (${h.description ?? 'error'})`,
+      const cfg = await getCfg(true);
+      return json({ ok: true, ready: true, sends_to: sendsTo, ...(cfg.chat ? { note: `group was upgraded by Telegram; now sending to ${cfg.chat} — put this id in TELEGRAM_CHAT_ID when convenient` } : {}),
+        online_orders: cfg.paused ? 'paused (/davom in the group to reopen)' : 'open', extra_minutes: cfg.extra ?? 0, open_orders: (await openList()).length, buttons: h.ok ? 'on' : `off (${h.description ?? 'error'})`,
         website_status: stored ? `on (${blobShape})` : blobCtx() ? 'off (storage refused)' : 'off (no storage context)' });
     }
     const tg = m => tgCall(token, m);
@@ -299,36 +422,74 @@ export default async (req, context) => {
     return json({ ok: true, bot: '@' + me.result.username, step: 'Copy an id into TELEGRAM_CHAT_ID and redeploy. Groups have negative ids; "private" is a chat with the bot itself (good for testing). If the list is empty, send any message to the bot or in the group, then reload.', chats: [...chats].map(([id, c]) => ({ id, ...c })) });
   }
   if (req.method !== 'POST') return json({ ok: false }, 405);
+  const chat = await chatOf();
   if (!token || !chat) return json({ ok: false, error: 'not-configured' }, 503);
-
-  const ip = context?.ip ?? req.headers.get('x-nf-client-connection-ip') ?? 'x', nowMs = Date.now();
-  const recent = (hits.get(ip) ?? []).filter(t => nowMs - t < 10 * 60000);
-  if (recent.length >= 8) return json({ ok: false, error: 'too-many' }, 429);
-  hits.set(ip, [...recent, nowMs]);
 
   let d;
   try { d = await req.json(); } catch { return json({ ok: false, error: 'bad-json' }, 400); }
   if (!d || typeof d !== 'object' || d['bot-field']) return json({ ok: true }); // bots get a quiet "ok"
   const kind = d['form-name'];
   if (kind !== 'order' && kind !== 'booking') return json({ ok: false, error: 'bad-kind' }, 400);
-  if (cut(d.name, MAX.name).length < 2 || !/\d{9}/.test(String(d.phone ?? '').replace(/\D/g, ''))) return json({ ok: false, error: 'bad-contact' }, 400);
+  const phone = String(d.phone ?? '').replace(/\D/g, '');
+  if (cut(d.name, MAX.name).length < 2 || !/\d{9}/.test(phone)) return json({ ok: false, error: 'bad-contact' }, 400);
   if (kind === 'order' && !cut(d.items, MAX.items)) return json({ ok: false, error: 'empty' }, 400);
+
+  const cfg = await getCfg();
+  if (kind === 'order' && cfg.paused) return json({ ok: false, error: 'paused' }, 423);
 
   const text = kind === 'order' ? orderText(d) : bookingText(d);
   const k = kind === 'order' ? (KIND[d.method] ?? 'p') : 'b';
   const id = kind === 'order' && ID_RE.test(String(d.order_id ?? '')) ? String(d.order_id) : '';
-  const res = await tgCall(token, 'sendMessage', {
-    chat_id: chat, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true },
-    reply_markup: { inline_keyboard: [...statusRows('new', k, id), ...(kind === 'order' ? mapRow(d) : [])] },
-  });
-  if (!res?.ok) return json({ ok: false, error: 'telegram' }, 502);
-  // first order after a deploy switches the buttons on by itself
-  const hook = await ensureWebhook(token, req).catch(() => ({ ok: false }));
-  // live status on the customer's page needs both: the buttons reaching us, and somewhere to keep the status
-  let live = false;
+  const key = KEY_RE.test(String(d.track_key ?? '')) ? String(d.track_key) : '';
   const lang = ['uz', 'ru', 'en'].includes(d.lang) ? d.lang : 'uz';
-  if (id && KEY_RE.test(String(d.track_key ?? '')) && hook.ok) live = await blobSet(id, { k: String(d.track_key), kind: k, st: 'new', h: { new: Date.now() }, lang });
-  return json({ ok: true, live, bot: live ? await getBotName(token) : '' });
+
+  // The same order sent twice (slow network, double tap, retry): answer as before, never post it again.
+  let rec = id ? await blobGet(id) : null;
+  if (rec && rec.k !== key) return json({ ok: false, error: 'id-taken' }, 409);
+  const sameAgain = async () => json({ ok: true, live: !!rec.live, bot: rec.live ? await getBotName(token) : '', again: true });
+  if (rec && (rec.msg || rec.payload)) return sameAgain();
+
+  // Limits: generous per address (a whole cafe can share one Wi-Fi), tighter per phone number.
+  const ip = context?.ip ?? req.headers.get('x-nf-client-connection-ip') ?? 'x', nowMs = Date.now();
+  const bump = (key, max) => { const r = (hits.get(key) ?? []).filter(t => nowMs - t < 10 * 60000); if (r.length >= max) return false; hits.set(key, [...r, nowMs]); return true; };
+  if (hits.size > 5000) hits.clear();
+  if (!bump('ip:' + ip, 200) || !bump('ph:' + phone.slice(-9), 6)) return json({ ok: false, error: 'too-many' }, 429);
+
+
+  // Two copies of the same order arriving together: each claims the number, the last claim wins, the other waits for it.
+  if (id && key) {
+    const claim = Math.random().toString(36).slice(2);
+    await blobSet(id, { k: key, kind: k, st: 'new', h: { new: nowMs }, lang, claim });
+    await sleep(60 + Math.random() * 60);
+    const back = await blobGet(id);
+    if (back && back.claim !== claim && back.k === key) {
+      for (let i = 0; i < 25; i++) { rec = await blobGet(id); if (rec?.msg || rec?.payload) return sameAgain(); await sleep(250); }
+      return json({ ok: true, live: false, bot: '', again: true });
+    }
+  }
+
+  const payload = { chat_id: chat, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true },
+    reply_markup: { inline_keyboard: [...statusRows('new', k, id), ...(kind === 'order' ? mapRow(d) : [])] } };
+  // write the order down first, so it survives Telegram being slow or down
+  const stored = id && key ? await blobSet(id, rec = { k: key, kind: k, st: 'new', h: { new: Date.now() }, lang }) : false;
+
+  let res = await tgSafe(token, 'sendMessage', payload);
+  const backup = env('TELEGRAM_BACKUP_CHAT_ID');
+  if (!res.ok && backup && backup !== String(chat)) res = await tgSafe(token, 'sendMessage', { ...payload, chat_id: backup, text: '⚠️ Asosiy guruhga yuborib boʻlmadi\n\n' + text }, 2500);
+
+  const hook = await ensureWebhook(token, req).catch(() => ({ ok: false }));
+  const live = !!(stored && hook.ok);
+  if (res.ok) {
+    if (stored) { rec.msg = res.result.message_id; rec.live = live; await blobSet(id, rec); later(openAdd(id)); }
+    return json({ ok: true, live, bot: live ? await getBotName(token) : '' });
+  }
+  // Telegram refused for now: keep it and let the every-minute check post it (the customer still gets an honest "sent")
+  if (stored) {
+    rec.payload = payload; rec.live = live; await blobSet(id, rec);
+    if (await openAdd(id)) return json({ ok: true, live, bot: live ? await getBotName(token) : '', queued: true });
+    delete rec.payload; await blobSet(id, rec); // not queued after all: let a retry send it fresh
+  }
+  return json({ ok: false, error: 'telegram' }, 502);
 };
 
 export const config = { path: '/api/telegram' };

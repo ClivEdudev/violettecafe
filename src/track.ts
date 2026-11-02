@@ -22,7 +22,7 @@ const FLOW: Record<Kind, St[]> = { d: ['new', 'acc', 'rdy', 'out', 'done'], p: [
 const ST_OK = new Set<St>(['new', 'acc', 'rdy', 'out', 'done', 'cy']);
 
 let tr: Track | null = null, pill: HTMLButtonElement | null = null, panel: HTMLElement | null = null;
-let timer = 0, anim = 0, polling = false, renderedSt: St | null = null;
+let timer = 0, anim = 0, polling = false, renderedSt: St | null = null, fails = 0;
 
 const load = (): Track | null => {
   const v = store.get('vc-track') as Track | null;
@@ -148,13 +148,18 @@ async function poll() {
   polling = true;
   try {
     const r = await fetch(`/api/telegram?order=${encodeURIComponent(tr.id)}&k=${encodeURIComponent(tr.key)}`, { cache: 'no-store' });
-    if (!r.ok) return;
-    const j = await r.json() as { ok?: boolean; st?: St; h?: Partial<Record<St, number>> };
-    if (!tr || !j.ok || !j.st || !ST_OK.has(j.st)) return;
+    if (!r.ok) { fails++; return; }
+    const j = await r.json() as { ok?: boolean; st?: St; h?: Partial<Record<St, number>>; now?: number };
+    if (!tr || !j.ok || !j.st || !ST_OK.has(j.st)) { fails++; return; }
+    fails = 0;
+    // the kitchen's times are server times; shift them onto this phone's clock (which may be minutes off)
+    const skew = typeof j.now === 'number' ? Date.now() - j.now : 0;
+    const h: Partial<Record<St, number>> = {};
+    for (const [k, v] of Object.entries(j.h ?? {})) if (typeof v === 'number') h[k as St] = v + skew;
     const changed = j.st !== tr.st;
-    tr.st = j.st; tr.h = { ...tr.h, ...(j.h ?? {}) }; save();
+    tr.st = j.st; tr.h = { ...tr.h, ...h }; save();
     if (changed) { toast(t('tk.toast.' + j.st)); alertUser(tr); announce(); refresh(); renderNotify(); if (panel && !panel.hidden) render(); }
-  } catch { /* offline for a moment: try again next round */ } finally { polling = false; }
+  } catch { fails++; /* offline for a moment: try again next round */ } finally { polling = false; }
 }
 
 /* ---------- the map: a few Andijan-ish blocks, a canal, the route, the cafe and the door ---------- */
@@ -285,7 +290,11 @@ function tick() {
   if (panel && !panel.hidden && tr && renderedSt !== tr.st) render();
   void poll();
   // quick while waiting for the kitchen to answer, slower once it's cooking
-  const wait = !tr || ended(tr) ? 30000 : document.hidden ? 15000 : tr.st === 'new' ? 5000 : 10000;
+  // quick while waiting for the kitchen's first answer, calmer after; back off when the server is struggling;
+  // a little randomness so thousands of phones don't all ask in the same second
+  const age = tr ? Date.now() - tr.placed : 0;
+  const base = !tr || ended(tr) ? 30000 : document.hidden ? 20000 : tr.st === 'new' ? (age < 2 * MIN ? 5000 : 8000) : 12000;
+  const wait = Math.min(60000, base * 2 ** Math.min(fails, 3)) * (0.85 + Math.random() * 0.3);
   timer = window.setTimeout(tick, wait);
 }
 

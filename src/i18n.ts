@@ -2,6 +2,8 @@ import type { Lang } from './data.js';
 
 type Dict = Record<string, string>;
 const uz: Dict = {
+  "err.paused": "FFS hozir juda band — onlayn buyurtmalar vaqtincha toʻxtatilgan. Bir ozdan keyin qayta urinib koʻring yoki qoʻngʻiroq qiling.",
+  "err.tooMany": "Juda koʻp buyurtma yuborildi. Bir necha daqiqadan keyin qayta urinib koʻring yoki qoʻngʻiroq qiling.",
   "nt.title": "🔔 Tayyor boʻlganda xabar olish",
   "nt.sub.d": "Kuryer yoʻlga chiqqanda va yetkazilganda xabar beramiz.",
   "nt.sub.p": "Buyurtma tayyor boʻlishi bilan xabar beramiz — kassadan olasiz.",
@@ -271,6 +273,8 @@ const uz: Dict = {
   'items.one': 'ta', 'items.many': 'ta',
 };
 const ru: Dict = {
+  "err.paused": "FFS сейчас очень загружен — онлайн-заказы временно приостановлены. Попробуйте чуть позже или позвоните.",
+  "err.tooMany": "Слишком много заказов подряд. Попробуйте через несколько минут или позвоните.",
   "nt.title": "🔔 Сообщить, когда будет готово",
   "nt.sub.d": "Напишем, когда курьер выедет и когда заказ доставят.",
   "nt.sub.p": "Сообщим, как только заказ будет готов — заберёте на кассе.",
@@ -540,6 +544,8 @@ const ru: Dict = {
   'items.one': 'шт', 'items.few': 'шт', 'items.many': 'шт',
 };
 const en: Dict = {
+  "err.paused": "FFS is very busy right now — online orders are paused for a bit. Please try again shortly or call.",
+  "err.tooMany": "Too many orders in a row. Please try again in a few minutes or call.",
   "nt.title": "🔔 Tell me when it’s ready",
   "nt.sub.d": "We’ll tell you when the courier leaves and when it’s delivered.",
   "nt.sub.p": "We’ll tell you as soon as it’s ready — pick it up at the counter.",

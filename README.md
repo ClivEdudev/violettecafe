@@ -67,3 +67,15 @@ Boburshoh koʻchasi 48, Andijan (after the My Sports store), Plus Code Q8PJ+CWH;
 - Delivery fees for the city under 100 000 soʻm and for the districts (placeholders now: 10 000 / 25 000).
 - Telegram @ffs and Instagram @javanews as given; the second branch's address.
 - Domain ffs.uz; then make `og:image` an absolute URL. Real photos.
+
+## Busy hours: what protects the orders
+
+- **Kitchen commands** (type them in the orders group): `/pauza` stops new online orders (the site says FFS is busy), `/davom` reopens, `/kutish 15` adds 15 minutes to every time the site promises (`/kutish 0` removes it), `/holat` shows the current state and how many orders nobody has accepted yet.
+- **Nothing gets lost when Telegram is slow or down**: the order is saved first; if Telegram refuses it, `netlify/functions/watch.mjs` (runs every minute) posts it as soon as Telegram takes messages again. The customer still gets an honest "sent, waiting for the kitchen".
+- **Missed orders**: if nobody presses "Qabul qilish" within 4 minutes, the bot replies to that order in the group, and again every 5 minutes.
+- **No duplicates**: order numbers are random (`F` + 5 characters, no 0/O/1/I), and a retry of the same order is recognised and never posted twice. Two cooks pressing the same button at once count once.
+- **Shared Wi-Fi in the cafe**: limits are 6 orders per phone number and 200 per network per 10 minutes.
+- **Group upgraded by Telegram** (its id changes): the bot follows the new id by itself; `/api/telegram` shows a note so you can update `TELEGRAM_CHAT_ID`.
+- **Backup chat** (optional): set `TELEGRAM_BACKUP_CHAT_ID` (for example the owner's own chat with the bot); orders go there if the main group refuses them.
+- **Netlify Forms** only receives an order when the bot can't, so its monthly quota isn't used up.
+- Telegram lets a bot post about **20 messages a minute in one group** (button presses count too). Above that the queue takes over; if the shop regularly gets more than that, split deliveries into a second group.

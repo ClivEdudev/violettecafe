@@ -300,8 +300,19 @@ $('#imAdd').addEventListener('click', () => {
 /* =============== cart drawer =============== */
 const PCOL = ['#E11D24', '#E11D24', '#F4B731', '#3E8E6A', '#3E6FB8', '#C2185B', '#8A5A3B', '#5C4B4C'];
 const split = { on: false, n: 2 };
+/** What the kitchen set from Telegram: online orders paused, extra minutes when it's busy. Cached by the CDN. */
+const shop = { paused: false, extra: 0, at: 0 };
+async function loadShop(force = false) {
+  if (!force && Date.now() - shop.at < 20000) return;
+  try {
+    const r = await fetch('/api/telegram?cfg=1');
+    if (!r.ok) return;
+    const j = await r.json() as { paused?: boolean; extra?: number };
+    shop.paused = !!j.paused; shop.extra = Math.max(0, Math.min(180, Number(j.extra) || 0)); shop.at = Date.now();
+  } catch { /* keep the last known */ }
+}
 function eta(): Date {
-  const prep = cart.length ? Math.max(...cart.map(linePrep)) : 0;
+  const prep = (cart.length ? Math.max(...cart.map(linePrep)) : 0) + shop.extra;
   const load = Math.min(10, Math.floor(count() / 4) * 2);
   const ride = order.method === 'delivery' ? (ZONES.find(z => z.id === order.zone) ?? ZONES[0]).mins : 0;
   return new Date(tashkentNow().getTime() + (prep + 5 + load + ride) * 60000);
@@ -544,6 +555,7 @@ function captureStep2() {
 }
 function openCheckout() {
   if (!cart.length) return;
+  void loadShop().then(() => { if (shop.paused && !$('#checkout').hidden) fail(t('err.paused')); });
   order.step = 1;
   $('#coForm').hidden = false; $('#coDone').hidden = true; $('#coSteps').hidden = false;
   renderCheckout(); openOverlay($('#checkout'));
@@ -581,17 +593,29 @@ $('#coForm').addEventListener('submit', async e => {
 });
 /* Orders and bookings go to the shop's Telegram group (netlify/functions/telegram.mjs); a copy is also kept in
    Netlify Forms, so nothing is lost if Telegram isn't set up yet or is briefly unreachable. Either one landing counts. */
-/** Sends to the Telegram bot and to Netlify Forms (backup). ok: at least one got it; live: the bot will report the kitchen's status. */
-async function sendBoth(data: Record<string, string>, signal?: AbortSignal): Promise<{ ok: boolean; live: boolean; bot: string }> {
-  const [tg, nf] = await Promise.allSettled([
-    fetch('/api/telegram', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data), signal }),
-    fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(data).toString(), signal }),
-  ]);
-  let live = false, bot = '';
-  if (tg.status === 'fulfilled' && tg.value.ok) { try { const j = await tg.value.json() as { live?: boolean; bot?: string }; live = !!j.live; bot = /^[A-Za-z0-9_]{5,40}$/.test(j.bot ?? '') ? j.bot! : ''; } catch { /* plain ok */ } }
-  return { ok: (tg.status === 'fulfilled' && tg.value.ok) || (nf.status === 'fulfilled' && nf.value.ok), live, bot };
+/** Sends to the Telegram bot; only if that fails, to Netlify Forms as a backup (its monthly quota is small).
+    ok: someone has the order; live: the page will get the kitchen's status; why: the bot's reason for a refusal. */
+type SendResult = { ok: boolean; live: boolean; bot: string; why?: string };
+async function sendBoth(data: Record<string, string>, signal?: AbortSignal): Promise<SendResult> {
+  let why = '';
+  try {
+    const r = await fetch('/api/telegram', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data), signal });
+    const j = await r.json().catch(() => ({})) as { ok?: boolean; live?: boolean; bot?: string; error?: string };
+    if (r.ok && j.ok !== false) return { ok: true, live: !!j.live, bot: /^[A-Za-z0-9_]{5,40}$/.test(j.bot ?? '') ? j.bot! : '' };
+    why = j.error ?? String(r.status);
+    // these are answers, not breakdowns: don't route around them
+    if (why === 'paused' || why === 'id-taken' || why === 'too-many' || why === 'bad-contact') return { ok: false, live: false, bot: '', why };
+  } catch { why = 'network'; }
+  try {
+    const nf = await fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(data).toString(), signal });
+    return { ok: nf.ok, live: false, bot: '', why };
+  } catch { return { ok: false, live: false, bot: '', why }; }
 }
 async function submitForm(data: Record<string, string>, signal?: AbortSignal): Promise<boolean> { return (await sendBoth(data, signal)).ok; }
+const ID_ABC = '23456789ABCDEFGHJKLMNPQRSTUVWXYZ'; // no 0/O, 1/I: easy to read out over the phone
+const newOrderId = () => 'F' + Array.from(crypto.getRandomValues(new Uint8Array(5)), b => ID_ABC[b % ID_ABC.length]).join('');
+let pending: { id: string; key: string; sig: string } | null = null; // kept until the order goes through
+const cartSig = () => JSON.stringify([cart.map(l => [l.sig, l.qty]), order.method, order.name, order.phone, order.address, order.table]);
 const trackKey = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(16).padStart(2, '0')).join('');
 // the "order sent" screen mirrors the kitchen's answer as soon as it comes in
 onStatus(x => { const el = document.querySelector<HTMLElement>('#coDone .co-live'); if (!el) return; el.dataset.st = x.st; $('span', el).textContent = statusTitle(x); });
@@ -604,7 +628,9 @@ async function sendOrder() {
   unlockSound(); // this tap is what allows the "it's ready" chime later
   const btn = $<HTMLButtonElement>('#coNext');
   btn.disabled = true; btn.textContent = t('co.sending');
-  const id = 'F' + Date.now().toString(36).slice(-5).toUpperCase();
+  void loadShop();
+  if (!pending || pending.sig !== cartSig()) pending = { id: newOrderId(), key: trackKey(), sig: cartSig() };
+  const id = pending.id;
   const due = order.method === 'table' || order.time === 'asap' ? hhmm(eta()) : order.time;
   const dueLabel = order.time === 'asap' || order.method === 'table' ? due : timeLabel(due, order.tomorrow);
   const items = cart.map(l => `${l.qty} × ${lineName(l)}${lineSub(l) ? ` (${lineSub(l)})` : ''} — ${money(unitPrice(l) * l.qty)}${split.on && l.who >= 0 && l.who < split.n ? ` [${l.who + 1}]` : ''}`).join('\n');
@@ -616,26 +642,34 @@ async function sendOrder() {
     zone: order.method === 'delivery' ? (ZONES.find(z => z.id === order.zone) ?? ZONES[0]).name.uz : '', time: order.time === 'asap' ? `ASAP ~${due}` : `${order.tomorrow ? 'ERTAGA / TOMORROW ' : ''}${order.time}`,
     payment: order.payment, comment: order.comment, items: itemsText, split: split.on ? splitShares().map((s, i) => `${i + 1}: ${money(Math.ceil(s / 500) * 500)}`).join('; ') : '',
     subtotal: String(subtotal()), delivery: String(deliveryFee()), total: String(orderTotal()), lang: state.lang,
-    kitchen: JSON.stringify(kitchenLines()), gifts: String(gifts), track_key: trackKey(),
+    kitchen: JSON.stringify(kitchenLines()), gifts: String(gifts), track_key: pending.key,
   };
   try {
     const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 12000);
-    const { ok, live, bot } = await sendBoth(data, ctl.signal);
+    let res = await sendBoth(data, ctl.signal);
+    if (res.why === 'id-taken') { // another order already has this number (very rare): new number, same order
+      pending = { id: newOrderId(), key: trackKey(), sig: cartSig() };
+      res = await sendBoth({ ...data, order_id: pending.id, track_key: pending.key }, ctl.signal);
+    }
     clearTimeout(tm);
-    if (!ok) throw new Error('send');
+    if (res.why === 'paused') { shop.paused = true; throw new Error('paused'); }
+    if (res.why === 'too-many') throw new Error('too-many');
+    if (!res.ok) throw new Error('send');
+    const { live, bot } = res;
+    const sentId = pending!.id, sentKey = pending!.key; pending = null;
     store.set('vc-last', { at: Date.now(), n: count(), total: subtotal(), lines: cart.map(({ sig: _s, who: _w, ...l }) => l) });
     const made = cart.map(l => ({ ...l }));
     // the tracker follows only what the kitchen presses in Telegram; without that link there is nothing honest to show
     if (live) {
       const cookMin = Math.max(...made.map(linePrep)) + 5 + Math.min(10, Math.floor(count() / 4) * 2);
-      startTrack({ id, key: data.track_key, kind: order.method === 'delivery' ? 'd' : order.method === 'table' ? 't' : 'p', placed: Date.now(), zone: order.zone, address: order.address, total: orderTotal(), lines: made, cookMin, bot });
+      startTrack({ id: sentId, key: sentKey, kind: order.method === 'delivery' ? 'd' : order.method === 'table' ? 't' : 'p', placed: Date.now(), zone: order.zone, address: order.address, total: orderTotal(), lines: made, cookMin, bot });
     }
     setCart([]);
     $('#coForm').hidden = true; $('#coSteps').hidden = true;
     const done = $('#coDone');
     done.hidden = false;
     done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('kfc-1kg')!.art)}</div><h4>${t('done.sent')}</h4>
-      <p>${tf('done.no', { id })}</p>
+      <p>${tf('done.no', { id: sentId })}</p>
       ${live ? `<p class="co-live" data-st="new" aria-live="polite"><i aria-hidden="true"></i><span>${t('tk.t.new')}</span></p><p class="hint">${t('done.live')}</p><div class="co-nt" data-nt-slot></div>` : `<p>${tf('done.call', { phone: '+998 ' + fmtPhone(order.phone) })}</p>`}<p class="eta-big">${tf((order.method === 'delivery' ? 'done.etaDelivery' : 'done.eta') + (order.time !== 'asap' && order.method !== 'table' && order.tomorrow ? 'Tm' : ''), { t: due })}</p>
       ${gifts ? `<p class="stamp-plus">${tf('fri.got', { g: gifts })}</p>` : ''}
       ${live ? `<button type="button" class="btn btn-ink tk-done-btn" data-track>${t('tk.open')}</button>` : ''}
@@ -645,8 +679,9 @@ async function sendOrder() {
     const slot = done.querySelector<HTMLElement>('[data-nt-slot]'); if (slot) mountNotify(slot);
     done.querySelector('[data-track]')?.addEventListener('click', () => { closeOverlay($('#checkout')); setTimeout(openTrack, 250); });
     $<HTMLElement>('[data-close].btn', done).focus();
-  } catch {
-    fail(t('err.send'));
+  } catch (e) {
+    const m = (e as Error).message;
+    fail(t(m === 'paused' ? 'err.paused' : m === 'too-many' ? 'err.tooMany' : 'err.send'));
   } finally {
     sending = false; btn.disabled = false; if (order.step === 3) btn.textContent = t('co.send');
   }
