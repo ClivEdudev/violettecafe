@@ -3,7 +3,7 @@ import { svg, REAL_DEFS } from './art.js';
 import { initScroll } from './scroll.js';
 import { initAfk, showOrder } from './afk.js';
 import { initPerf } from './perf.js';
-import { initTrack, startTrack, openTrack, langTrack } from './track.js';
+import { initTrack, startTrack, openTrack, langTrack, onStatus, statusTitle } from './track.js';
 document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import { $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, plural, on, emit, cart, saveCart, setCart, addLine, unitPrice, lineName, lineSub, linePrep, subtotal, count, toast, openOverlay, closeOverlay, tashkentNow, hhmm, ddmmyyyy, pad, isLang, itemPic, lineVisual, addSavedLines, } from './shared.js';
 import { initLab } from './lab.js';
@@ -770,13 +770,26 @@ $('#coForm').addEventListener('submit', async (e) => {
 });
 /* Orders and bookings go to the shop's Telegram group (netlify/functions/telegram.mjs); a copy is also kept in
    Netlify Forms, so nothing is lost if Telegram isn't set up yet or is briefly unreachable. Either one landing counts. */
-async function submitForm(data, signal) {
+/** Sends to the Telegram bot and to Netlify Forms (backup). ok: at least one got it; live: the bot will report the kitchen's status. */
+async function sendBoth(data, signal) {
     const [tg, nf] = await Promise.allSettled([
         fetch('/api/telegram', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(data), signal }),
         fetch('/', { method: 'POST', headers: { 'Content-Type': 'application/x-www-form-urlencoded' }, body: new URLSearchParams(data).toString(), signal }),
     ]);
-    return (tg.status === 'fulfilled' && tg.value.ok) || (nf.status === 'fulfilled' && nf.value.ok);
+    let live = false;
+    if (tg.status === 'fulfilled' && tg.value.ok) {
+        try {
+            live = !!(await tg.value.json()).live;
+        }
+        catch { /* plain ok */ }
+    }
+    return { ok: (tg.status === 'fulfilled' && tg.value.ok) || (nf.status === 'fulfilled' && nf.value.ok), live };
 }
+async function submitForm(data, signal) { return (await sendBoth(data, signal)).ok; }
+const trackKey = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(16).padStart(2, '0')).join('');
+// the "order sent" screen mirrors the kitchen's answer as soon as it comes in
+onStatus(x => { const el = document.querySelector('#coDone .co-live'); if (!el)
+    return; el.dataset.st = x.st; $('span', el).textContent = statusTitle(x); });
 let sending = false;
 async function sendOrder() {
     if (sending || !cart.length)
@@ -804,40 +817,32 @@ async function sendOrder() {
         zone: order.method === 'delivery' ? (ZONES.find(z => z.id === order.zone) ?? ZONES[0]).name.uz : '', time: order.time === 'asap' ? `ASAP ~${due}` : `${order.tomorrow ? 'ERTAGA / TOMORROW ' : ''}${order.time}`,
         payment: order.payment, comment: order.comment, items: itemsText, split: split.on ? splitShares().map((s, i) => `${i + 1}: ${money(Math.ceil(s / 500) * 500)}`).join('; ') : '',
         subtotal: String(subtotal()), delivery: String(deliveryFee()), total: String(orderTotal()), lang: state.lang,
-        kitchen: JSON.stringify(kitchenLines()), gifts: String(gifts),
+        kitchen: JSON.stringify(kitchenLines()), gifts: String(gifts), track_key: trackKey(),
     };
     try {
         const ctl = new AbortController();
         const tm = setTimeout(() => ctl.abort(), 12000);
-        const ok = await submitForm(data, ctl.signal);
+        const { ok, live } = await sendBoth(data, ctl.signal);
         clearTimeout(tm);
         if (!ok)
             throw new Error('send');
         store.set('vc-last', { at: Date.now(), n: count(), total: subtotal(), lines: cart.map(({ sig: _s, who: _w, ...l }) => l) });
         const made = cart.map(l => ({ ...l }));
-        const isDelivery = order.method === 'delivery';
-        if (isDelivery) {
-            // real timestamps for the tracker: when the courier is due, and when the kitchen has to start to make it
-            const zone = ZONES.find(z => z.id === order.zone) ?? ZONES[0];
-            const tn = tashkentNow(), [hh, mm] = due.split(':').map(Number), target = new Date(tn);
-            target.setHours(hh, mm, 0, 0);
-            if (target.getTime() < tn.getTime() - 60000)
-                target.setDate(target.getDate() + 1);
-            const now = Date.now(), dueAt = now + (target.getTime() - tn.getTime());
+        // the tracker follows only what the kitchen presses in Telegram; without that link there is nothing honest to show
+        if (live) {
             const cookMin = Math.max(...made.map(linePrep)) + 5 + Math.min(10, Math.floor(count() / 4) * 2);
-            const cooked = Math.max(now + 3 * 60000, dueAt - zone.mins * 60000);
-            const start = Math.max(now, cooked - cookMin * 60000);
-            startTrack({ id, placed: now, start, cooked, due: dueAt, zone: zone.id, address: order.address, total: orderTotal(), lines: made });
+            startTrack({ id, key: data.track_key, kind: order.method === 'delivery' ? 'd' : order.method === 'table' ? 't' : 'p', placed: Date.now(), zone: order.zone, address: order.address, total: orderTotal(), lines: made, cookMin });
         }
         setCart([]);
         $('#coForm').hidden = true;
         $('#coSteps').hidden = true;
         const done = $('#coDone');
         done.hidden = false;
-        done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('kfc-1kg').art)}</div><h4>${t('done.title')}</h4>
-      <p>${tf('done.text', { id, phone: '+998 ' + fmtPhone(order.phone) })}</p><p class="eta-big">${tf((order.method === 'delivery' ? 'done.etaDelivery' : 'done.eta') + (order.time !== 'asap' && order.method !== 'table' && order.tomorrow ? 'Tm' : ''), { t: due })}</p>
+        done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('kfc-1kg').art)}</div><h4>${t('done.sent')}</h4>
+      <p>${tf('done.no', { id })}</p>
+      ${live ? `<p class="co-live" data-st="new" aria-live="polite"><i aria-hidden="true"></i><span>${t('tk.t.new')}</span></p><p class="hint">${t('done.live')}</p>` : `<p>${tf('done.call', { phone: '+998 ' + fmtPhone(order.phone) })}</p>`}<p class="eta-big">${tf((order.method === 'delivery' ? 'done.etaDelivery' : 'done.eta') + (order.time !== 'asap' && order.method !== 'table' && order.tomorrow ? 'Tm' : ''), { t: due })}</p>
       ${gifts ? `<p class="stamp-plus">${tf('fri.got', { g: gifts })}</p>` : ''}
-      ${isDelivery ? `<button type="button" class="btn btn-ink tk-done-btn" data-track>${t('tr.open')}</button>` : ''}
+      ${live ? `<button type="button" class="btn btn-ink tk-done-btn" data-track>${t('tk.open')}</button>` : ''}
       <button type="button" class="watch-btn" data-watch><span class="wb-play" aria-hidden="true"></span><span><b>${t('afk.watch')}</b><small>${t('afk.watchSub')}</small></span></button>
       <button class="btn btn-acc" data-close>${t('done.close')}</button>`;
         $('[data-watch]', done).addEventListener('click', () => showOrder(made, dueLabel));

@@ -4,6 +4,8 @@
 //   TELEGRAM_CHAT_ID   — the group's id (a negative number like -1001234567890)
 // While TELEGRAM_CHAT_ID is empty, opening /api/telegram in a browser lists the groups the bot has seen,
 // so you can copy the id from there. No packages needed: Node's own fetch talks to the Bot API.
+// Order status (what the cook pressed in Telegram) is kept in Netlify Blobs, so the customer's page can show it:
+//   GET /api/telegram?order=<id>&k=<key>  →  { st, h }  — the key is random per order, known only to that browser.
 
 const MAX = { name: 60, phone: 30, address: 200, comment: 400, items: 3500, short: 80 }; // kitchen list: max 40 lines × 8 details
 const hits = new Map(); // best-effort rate limit per visitor (per function instance)
@@ -12,6 +14,43 @@ const esc = s => String(s ?? '').replace(/[&<>]/g, c => ({ '&': '&amp;', '<': '&
 const cut = (s, n) => String(s ?? '').slice(0, n).trim();
 const json = (body, status = 200) => new Response(JSON.stringify(body), { status, headers: { 'content-type': 'application/json; charset=utf-8', 'cache-control': 'no-store' } });
 const env = k => (globalThis.Netlify?.env?.get(k) ?? process.env[k] ?? '').trim();
+/* ---------- order status storage: Netlify Blobs, spoken to directly over HTTP ----------
+   Inside a Netlify function the platform puts the store's address and a short-lived token in NETLIFY_BLOBS_CONTEXT
+   (base64 JSON). Two address shapes exist (with and without a region prefix); the first one that works is remembered. */
+const STORE = 'site:ffs-orders';
+function blobCtx() {
+  const raw = globalThis.netlifyBlobsContext ?? env('NETLIFY_BLOBS_CONTEXT');
+  if (!raw) return null;
+  try { return JSON.parse(Buffer.from(raw, 'base64').toString('utf8')); } catch { return null; }
+}
+let blobShape = null; // 'region' | 'plain'
+function blobURLs(c, key) {
+  const base = c.uncachedEdgeURL || c.edgeURL;
+  const path = `/${c.siteID}/${STORE}/${encodeURIComponent(key)}`;
+  const root = String(base).replace(/\/+$/, '');
+  const shapes = { region: c.primaryRegion ? `${root}/region:${c.primaryRegion}${path}` : null, plain: root + path };
+  const order = blobShape ? [blobShape] : ['region', 'plain'];
+  return order.map(k => [k, shapes[k]]).filter(([, u]) => u);
+}
+async function blobGet(key) {
+  const c = blobCtx(); if (!c?.token) return null;
+  for (const [shape, url] of blobURLs(c, key)) {
+    const r = await fetch(url, { headers: { authorization: `Bearer ${c.token}` } }).catch(() => null);
+    if (r?.status === 200) { blobShape = shape; try { return await r.json(); } catch { return null; } }
+    if (r?.status === 404 && blobShape) return null;
+  }
+  return null;
+}
+async function blobSet(key, value) {
+  const c = blobCtx(); if (!c?.token) return false;
+  for (const [shape, url] of blobURLs(c, key)) {
+    const r = await fetch(url, { method: 'PUT', headers: { authorization: `Bearer ${c.token}`, 'content-type': 'application/json' }, body: JSON.stringify(value) }).catch(() => null);
+    if (r?.ok) { blobShape = shape; return true; }
+  }
+  return false;
+}
+const ID_RE = /^[A-Z0-9]{4,12}$/, KEY_RE = /^[a-f0-9]{16,40}$/;
+
 const som = n => `${Math.round(Number(n) || 0).toLocaleString('ru-RU').replace(/\s/g, ' ')} soʻm`;
 
 const METHOD = { delivery: '🛵 YETKAZIB BERISH', pickup: '🥡 OLIB KETISH', table: '🍽 ZALDA' };
@@ -101,11 +140,11 @@ function nextStep(cur, kind) {
   if (kind === 'b') return cur === 'new' ? 'acc' : null;
   return { new: 'acc', acc: 'rdy', rdy: kind === 'd' ? 'out' : 'done', out: 'done' }[cur] ?? null;
 }
-function statusRows(cur, kind) {
+function statusRows(cur, kind, id = '') {
   const nx = nextStep(cur, kind);
   if (!nx) return [];
   const go = { acc: kind === 'b' ? '✅ Tasdiqlash' : '✅ Qabul qilish', rdy: '🔥 Tayyor', out: '🛵 Yoʻlga chiqdi', done: DONE[kind] }[nx];
-  return [[{ text: go, callback_data: `${nx}|${kind}` }, { text: '❌ Bekor qilish', callback_data: `cx|${kind}|${cur}` }]];
+  return [[{ text: go, callback_data: `${nx}|${kind}|${id}` }, { text: '❌ Bekor qilish', callback_data: `cx|${kind}|${cur}|${id}` }]];
 }
 
 const secretOf = async token => { const { createHash } = await import('node:crypto'); return createHash('sha256').update('ffs:' + token).digest('hex').slice(0, 48); };
@@ -142,15 +181,19 @@ async function onUpdate(u, token, chat) {
   if (!q?.message || !q.data) return;
   const answer = text => tgCall(token, 'answerCallbackQuery', { callback_query_id: q.id, text });
   if (String(q.message.chat.id) !== String(chat)) return answer('Bu chat ulanmagan');
-  const [step, kind, cur] = q.data.split('|');
+  const parts = q.data.split('|');
+  const [step, kind] = parts;
+  // "<step>|<kind>|<id>" or "cx|<kind>|<current>|<id>" / "cn|<kind>|<current>|<id>" / "cy|<kind>|<id>"
+  const cur = step === 'cx' || step === 'cn' ? parts[2] : '';
+  const id = (step === 'cx' || step === 'cn' ? parts[3] : parts[2]) ?? '';
   if (!['d', 'p', 't', 'b'].includes(kind)) return answer('');
   const keep = (q.message.reply_markup?.inline_keyboard ?? []).filter(row => row.every(b => b.url)); // map button stays
   const msg = { chat_id: q.message.chat.id, message_id: q.message.message_id };
 
   if (step === 'cx' || step === 'cn') {
     const rows = step === 'cx'
-      ? [[{ text: '❌ Ha, bekor qilinsin', callback_data: `cy|${kind}` }, { text: '↩️ Yoʻq', callback_data: `cn|${kind}|${cur}` }]]
-      : statusRows(cur, kind);
+      ? [[{ text: '❌ Ha, bekor qilinsin', callback_data: `cy|${kind}|${id}` }, { text: '↩️ Yoʻq', callback_data: `cn|${kind}|${cur}|${id}` }]]
+      : statusRows(cur, kind, id);
     await tgCall(token, 'editMessageReplyMarkup', { ...msg, reply_markup: { inline_keyboard: [...rows, ...keep] } });
     return answer(step === 'cx' ? 'Bekor qilishni tasdiqlang' : '');
   }
@@ -162,11 +205,16 @@ async function onUpdate(u, token, chat) {
 
   const who = [q.from?.first_name, q.from?.last_name].filter(Boolean).join(' ').slice(0, 40) || 'Xodim';
   const add = `${text.includes('\n📋 HOLAT') ? '' : '\n\n📋 HOLAT'}\n${name} · ${who} · ${now()}`;
-  const rows = step === 'cy' ? [] : statusRows(step, kind);
+  const rows = step === 'cy' ? [] : statusRows(step, kind, id);
   const r = await tgCall(token, 'editMessageText', {
     ...msg, text: (text + add).slice(0, 4096), entities: q.message.entities ?? [],
     link_preview_options: { is_disabled: true }, reply_markup: { inline_keyboard: [...rows, ...keep] },
   });
+  if (r.ok && ID_RE.test(id)) {
+    // tell the customer's page: the status and when each step happened
+    const rec = await blobGet(id);
+    if (rec) { rec.st = step; rec.h = { ...(rec.h ?? {}), [step]: Date.now() }; await blobSet(id, rec); }
+  }
   return answer(r.ok ? name : 'Xatolik, qayta bosing');
 }
 
@@ -182,10 +230,21 @@ export default async (req, context) => {
   }
 
   if (req.method === 'GET') {
+    const qs = new URL(req.url).searchParams;
+    if (qs.has('order')) {
+      const id = qs.get('order') ?? '', k = qs.get('k') ?? '';
+      if (!ID_RE.test(id) || !KEY_RE.test(k)) return json({ ok: false }, 400);
+      const rec = await blobGet(id);
+      if (!rec || rec.k !== k) return json({ ok: false, st: 'unknown' }, 404);
+      return json({ ok: true, st: rec.st, h: rec.h ?? {} });
+    }
     if (!token) return json({ ok: false, step: 'Set TELEGRAM_BOT_TOKEN in Netlify, then redeploy.' });
     if (chat) {
       const h = await ensureWebhook(token, req);
-      return json({ ok: true, ready: true, buttons: h.ok ? 'on' : `off (${h.description ?? 'error'})` });
+      const probe = { t: Date.now() };
+      const stored = (await blobSet('SELFTEST', probe)) && (await blobGet('SELFTEST'))?.t === probe.t;
+      return json({ ok: true, ready: true, buttons: h.ok ? 'on' : `off (${h.description ?? 'error'})`,
+        website_status: stored ? `on (${blobShape})` : blobCtx() ? 'off (storage refused)' : 'off (no storage context)' });
     }
     const tg = m => tgCall(token, m);
     const me = await tg('getMe');
@@ -215,14 +274,18 @@ export default async (req, context) => {
 
   const text = kind === 'order' ? orderText(d) : bookingText(d);
   const k = kind === 'order' ? (KIND[d.method] ?? 'p') : 'b';
+  const id = kind === 'order' && ID_RE.test(String(d.order_id ?? '')) ? String(d.order_id) : '';
   const res = await tgCall(token, 'sendMessage', {
     chat_id: chat, text, parse_mode: 'HTML', link_preview_options: { is_disabled: true },
-    reply_markup: { inline_keyboard: [...statusRows('new', k), ...(kind === 'order' ? mapRow(d) : [])] },
+    reply_markup: { inline_keyboard: [...statusRows('new', k, id), ...(kind === 'order' ? mapRow(d) : [])] },
   });
   if (!res?.ok) return json({ ok: false, error: 'telegram' }, 502);
   // first order after a deploy switches the buttons on by itself
-  await ensureWebhook(token, req).catch(() => null);
-  return json({ ok: true });
+  const hook = await ensureWebhook(token, req).catch(() => ({ ok: false }));
+  // live status on the customer's page needs both: the buttons reaching us, and somewhere to keep the status
+  let live = false;
+  if (id && KEY_RE.test(String(d.track_key ?? '')) && hook.ok) live = await blobSet(id, { k: String(d.track_key), kind: k, st: 'new', h: { new: Date.now() } });
+  return json({ ok: true, live });
 };
 
 export const config = { path: '/api/telegram' };

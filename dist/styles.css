@@ -956,3 +956,18 @@ img { max-width: 100%; }
 .lite .lab-stage { background: color-mix(in srgb, var(--disc-a) 70%, var(--disc-b)); }
 .lite .lab-stage svg { will-change: transform; }
 .lite.scrolled .top { background: var(--bg); }
+
+/* live kitchen status on the "order sent" screen and in the tracker */
+.co-live { display: flex; align-items: center; justify-content: center; gap: 10px; margin: 12px auto 4px; padding: 10px 16px; max-width: 420px; border-radius: 14px; border: 2px solid var(--line); font-weight: 800; background: var(--paper); }
+.co-live i { width: 12px; height: 12px; flex: none; border-radius: 50%; background: #F4B731; animation: tkPing 1.6s infinite; box-shadow: 0 0 0 0 rgba(244, 183, 49, .6); }
+.co-live[data-st="acc"], .co-live[data-st="rdy"], .co-live[data-st="out"], .co-live[data-st="done"] { border-color: #2E9E5B; color: #1F7A44; }
+.co-live[data-st="acc"] i, .co-live[data-st="rdy"] i, .co-live[data-st="out"] i { background: #2E9E5B; }
+.co-live[data-st="done"] i { background: #2E9E5B; animation: none; }
+.co-live[data-st="cy"] { border-color: var(--acc); color: var(--acc); } .co-live[data-st="cy"] i { background: var(--acc); animation: none; }
+.tk-pill[data-st="new"] .tk-dot { background: #F4B731; }
+.tk-pill[data-st="cy"] .tk-dot { background: var(--acc); animation: none; }
+.tk-st-new { color: var(--ink2); } .tk-st-cy { color: var(--acc); }
+.tk-steps li.off { opacity: .45; }
+.tk-steps li.tk-cy i { border-color: var(--acc); background: var(--acc); box-shadow: none; }
+.tk-eta span:only-child { font-weight: 700; color: var(--ink2); }
+@media (prefers-reduced-motion: reduce) { .co-live i { animation: none; } }
