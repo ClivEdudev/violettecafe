@@ -55,6 +55,13 @@ const version = crypto.createHash('sha256').update(fs.readFileSync(P('dist', 'in
 const sw = fs.readFileSync(P('public', 'sw.js'), 'utf8').replace("'__VERSION__'", JSON.stringify(version)).replace("'__SHELL__'", JSON.stringify(shell)).replace("'__LATER__'", JSON.stringify(later));
 fs.writeFileSync(P('dist', 'sw.js'), sw);
 
+// caching rules also as a _headers file in the published folder (Netlify always reads it; same rules as netlify.toml)
+fs.writeFileSync(P('dist', '_headers'), [
+  '/assets/*', '  Cache-Control: public, max-age=31536000, immutable', '',
+  '/sw.js', '  Cache-Control: no-cache', '',
+  '/fonts/*', '  Cache-Control: public, max-age=604800', '',
+].join('\n'));
+
 // 6. sizes
 const kb = f => (fs.statSync(P('dist', f.replace(/^\//, ''))).size / 1024).toFixed(1) + ' KB';
 console.log('first screen:', [mainOut.file, ...staticDeps, cssOut.file, ...fonts.map(f => f.file)].map(f => `${path.basename(f)} ${kb(f)}`).join(', '));
