@@ -3,6 +3,7 @@ import { DICT } from './i18n.js';
 import { ITEM, EXTRAS, SIZES, photoURL, SET_DISCOUNTS, SET_DRINKS, SET_BURGERS, setPrice, BUNS, WRAP_ADDS, WRAP_SAUCES, HD_TOPS, HD_SAUCES, type Lang, type ExtraId, type Item } from './data.js';
 import { burgerPrice, burgerName, burgerArt, burgerPrep, coffeePrice, coffeeName, coffeeArt, coffeePrep, sanitizeBurger, sanitizeCoffee, wrapPrice, wrapName, wrapArt, wrapPrep, sanitizeWrap, hotdogPrice, hotdogName, hotdogArt, hotdogPrep, sanitizeHotdog, type BurgerSpec, type CoffeeSpec, type WrapSpec, type HotdogSpec } from './recipes.js';
 import { svg, type ArtSpec } from './art.js';
+import { PHOTOS } from './photos.gen.js';
 
 export const $ = <T extends Element = HTMLElement>(s: string, root: ParentNode = document) => root.querySelector(s) as T;
 export const $$ = <T extends Element = HTMLElement>(s: string, root: ParentNode = document) => Array.from(root.querySelectorAll(s)) as T[];
@@ -256,3 +257,27 @@ export function tween(ms: number, step: (k: number) => void, done?: () => void) 
   raf = requestAnimationFrame(tick);
   return () => { stopped = true; cancelAnimationFrame(raf); };
 }
+
+/* ---------- photos: small WebP sizes, loaded only when they scroll into view, with a blurred preview meanwhile ---------- */
+/** <img> for a dish photo made by `npm run photos`, or '' if there is none (the drawn illustration stays). */
+export function photoHTML(name: string, alt: string, sizes = '(max-width: 700px) 92vw, 420px') {
+  const p = PHOTOS[name];
+  if (!p) return '';
+  return `<img class="photo" src="/img/${name}-480.webp" srcset="/img/${name}-480.webp 480w, /img/${name}-960.webp 960w" sizes="${sizes}" width="${p.w}" height="${p.h}" alt="${esc(alt)}" loading="lazy" decoding="async" style="background:center/cover url(${p.ph})">`;
+}
+
+/* ---------- sound: unlocked by a tap (browsers allow audio only after one), used later by the tracker ---------- */
+let actx: AudioContext | null = null;
+export function unlockSound() {
+  try { const A = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext; if (A && !actx) actx = new A(); void actx?.resume(); } catch { actx = null; }
+}
+export const audio = () => actx;
+
+/* ---------- connection quality ---------- */
+type NetInfo = { effectiveType?: string; saveData?: boolean; addEventListener?: (t: string, f: () => void) => void };
+const netInfo = () => (navigator as Navigator & { connection?: NetInfo }).connection;
+let measuredSlow = false;
+/** True on 2G / "slow-2g", with data saver on, or when this page took very long to load. */
+export const slowNet = () => { const c = netInfo(); return measuredSlow || !!c?.saveData || c?.effectiveType === '2g' || c?.effectiveType === 'slow-2g'; };
+export const markSlow = () => { measuredSlow = true; };
+export const onNetChange = (f: () => void) => { netInfo()?.addEventListener?.('change', f); addEventListener('online', f); addEventListener('offline', f); };

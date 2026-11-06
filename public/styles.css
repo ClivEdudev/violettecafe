@@ -1,3 +1,6 @@
+/* Fonts are served from this site, cut down to the characters the site uses (Latin, Uzbek, Russian). OFL licences in /fonts. */
+@font-face { font-family: 'Manrope'; src: url('./fonts/manrope.woff2') format('woff2'); font-weight: 200 800; font-style: normal; font-display: swap; }
+@font-face { font-family: 'Dela Gothic One'; src: url('./fonts/dela-gothic-one.woff2') format('woff2'); font-weight: 400; font-style: normal; font-display: swap; }
 /* ============ FFS — Fresh Fried Soul ============ */
 :root {
   --bg: #FAF7F6; --bg2: #F3ECEA; --paper: #FFFFFF; --ink: #1A1414; --ink2: #6B5655; --line: rgba(26, 20, 20, .14);
@@ -50,6 +53,8 @@ section { position: relative; }
 @keyframes ldPeck { to { transform: rotate(-8deg) translateY(-3px); } }
 #loader p { margin: 0; font: 400 1.4rem var(--display); letter-spacing: .02em; }
 #loader.gone { opacity: 0; visibility: hidden; }
+/* safety net for very slow connections: the loader steps aside after 6 s even if the scripts haven't started, so the menu written into the page can be read */
+#loader { animation: ldAuto .5s ease 6s forwards; } @keyframes ldAuto { to { opacity: 0; visibility: hidden; } }
 @keyframes ldFill { to { transform: translateY(0); } }
 #progress { position: fixed; top: 0; left: 0; right: 0; height: 3px; z-index: 120; background: var(--acc); transform-origin: 0 50%; transform: scaleX(0); }
 #wipe { position: fixed; inset: 0; z-index: 400; pointer-events: none; display: none; }
@@ -982,3 +987,15 @@ img { max-width: 100%; }
 .nt-on { font-weight: 800; color: #1F7A44; } .nt-off { font-size: .84rem; color: var(--ink2); }
 .nt-tip { font-size: .76rem !important; opacity: .8; }
 .co-nt .nt { max-width: 440px; margin-inline: auto; }
+
+/* connection notice + orders waiting for the internet */
+.net-bar { position: fixed; left: 50%; transform: translateX(-50%); top: calc(10px + env(safe-area-inset-top, 0px)); z-index: 700; pointer-events: none; max-width: min(560px, calc(100% - 24px)); padding: 9px 16px; border-radius: 999px; font-size: .86rem; font-weight: 700; line-height: 1.35; text-align: center; box-shadow: 0 6px 20px rgba(0,0,0,.18); background: #2A2324; color: #fff; }
+.net-bar[data-kind="off"] { background: #B3261E; } .net-bar[data-kind="wait"] { background: #8A5A00; } .net-bar[data-kind="slow"] { background: #3B3436; }
+.co-live[data-st="queued"] { border-color: #C98A00; color: #8A5A00; } .co-live[data-st="queued"] i { background: #F4B731; }
+.ob-alt { display: grid; gap: 8px; margin: 12px auto; max-width: 440px; padding: 14px 16px; border: 2px dashed var(--line); border-radius: 16px; text-align: left; }
+.ob-alt small { color: var(--ink2); font-size: .8rem; }
+.ob-btns { display: flex; flex-wrap: wrap; gap: 8px; } .ob-btns .btn { flex: 1 1 150px; }
+.ob-ta { width: 100%; min-height: 120px; font: inherit; font-size: .85rem; border-radius: 10px; padding: 8px; }
+/* weak connection: drop the purely decorative motion (the main scenes stay) */
+.slow [data-sr] { transition: none !important; animation: none !important; opacity: 1 !important; transform: none !important; }
+.slow .tape-track { animation-duration: 0s !important; animation: none !important; }

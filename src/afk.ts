@@ -1003,7 +1003,9 @@ function activity(e: Event) {
   idleTimer = window.setTimeout(show, IDLE_MS);
 }
 
-export function initAfk() {
+/** idleSince: when the visitor last touched the page (this file loads a little after the page does). */
+export function initAfk(idleSince = Date.now()) {
+  const firstDelay = Math.max(1000, IDLE_MS - (Date.now() - idleSince));
   ['pointermove', 'pointerdown', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(ev => addEventListener(ev, activity, { passive: ev !== 'keydown', capture: true }));
   on('lang', texts);
   const settle = () => { if (el && mode === 'idle') { if (el.classList.contains('on')) hide(); el.hidden = true; el.classList.remove('on', 'serving'); document.documentElement.classList.remove('afk-on'); } };
@@ -1011,5 +1013,5 @@ export function initAfk() {
   addEventListener('pageshow', e => { settle(); if ((e as PageTransitionEvent).persisted && !reduced) { clearTimeout(idleTimer); idleTimer = window.setTimeout(show, IDLE_MS); } });
   if (reduced) return; // the idle show is off for reduced motion; the order show still opens when asked for
   document.addEventListener('visibilitychange', () => { if (document.hidden) { if (mode === 'idle') hide(); clearTimeout(idleTimer); } else activity(new Event('visible')); });
-  idleTimer = window.setTimeout(show, IDLE_MS);
+  idleTimer = window.setTimeout(show, firstDelay);
 }

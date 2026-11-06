@@ -79,3 +79,24 @@ Boburshoh koʻchasi 48, Andijan (after the My Sports store), Plus Code Q8PJ+CWH;
 - **Backup chat** (optional): set `TELEGRAM_BACKUP_CHAT_ID` (for example the owner's own chat with the bot); orders go there if the main group refuses them.
 - **Netlify Forms** only receives an order when the bot can't, so its monthly quota isn't used up.
 - Telegram lets a bot post about **20 messages a minute in one group** (button presses count too). Above that the queue takes over; if the shop regularly gets more than that, split deliveries into a second group.
+
+## Slow connections
+
+Measured locally on a simulated slow 3G line (400 ms per request, 400 kbit/s) — first visit / repeat visit:
+
+| | before | after |
+|---|---|---|
+| menu readable | 4.5 s / 2.3 s | 1.3 s / 0.6 s |
+| page usable | 4.5 s / 2.3 s | 3.3 s / 0.6 s |
+| requests | 17 / 17 | 7 / 7 (repeat: nothing downloaded) |
+
+(Google Fonts couldn't be reached from the test machine, so the real "before" was slower than shown.)
+
+What does it:
+- **Build** (`npm run build` → `scripts/build.mjs`): esbuild bundles and minifies; file names carry a content hash and live in `/assets`, which `netlify.toml` lets browsers keep for a year. The idle show, the builders and the tracker are separate files loaded only when needed. `dist/` is still committed; Netlify just publishes it.
+- **Fonts** are served from this site (`public/fonts`, cut to the characters the site uses — 49 KB for both; OFL licences alongside), no Google Fonts.
+- **The menu is written into the page** (`scripts/prerender.mjs`, needs Playwright on the build machine; `NO_PRERENDER=1` skips it) so dishes and prices show before the scripts arrive. The loading logo steps aside after 6 s even if the scripts are still on their way.
+- **Offline copy** (`public/sw.js`): the site stays on the phone; repeat visits open instantly and the menu works with no internet. Pages are checked with the network for 3 s first, so price changes still arrive. `/api/*` is never cached.
+- **Orders survive a dropped connection**: if sending fails for lack of internet, the order is kept on the phone and sent automatically when the connection returns — even after the page was closed — with the same order number (the bot never posts it twice). The kitchen sees "Mijozda internet yoʻq edi — buyurtma N daqiqa kechikib keldi". After an hour it's dropped with a message to order again. Meanwhile the customer can call or copy the order text. What they type in checkout is saved as they type.
+- **Weak-connection mode**: on 2G / data saver (or if the page took over 6 s to start) a short notice shows, decorative motion is off, the idle show only loads once the visitor is actually idle, and order-status checks happen half as often. With no internet a banner says so.
+- **Photos**: put originals in `/photos` (named after the dish id) and run `npm run photos` — it makes 480 px and 960 px WebP versions plus a blurred preview; `photoHTML()` in `shared.ts` gives a lazy-loading `<img>` for a dish.

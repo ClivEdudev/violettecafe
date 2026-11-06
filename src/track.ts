@@ -3,9 +3,8 @@
 // Nothing here moves forward on its own. Works for delivery, pickup and table orders; delivery also gets the map,
 // where the courier only starts moving once the kitchen presses "on the way" (his position is an estimate, no GPS).
 // Preview with ?trackdemo=new|acc|rdy|out|done|cy (&kind=p for pickup, t for table).
-import { $, clamp, reduced, esc, state, t, tf, store, money, toast, type Line } from './shared.js';
+import { $, clamp, reduced, esc, state, t, tf, store, money, toast, unlockSound, audio, slowNet, type Line } from './shared.js';
 import { CAFE, ZONES } from './data.js';
-import { showOrder } from './afk.js';
 
 export type St = 'new' | 'acc' | 'rdy' | 'out' | 'done' | 'cy';
 export type Kind = 'd' | 'p' | 't';
@@ -71,21 +70,18 @@ function closeTrack() {
 function finish() { const was = tr; store.set('vc-track', null); tr = null; closeTrack(); refresh(); if (was?.st === 'done' || was?.st === 'out') toast(t('tk.enjoy')); }
 
 /* ---------- telling the customer: sound + vibration, a system notification, and the tab title ---------- */
-let actx: AudioContext | null = null, baseTitle = '';
-/** Call from a tap (sending the order): browsers only allow sound after one. */
-export function unlockSound() {
-  try { const A = window.AudioContext ?? (window as unknown as { webkitAudioContext?: typeof AudioContext }).webkitAudioContext; if (A && !actx) actx = new A(); void actx?.resume(); } catch { actx = null; }
-}
+let baseTitle = '';
 function chime(strong: boolean) {
+  const actx = audio();
   if (!actx) return;
   try {
     void actx.resume();
     const t0 = actx.currentTime, notes = strong ? [784, 1047, 1319] : [880, 1175];
     notes.forEach((f, i) => {
-      const o = actx!.createOscillator(), g = actx!.createGain(), at = t0 + i * .16;
+      const o = actx.createOscillator(), g = actx.createGain(), at = t0 + i * .16;
       o.type = 'sine'; o.frequency.value = f;
       g.gain.setValueAtTime(.0001, at); g.gain.exponentialRampToValueAtTime(.22, at + .02); g.gain.exponentialRampToValueAtTime(.0001, at + .55);
-      o.connect(g).connect(actx!.destination); o.start(at); o.stop(at + .6);
+      o.connect(g).connect(actx.destination); o.start(at); o.stop(at + .6);
     });
   } catch { /* no sound is fine */ }
 }
@@ -93,7 +89,9 @@ const canSystem = () => 'Notification' in window && 'serviceWorker' in navigator
 async function systemNote(x: Track) {
   if (!x.notify || !canSystem() || Notification.permission !== 'granted') return;
   const opts: NotificationOptions & { renotify?: boolean; vibrate?: number[] } = { body: tf('tr.order', { id: x.id }), icon: '/icon-192.png', badge: '/icon-192.png', tag: 'ffs-' + x.id, renotify: true, vibrate: [200, 100, 200] };
-  try { const reg = await navigator.serviceWorker.ready; await reg.showNotification('FFS · ' + title(x), opts); }
+  // the service worker may be blocked (private windows, some browsers): don't wait for it forever
+  const ready = Promise.race([navigator.serviceWorker.ready, new Promise<never>((_, no) => setTimeout(() => no(new Error('no sw')), 3000))]);
+  try { const reg = await ready; await reg.showNotification('FFS · ' + title(x), opts); }
   catch { try { new Notification('FFS · ' + title(x), opts); } catch { /* not allowed here */ } }
 }
 /** The big moments: ready to pick up / at the table, courier left, delivered, cancelled. */
@@ -195,7 +193,7 @@ function build() {
     const tg = e.target as Element;
     if (tg.closest('[data-tk-close]')) closeTrack();
     else if (tg.closest('[data-tk-got]')) finish();
-    else if (tg.closest('[data-tk-watch]') && tr) { const e2 = estimate(tr); showOrder(tr.lines, tk(e2.arrive ?? e2.ready ?? Date.now())); }
+    else if (tg.closest('[data-tk-watch]') && tr) { const e2 = estimate(tr), lines = tr.lines; void import('./afk.js').then(m => m.showOrder(lines, tk(e2.arrive ?? e2.ready ?? Date.now()))); }
   });
   panel.addEventListener('keydown', e => { if (e.key === 'Escape') { e.stopPropagation(); closeTrack(); } });
 }
@@ -293,7 +291,7 @@ function tick() {
   // quick while waiting for the kitchen's first answer, calmer after; back off when the server is struggling;
   // a little randomness so thousands of phones don't all ask in the same second
   const age = tr ? Date.now() - tr.placed : 0;
-  const base = !tr || ended(tr) ? 30000 : document.hidden ? 20000 : tr.st === 'new' ? (age < 2 * MIN ? 5000 : 8000) : 12000;
+  const base = (!tr || ended(tr) ? 30000 : document.hidden ? 20000 : tr.st === 'new' ? (age < 2 * MIN ? 5000 : 8000) : 12000) * (slowNet() ? 2 : 1);
   const wait = Math.min(60000, base * 2 ** Math.min(fails, 3)) * (0.85 + Math.random() * 0.3);
   timer = window.setTimeout(tick, wait);
 }

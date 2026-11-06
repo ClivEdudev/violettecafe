@@ -1,16 +1,27 @@
 import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, BUNS, FILLINGS, WRAP_BASES, WRAP_MEATS, WRAP_ADDS, WRAP_SAUCES, HD_SAUSAGES, HD_TOPS, HD_SAUCES, ZONES, STAMPS_FOR_GIFT, MIN_DELIVERY, FRIDAY_EVERY, SET_DRINKS, SET_BURGERS, SET_DISCOUNTS, setFull, setPrice, isVeg, isSpicy, allergens, type World, type CatId, type Item, type ExtraId, type Lang } from './data.js';
 import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } from './art.js';
 import { initScroll } from './scroll.js';
-import { initAfk, showOrder } from './afk.js';
 import { initPerf } from './perf.js';
-import { initTrack, startTrack, openTrack, langTrack, onStatus, statusTitle, unlockSound, mountNotify } from './track.js';
 document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import {
   $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, plural, on, emit, cart, saveCart, setCart, addLine,
   unitPrice, lineName, lineSub, lineArt, linePrep, isCoffeeLine, subtotal, count, toast, openOverlay, closeOverlay, tashkentNow, hhmm, ddmmyyyy, pad,
-  isLang, itemPic, lineVisual, addSavedLines, type Line, type Size,
+  isLang, itemPic, lineVisual, addSavedLines, unlockSound, slowNet, markSlow, onNetChange, type Line, type Size,
 } from './shared.js';
-import { initLab } from './lab.js';
+
+/* =============== parts that load on demand (smaller first download on slow connections) =============== */
+// the idle show (100 KB): only needed after 50 s without a touch
+const afkMod = () => import('./afk.js');
+const showOrder = (...a: Parameters<typeof import('./afk.js').showOrder>) => void afkMod().then(m => m.showOrder(...a));
+// order tracking: only when there's an order
+type TrackMod = typeof import('./track.js');
+let trackP: Promise<TrackMod> | null = null;
+const trackMod = () => trackP ??= import('./track.js').then(m => {
+  m.initTrack(); on('lang', m.langTrack);
+  // the "order sent" screen mirrors the kitchen's answer as soon as it comes in
+  m.onStatus(x => { const el = document.querySelector<HTMLElement>('#coDone .co-live'); if (!el) return; el.dataset.st = x.st; $('span', el).textContent = m.statusTitle(x); });
+  return m;
+});
 import { initBudget } from './budget.js';
 import { buildHero, updateHero as drawHero, renderHeroTexts, addDeal } from './hero.js';
 
@@ -457,7 +468,7 @@ const saved = (store.get('vc-contact') ?? {}) as Record<string, string>;
 const order = {
   step: 1, method: (tableParam ? 'table' : 'pickup') as Method, zone: 'near', table: tableParam,
   name: typeof saved.name === 'string' ? saved.name.slice(0, 60) : '', phone: typeof saved.phone === 'string' ? saved.phone.replace(/\D/g, '').slice(0, 9) : '',
-  address: typeof saved.address === 'string' ? saved.address.slice(0, 160) : '', time: 'asap', tomorrow: false, payment: 'cash', comment: '',
+  address: typeof saved.address === 'string' ? saved.address.slice(0, 160) : '', time: 'asap', tomorrow: false, payment: 'cash', comment: typeof saved.comment === 'string' ? saved.comment.slice(0, 300) : '',
 };
 const phoneDigits = (raw: string) => { let d = raw.replace(/\D/g, ''); if (d.length > 9 && d.startsWith('998')) d = d.slice(3); return d.slice(0, 9); };
 const fmtPhone = (raw: string) => { const d = phoneDigits(raw); return [d.slice(0, 2), d.slice(2, 5), d.slice(5, 7), d.slice(7, 9)].filter(Boolean).join(' '); };
@@ -570,6 +581,18 @@ $('#checkout').addEventListener('click', e => {
 });
 $('#checkout').addEventListener('input', e => { const el = e.target as HTMLInputElement; if (el.id === 'coTable') { el.value = el.value.replace(/\D/g, '').slice(0, 3); order.table = el.value; } });
 bindPhone($<HTMLInputElement>('#coPhone'));
+// keep what they've typed: a reload or a dropped connection shouldn't make them type the address again
+let draftT = 0;
+$('#checkout').addEventListener('input', e => {
+  const el = e.target as HTMLElement;
+  if (!['coName', 'coPhone', 'coAddr', 'coComment'].includes(el.id)) return;
+  clearTimeout(draftT);
+  draftT = window.setTimeout(() => {
+    const v = (id: string) => (document.getElementById(id) as HTMLInputElement | HTMLTextAreaElement | null)?.value.trim() ?? '';
+    const prev = (store.get('vc-contact') ?? {}) as Record<string, string>;
+    store.set('vc-contact', { ...prev, name: v('coName') || prev.name || '', phone: v('coPhone').replace(/\D/g, '').slice(-9) || prev.phone || '', address: v('coAddr') || prev.address || '', comment: v('coComment') });
+  }, 400);
+});
 $('#coBack').addEventListener('click', () => { if (order.step === 2) captureStep2(); order.step = Math.max(1, order.step - 1); renderCheckout(); });
 const hasLetters = (s: string) => /\p{L}/u.test(s);
 function fail(msg: string, focus?: string) { $('#coErr').textContent = msg; if (focus) $<HTMLElement>(focus)?.focus(); }
@@ -617,8 +640,6 @@ const newOrderId = () => 'F' + Array.from(crypto.getRandomValues(new Uint8Array(
 let pending: { id: string; key: string; sig: string } | null = null; // kept until the order goes through
 const cartSig = () => JSON.stringify([cart.map(l => [l.sig, l.qty]), order.method, order.name, order.phone, order.address, order.table]);
 const trackKey = () => Array.from(crypto.getRandomValues(new Uint8Array(12)), b => b.toString(16).padStart(2, '0')).join('');
-// the "order sent" screen mirrors the kitchen's answer as soon as it comes in
-onStatus(x => { const el = document.querySelector<HTMLElement>('#coDone .co-live'); if (!el) return; el.dataset.st = x.st; $('span', el).textContent = statusTitle(x); });
 let sending = false;
 async function sendOrder() {
   if (sending || !cart.length) return;
@@ -644,47 +665,146 @@ async function sendOrder() {
     subtotal: String(subtotal()), delivery: String(deliveryFee()), total: String(orderTotal()), lang: state.lang,
     kitchen: JSON.stringify(kitchenLines()), gifts: String(gifts), track_key: pending.key,
   };
+  const made = cart.map(l => ({ ...l }));
+  const cookMin = Math.max(...made.map(linePrep)) + 5 + Math.min(10, Math.floor(count() / 4) * 2);
+  const ctx: DoneCtx = { made, method: order.method, zone: order.zone, address: order.address, total: orderTotal(), cookMin, due, dueLabel, gifts,
+    tomorrow: order.method !== 'table' && order.time !== 'asap' && order.tomorrow, phone: order.phone, text: orderPlainText(itemsText, data) };
   try {
-    const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), 12000);
-    let res = await sendBoth(data, ctl.signal);
+    let res = await sendWithin(data, 20000);
     if (res.why === 'id-taken') { // another order already has this number (very rare): new number, same order
       pending = { id: newOrderId(), key: trackKey(), sig: cartSig() };
-      res = await sendBoth({ ...data, order_id: pending.id, track_key: pending.key }, ctl.signal);
+      data.order_id = pending.id; data.track_key = pending.key;
+      res = await sendWithin(data, 20000);
     }
-    clearTimeout(tm);
     if (res.why === 'paused') { shop.paused = true; throw new Error('paused'); }
     if (res.why === 'too-many') throw new Error('too-many');
-    if (!res.ok) throw new Error('send');
-    const { live, bot } = res;
-    const sentId = pending!.id, sentKey = pending!.key; pending = null;
+    if (!res.ok && res.why !== 'network' && res.why !== 'timeout' && res.why !== 'offline') throw new Error('send');
     store.set('vc-last', { at: Date.now(), n: count(), total: subtotal(), lines: cart.map(({ sig: _s, who: _w, ...l }) => l) });
-    const made = cart.map(l => ({ ...l }));
-    // the tracker follows only what the kitchen presses in Telegram; without that link there is nothing honest to show
-    if (live) {
-      const cookMin = Math.max(...made.map(linePrep)) + 5 + Math.min(10, Math.floor(count() / 4) * 2);
-      startTrack({ id: sentId, key: sentKey, kind: order.method === 'delivery' ? 'd' : order.method === 'table' ? 't' : 'p', placed: Date.now(), zone: order.zone, address: order.address, total: orderTotal(), lines: made, cookMin, bot });
-    }
+    pending = null;
     setCart([]);
-    $('#coForm').hidden = true; $('#coSteps').hidden = true;
-    const done = $('#coDone');
-    done.hidden = false;
-    done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('kfc-1kg')!.art)}</div><h4>${t('done.sent')}</h4>
-      <p>${tf('done.no', { id: sentId })}</p>
-      ${live ? `<p class="co-live" data-st="new" aria-live="polite"><i aria-hidden="true"></i><span>${t('tk.t.new')}</span></p><p class="hint">${t('done.live')}</p><div class="co-nt" data-nt-slot></div>` : `<p>${tf('done.call', { phone: '+998 ' + fmtPhone(order.phone) })}</p>`}<p class="eta-big">${tf((order.method === 'delivery' ? 'done.etaDelivery' : 'done.eta') + (order.time !== 'asap' && order.method !== 'table' && order.tomorrow ? 'Tm' : ''), { t: due })}</p>
-      ${gifts ? `<p class="stamp-plus">${tf('fri.got', { g: gifts })}</p>` : ''}
-      ${live ? `<button type="button" class="btn btn-ink tk-done-btn" data-track>${t('tk.open')}</button>` : ''}
-      <button type="button" class="watch-btn" data-watch><span class="wb-play" aria-hidden="true"></span><span><b>${t('afk.watch')}</b><small>${t('afk.watchSub')}</small></span></button>
-      <button class="btn btn-acc" data-close>${t('done.close')}</button>`;
-    $('[data-watch]', done).addEventListener('click', () => showOrder(made, dueLabel));
-    const slot = done.querySelector<HTMLElement>('[data-nt-slot]'); if (slot) mountNotify(slot);
-    done.querySelector('[data-track]')?.addEventListener('click', () => { closeOverlay($('#checkout')); setTimeout(openTrack, 250); });
-    $<HTMLElement>('[data-close].btn', done).focus();
+    if (res.ok) showDone(data.order_id, data.track_key, res, ctx);
+    else {
+      // no connection: keep the order on the phone and send it the moment the internet is back (same number, so never twice)
+      queueOrder({ data, ctx, at: Date.now() });
+      showQueued(data.order_id, ctx);
+    }
   } catch (e) {
     const m = (e as Error).message;
     fail(t(m === 'paused' ? 'err.paused' : m === 'too-many' ? 'err.tooMany' : 'err.send'));
   } finally {
     sending = false; btn.disabled = false; if (order.step === 3) btn.textContent = t('co.send');
   }
+}
+
+/* =============== after sending: the "order sent" screen =============== */
+type DoneCtx = { made: Line[]; method: Method; zone: string; address: string; total: number; cookMin: number; due: string; dueLabel: string; gifts: number; tomorrow: boolean; phone: string; text: string };
+function showDone(id: string, key: string, res: SendResult, c: DoneCtx) {
+  const { live, bot } = res;
+  // the tracker follows only what the kitchen presses in Telegram; without that link there is nothing honest to show
+  if (live) void trackMod().then(m => m.startTrack({ id, key, kind: c.method === 'delivery' ? 'd' : c.method === 'table' ? 't' : 'p', placed: Date.now(), zone: c.zone, address: c.address, total: c.total, lines: c.made, cookMin: c.cookMin, bot }));
+  $('#coForm').hidden = true; $('#coSteps').hidden = true;
+  const done = $('#coDone');
+  done.hidden = false;
+  done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('kfc-1kg')!.art)}</div><h4>${t('done.sent')}</h4>
+    <p>${tf('done.no', { id })}</p>
+    ${live ? `<p class="co-live" data-st="new" aria-live="polite"><i aria-hidden="true"></i><span>${t('tk.t.new')}</span></p><p class="hint">${t('done.live')}</p><div class="co-nt" data-nt-slot></div>` : `<p>${tf('done.call', { phone: '+998 ' + fmtPhone(c.phone) })}</p>`}<p class="eta-big">${tf((c.method === 'delivery' ? 'done.etaDelivery' : 'done.eta') + (c.tomorrow ? 'Tm' : ''), { t: c.due })}</p>
+    ${c.gifts ? `<p class="stamp-plus">${tf('fri.got', { g: c.gifts })}</p>` : ''}
+    ${live ? `<button type="button" class="btn btn-ink tk-done-btn" data-track>${t('tk.open')}</button>` : ''}
+    <button type="button" class="watch-btn" data-watch><span class="wb-play" aria-hidden="true"></span><span><b>${t('afk.watch')}</b><small>${t('afk.watchSub')}</small></span></button>
+    <button class="btn btn-acc" data-close>${t('done.close')}</button>`;
+  $('[data-watch]', done).addEventListener('click', () => showOrder(c.made, c.dueLabel));
+  const slot = done.querySelector<HTMLElement>('[data-nt-slot]'); if (slot) void trackMod().then(m => m.mountNotify(slot));
+  done.querySelector('[data-track]')?.addEventListener('click', () => { closeOverlay($('#checkout')); void trackMod().then(m => setTimeout(m.openTrack, 250)); });
+  $<HTMLElement>('[data-close].btn', done).focus();
+}
+/** No internet: the order waits on this phone. Also offers the ways that don't need the website. */
+function showQueued(id: string, c: DoneCtx) {
+  $('#coForm').hidden = true; $('#coSteps').hidden = true;
+  const done = $('#coDone');
+  done.hidden = false;
+  const tg = /^[A-Za-z0-9_]{5,}$/.test(CAFE.telegram) ? `https://t.me/${CAFE.telegram}` : '';
+  const phoneOk = /\d{3}/.test(CAFE.phone) && !/X/.test(CAFE.phone);
+  done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('kfc-1kg')!.art)}</div><h4>${t('ob.title')}</h4>
+    <p>${tf('done.no', { id })}</p>
+    <p class="co-live" data-st="queued" aria-live="polite"><i aria-hidden="true"></i><span>${t('ob.waiting')}</span></p>
+    <p class="hint">${t('ob.keep')}</p>
+    <div class="ob-alt"><b>${t('ob.altTitle')}</b>
+      <div class="ob-btns">${tg ? `<a class="btn btn-line" href="${tg}" target="_blank" rel="noopener">${t('ob.tg')}</a>` : ''}${phoneOk ? `<a class="btn btn-line" href="tel:${CAFE.phone.replace(/\s/g, '')}">${t('ob.call')} ${esc(CAFE.phone)}</a>` : ''}<button type="button" class="btn btn-line" data-ob-copy>${t('ob.copy')}</button></div>
+      <small>${t('ob.altNote')}</small></div>
+    <button class="btn btn-acc" data-close>${t('done.close')}</button>`;
+  $('[data-ob-copy]', done).addEventListener('click', async e => {
+    const b = e.currentTarget as HTMLButtonElement;
+    try { await navigator.clipboard.writeText(c.text); b.textContent = t('ob.copied'); }
+    catch { const ta = document.createElement('textarea'); ta.value = c.text; ta.className = 'ob-ta'; b.replaceWith(ta); ta.select(); }
+  });
+  $<HTMLElement>('[data-close].btn', done).focus();
+}
+/** The order as plain text, for pasting into Telegram or reading out on the phone. */
+function orderPlainText(items: string, d: Record<string, string>) {
+  return [`FFS — ${t('done.no').replace('{id}', d.order_id)}`, items, `${t('ob.total')}: ${money(+d.total)}`, `${d.name}, ${d.phone}`, d.address, d.table ? `#${d.table}` : '', d.comment].filter(Boolean).join('\n');
+}
+
+/* =============== the outbox: orders waiting for the internet =============== */
+type Queued = { data: Record<string, string>; ctx: DoneCtx; at: number };
+const OB_KEY = 'vc-outbox', OB_MAX_AGE = 60 * 60000; // after an hour the food time is meaningless: ask them to order again
+const obGet = (): Queued[] => { const v = store.get(OB_KEY); return Array.isArray(v) ? v as Queued[] : []; };
+const obSet = (q: Queued[]) => store.set(OB_KEY, q.length ? q : null);
+function queueOrder(q: Queued) { obSet([...obGet().filter(x => x.data.order_id !== q.data.order_id), q]); scheduleFlush(3000); renderNet(); }
+let flushing = false, flushTimer = 0, flushWait = 5000;
+function scheduleFlush(ms = flushWait) { clearTimeout(flushTimer); flushTimer = window.setTimeout(() => void flushOutbox(), ms); }
+async function flushOutbox() {
+  const list = obGet();
+  if (!list.length || flushing) return;
+  if (navigator.onLine === false) { scheduleFlush(15000); return; }
+  flushing = true;
+  try {
+    for (const q of list) {
+      if (Date.now() - q.at > OB_MAX_AGE) { obSet(obGet().filter(x => x !== q && x.data.order_id !== q.data.order_id)); toast(tf('ob.expired', { id: q.data.order_id })); continue; }
+      // tell the kitchen it's late, so nobody is surprised by an "ASAP" order from half an hour ago
+      const late = Math.round((Date.now() - q.at) / 60000);
+      const res = await sendWithin(late >= 2 ? { ...q.data, queued_min: String(late) } : q.data, 25000);
+      if (res.ok || (res.why && !['network', 'timeout', 'offline'].includes(res.why))) obSet(obGet().filter(x => x.data.order_id !== q.data.order_id));
+      if (res.ok) {
+        toast(tf('ob.sent', { id: q.data.order_id }));
+        const open = !$('#checkout').hidden && $('#coDone .co-live[data-st="queued"]');
+        if (open) showDone(q.data.order_id, q.data.track_key, res, q.ctx);
+        else if (res.live) void trackMod().then(m => m.startTrack({ id: q.data.order_id, key: q.data.track_key, kind: q.ctx.method === 'delivery' ? 'd' : q.ctx.method === 'table' ? 't' : 'p', placed: Date.now(), zone: q.ctx.zone, address: q.ctx.address, total: q.ctx.total, lines: q.ctx.made, cookMin: q.ctx.cookMin, bot: res.bot }));
+      } else if (res.why === 'paused') toast(t('err.paused'));
+      else if (res.why && !['network', 'timeout', 'offline'].includes(res.why)) toast(t('err.send'));
+    }
+  } finally {
+    flushing = false;
+    const left = obGet().length;
+    flushWait = left ? Math.min(60000, flushWait * 1.5) : 5000;
+    if (left) scheduleFlush(); renderNet();
+  }
+}
+/** sendBoth with a time limit; a timeout counts as "no connection" (the server ignores a repeat of the same order). */
+async function sendWithin(data: Record<string, string>, ms: number): Promise<SendResult> {
+  if (navigator.onLine === false) return { ok: false, live: false, bot: '', why: 'offline' };
+  const ctl = new AbortController(); const tm = setTimeout(() => ctl.abort(), ms);
+  try { const r = await sendBoth(data, ctl.signal); return ctl.signal.aborted && !r.ok ? { ...r, why: 'timeout' } : r; }
+  finally { clearTimeout(tm); }
+}
+
+/* =============== connection: offline / slow notice =============== */
+function renderNet() {
+  let bar = document.getElementById('netBar');
+  const offline = navigator.onLine === false, waiting = obGet().length;
+  const msg = offline ? t(waiting ? 'net.offlineQueued' : 'net.offline') : waiting ? t('net.sending') : slowNet() && !slowShown ? t('net.slow') : '';
+  root.classList.toggle('slow', slowNet());
+  if (!msg) { if (bar) bar.hidden = true; return; }
+  if (!bar) { bar = document.createElement('div'); bar.id = 'netBar'; bar.className = 'net-bar'; bar.setAttribute('role', 'status'); document.body.appendChild(bar); }
+  bar.hidden = false; bar.dataset.kind = offline ? 'off' : waiting ? 'wait' : 'slow'; bar.textContent = msg;
+  if (!offline && !waiting && slowNet()) { slowShown = true; setTimeout(() => { if (bar && bar.dataset.kind === 'slow') bar.hidden = true; }, 6000); }
+}
+let slowShown = false;
+function initNet() {
+  onNetChange(() => { renderNet(); if (navigator.onLine !== false) { flushWait = 5000; scheduleFlush(500); } });
+  document.addEventListener('visibilitychange', () => { if (!document.hidden && obGet().length) scheduleFlush(500); });
+  on('lang', renderNet);
+  renderNet();
+  if (obGet().length) scheduleFlush(1500);
 }
 
 /* =============== booking =============== */
@@ -785,9 +905,29 @@ on('lang', () => { renderStatus(); renderReceipt(); renderChips(); renderGrid();
 initPerf();
 buildScene(); renderReceipt(); fitScene(); renderTape(); renderVisit(); setWorldUI();
 applyLang();
-initLab(); initBudget();
-initReveal(); initScroll(); initAfk(); initTrack();
-on('lang', langTrack);
+initBudget();
+initReveal(); initScroll();
+// builders: load when the customer gets near them (or once the page is idle)
+let labP: Promise<unknown> | null = null;
+const loadLab = () => labP ??= import('./lab.js').then(m => m.initLab());
+const labEl = document.getElementById('lab');
+if (labEl && 'IntersectionObserver' in window) {
+  const io = new IntersectionObserver(es => { if (es.some(e => e.isIntersecting)) { io.disconnect(); void loadLab(); } }, { rootMargin: '1500px 0px' });
+  io.observe(labEl);
+} else void loadLab();
+// tracking: right away only if there's an order to follow
+const qsBoot = new URLSearchParams(location.search);
+if (store.get('vc-track') || qsBoot.has('trackdemo') || qsBoot.has('track')) void trackMod();
+navigator.serviceWorker?.addEventListener('message', e => { if ((e.data as { type?: string })?.type === 'open-track') void trackMod().then(m => m.openTrack()); });
+// idle show: fetched quietly after the page settles; on a weak connection only once the visitor is actually idle
+const idleLoad = (f: () => void, ms: number) => setTimeout(() => ('requestIdleCallback' in window ? requestIdleCallback(f, { timeout: 4000 }) : f()), ms);
+const forceAfk = qsBoot.has('afk') || qsBoot.has('afkt');
+let lastTouch = Date.now();
+['pointerdown', 'pointermove', 'keydown', 'wheel', 'touchstart', 'scroll'].forEach(ev => addEventListener(ev, () => { lastTouch = Date.now(); }, { passive: true, capture: true }));
+if (forceAfk || !slowNet()) idleLoad(() => { void afkMod().then(m => m.initAfk(lastTouch)); if (!labP) void loadLab(); }, forceAfk ? 0 : 4000);
+else {
+  const watch = setInterval(() => { if (Date.now() - lastTouch > 30000) { clearInterval(watch); void afkMod().then(m => m.initAfk(lastTouch)); } }, 5000);
+}
 if (reduced) root.classList.add('reduced');
 // iOS Safari brings pages back from its back/forward cache with frozen transitions, a stale scroll state and the pinned
 // hero scene unpinned. Instead of patching that state, load the page fresh (from cache, so it's instant).
@@ -795,5 +935,11 @@ addEventListener('pageshow', e => { if ((e as PageTransitionEvent).persisted) lo
 document.addEventListener('visibilitychange', () => { if (!document.hidden) { heroP = -1; fitScene(); onScroll(); } });
 updateHero(heroProgress()); onScroll();
 const hideLoader = () => { const l = document.getElementById('loader'); if (!l || l.classList.contains('gone')) return; l.classList.add('gone'); setTimeout(() => l.remove(), 700); root.classList.add('ready'); };
-if (document.readyState === 'complete') setTimeout(hideLoader, 500); else addEventListener('load', () => setTimeout(hideLoader, 400));
-setTimeout(hideLoader, 3500);
+// the page is drawn by now; don't keep the loader up waiting for fonts or the last files on a slow connection
+setTimeout(hideLoader, document.readyState === 'complete' ? 300 : 400);
+root.dataset.ready = '1';
+// a page that took this long to start is on a slow connection, whatever the browser reports
+if (performance.now() > 6000) markSlow();
+initNet();
+// keep the site on the phone for instant repeat visits and offline use (also delivers "order ready" notifications)
+if ('serviceWorker' in navigator && isSecureContext && !qsBoot.has('nosw')) addEventListener('load', () => setTimeout(() => navigator.serviceWorker.register('/sw.js').catch(() => null), 1500));

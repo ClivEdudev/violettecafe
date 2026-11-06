@@ -186,6 +186,8 @@ function orderText(d) {
     k.text,
   ];
   if (d.comment) L.push('', `⚠️ <b>Izoh:</b>`, `<blockquote>${esc(cut(d.comment, MAX.comment))}</blockquote>`);
+  const late = Math.round(Number(d.queued_min) || 0);
+  if (late >= 2 && late <= 120) L.push('', `📶 <b>Mijozda internet yoʻq edi — buyurtma ${late} daqiqa kechikib keldi.</b> Vaqtini tekshiring.`);
   L.push('', `👤 <b>MIJOZ</b>`, LINE, `${esc(cut(d.name, MAX.name))}`, `📞 ${esc(phoneLink(d.phone))}`);
   if (d.method === 'delivery') L.push(`📍 ${esc(cut(d.address, MAX.address))}`, ...(d.zone ? [`🗺 Hudud: ${esc(cut(d.zone, MAX.short))}`] : []));
   L.push('', `💰 <b>TOʻLOV</b> · ${PAY[d.payment] ?? esc(cut(d.payment, 20))}`, LINE);
