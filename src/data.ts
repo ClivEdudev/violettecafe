@@ -17,17 +17,18 @@ const n = (uz: string, ru: string, en: string): L10n => ({ uz, ru, en });
 const D = (d: DrinkSpec): ArtSpec => ({ k: 'drink', d });
 
 export const CAFE = {
-  name: 'FFS',
-  phone: '+998 20 009 01 57', phone2: '+998 92 151 40 72',
-  telegram: 'ffs',
-  instagram: 'javanews', // as given by the owner — worth double-checking
-  plus: 'Q8PJ+CWH', plusFull: '8JGJQ8PJ+CWH', lat: 40.78606, lng: 72.33236, // Boburshoh koʻchasi 48
-  open: 8, close: 24, lastOrder: 23 + 40 / 60, // every day 08:00–00:00, last order 23:40 (Tashkent time)
+  name: 'Frans Burger',
+  // placeholders until the owner gives the real contacts: while the phone holds XX the site shows the Telegram link instead
+  phone: '+998 XX XXX XX XX', phone2: '',
+  telegram: 'fransburger',
+  instagram: 'fransburger',
+  plus: 'Q944+3J5', plusFull: '8JGJQ944+3J5', lat: 40.75514, lng: 72.35661, // Andijan (street address to be confirmed)
+  open: 10, close: 23, lastOrder: 22 + 40 / 60, // placeholder hours: every day 10:00–23:00, last order 22:40 (Tashkent time)
 };
 
 export const CATS: { id: CatId; world: World; name: L10n }[] = [
-  { id: 'chicken', world: 'food', name: n('KFC tovuq', 'Курица KFC', 'Fried chicken') },
   { id: 'burger', world: 'food', name: n('Burgerlar', 'Бургеры', 'Burgers') },
+  { id: 'chicken', world: 'food', name: n('Tovuq', 'Курица', 'Chicken') },
   { id: 'lavash', world: 'food', name: n('Lavash va donar', 'Лаваш и донер', 'Lavash & doner') },
   { id: 'hotdog', world: 'food', name: n('Hot-doglar', 'Хот-доги', 'Hot dogs') },
   { id: 'sides', world: 'food', name: n('Fri', 'Фри', 'Fries') },
@@ -41,30 +42,33 @@ const C = { esp: '#3A1F14', amer: '#4A2A1A', latte: '#C69C72', foam: '#F1E3CF', 
 const COFFEE_X: ExtraId[] = ['shot', 'oat', 'syrup'];
 const FOOD_X: ExtraId[] = ['cheese', 'sauce'];
 
+// SAMPLE MENU: names, prices, calories and prep times are placeholders until the Frans Burger owner sends the real menu.
 export const ITEMS: Item[] = [
-  // ---- fried chicken (the shop's own names and prices)
-  { id: 'kfc-1kg', cat: 'chicken', role: 'main', art: { k: 'bucket' }, name: n('1 kg KFC kombo', '1 кг KFC комбо', '1 kg KFC combo'), desc: n('Bir kilogramm qarsildoq tovuq — eng koʻp olinadigan set', 'Килограмм хрустящей курицы — самый популярный сет', 'A kilo of crispy chicken — our best seller'), price: 95000, kcal: 2400, prep: 12, tags: ['hit', 'signature'], extras: ['sauce'], pop: 100 },
-  { id: 'ffs-mega-mix', cat: 'chicken', role: 'main', art: { k: 'combo', parts: [{ k: 'drumsticks' }, { k: 'fries' }] }, name: n('FFS mega mix', 'FFS mega mix', 'FFS mega mix'), desc: n('Qarsildoq tovuq boʻlaklari va fri', 'Хрустящие куриные кусочки и фри', 'Crispy chicken pieces and fries'), price: 38000, kcal: 900, prep: 10, tags: ['signature'], extras: ['sauce'], pop: 90 },
-  { id: 'spicy-bite', cat: 'chicken', role: 'main', art: { k: 'drumsticks', variant: 'spicy' }, name: n('Spicy bite', 'Spicy bite', 'Spicy bite'), desc: n('Achchiq va qarsildoq', 'Острое и хрустящее', 'Spicy and crunchy'), price: 24000, kcal: 520, prep: 9, tags: ['spicy'], extras: ['sauce'], pop: 86 },
   // ---- burgers
-  { id: 'ffs-boss-burger', cat: 'burger', role: 'main', art: { k: 'burger', layers: ['bun:brioche', 'sauce', 'beef', 'cheese', 'beef', 'cheese', 'onion', 'lettuce'] }, name: n('FFS boss burger', 'FFS boss burger', 'FFS boss burger'), desc: n('FFS imzo burgeri', 'Фирменный бургер FFS', 'The FFS signature burger'), price: 35000, kcal: 820, prep: 10, tags: ['signature'], extras: FOOD_X, pop: 95 },
-  { id: 'cheese-storm', cat: 'burger', role: 'main', art: { k: 'burger', layers: ['bun:classic', 'sauce', 'beef', 'cheese', 'cheese', 'pickles'] }, name: n('Cheese storm', 'Cheese storm', 'Cheese storm'), desc: n('Pishloq boʻroni', 'Сырный шторм', 'A storm of cheese'), price: 27000, kcal: 640, prep: 9, extras: FOOD_X, pop: 88 },
-  { id: 'classic-burger', photo: 'photo-1568901346375-23c9450c58cd', cat: 'burger', role: 'main', art: { k: 'burger', layers: ['bun:classic', 'ketchup', 'beef', 'tomato', 'lettuce'] }, name: n('Klassik burger', 'Классический бургер', 'Classic burger'), desc: n('Mol goʻshti kotleti, pomidor, salat', 'Говяжья котлета, томат, салат', 'Beef patty, tomato, lettuce'), price: 35000, kcal: 520, prep: 10, extras: [...FOOD_X, 'patty'], pop: 88 },
-  { id: 'cheeseburger', photo: 'photo-1667329829058-ac191ba4a905', cat: 'burger', role: 'main', art: { k: 'burger', layers: ['bun:classic', 'beef', 'cheese', 'pickles', 'ketchup'] }, name: n('Chizburger', 'Чизбургер', 'Cheeseburger'), desc: n('Erigan cheddar va tuzlangan bodring', 'Плавленый чеддер и огурчики', 'Melted cheddar and pickles'), price: 38000, kcal: 580, prep: 10, extras: [...FOOD_X, 'patty'], pop: 90 },
-  { id: 'chicken-burger', photo: 'photo-1637710847214-f91d99669e18', cat: 'burger', role: 'main', art: { k: 'burger', layers: ['bun:classic', 'sauce', 'chicken', 'lettuce', 'tomato'] }, name: n('Krispi tovuq burger', 'Бургер с хрустящей курицей', 'Crispy chicken burger'), desc: n('Qarsildoq tovuq filesi va oq sous', 'Хрустящее куриное филе и белый соус', 'Crispy chicken fillet and white sauce'), price: 36000, kcal: 560, prep: 11, extras: FOOD_X, pop: 86 },
+  { id: 'frans-burger', cat: 'burger', role: 'main', art: { k: 'burger', layers: ['bun:brioche', 'sauce', 'beef', 'cheese', 'bacon', 'onion', 'lettuce'] }, name: n('Frans burger', 'Frans burger', 'Frans burger'), desc: n('Imzo burgerimiz: brioch non, mol goʻshti, cheddar, bekon, piyoz va maxsus Frans sousi', 'Наш фирменный: бриошь, говядина, чеддер, бекон, лук и соус Frans', 'Our signature: brioche, beef, cheddar, beef bacon, onion and Frans sauce'), price: 42000, kcal: 760, prep: 10, tags: ['signature', 'hit'], extras: [...FOOD_X, 'patty'], pop: 100 },
+  { id: 'double-frans', cat: 'burger', role: 'main', art: { k: 'burger', layers: ['bun:brioche', 'sauce', 'beef', 'cheese', 'beef', 'cheese', 'pickles', 'onion'] }, name: n('Dabl Frans', 'Дабл Frans', 'Double Frans'), desc: n('Ikki kotlet, ikki cheddar — chinakam ochlar uchun', 'Две котлеты, два чеддера — для голодных всерьёз', 'Two patties, two cheddars — for the seriously hungry'), price: 52000, kcal: 1050, prep: 11, tags: ['signature'], extras: FOOD_X, pop: 92 },
+  { id: 'triple-cheese', cat: 'burger', role: 'main', art: { k: 'burger', layers: ['bun:classic', 'sauce', 'beef', 'cheese', 'cheese', 'cheese', 'pickles'] }, name: n('Uch pishloqli', 'Три сыра', 'Triple cheese'), desc: n('Mol goʻshti va uch qavat erigan pishloq', 'Говядина и три слоя тающего сыра', 'Beef with three layers of melting cheese'), price: 39000, kcal: 690, prep: 9, extras: FOOD_X, pop: 88 },
+  { id: 'classic-burger', photo: 'photo-1568901346375-23c9450c58cd', cat: 'burger', role: 'main', art: { k: 'burger', layers: ['bun:classic', 'ketchup', 'beef', 'tomato', 'lettuce'] }, name: n('Klassik burger', 'Классический бургер', 'Classic burger'), desc: n('Mol goʻshti kotleti, pomidor, salat', 'Говяжья котлета, томат, салат', 'Beef patty, tomato, lettuce'), price: 32000, kcal: 520, prep: 10, extras: [...FOOD_X, 'patty'], pop: 88 },
+  { id: 'cheeseburger', photo: 'photo-1667329829058-ac191ba4a905', cat: 'burger', role: 'main', art: { k: 'burger', layers: ['bun:classic', 'beef', 'cheese', 'pickles', 'ketchup'] }, name: n('Chizburger', 'Чизбургер', 'Cheeseburger'), desc: n('Erigan cheddar va tuzlangan bodring', 'Плавленый чеддер и огурчики', 'Melted cheddar and pickles'), price: 35000, kcal: 580, prep: 10, extras: [...FOOD_X, 'patty'], pop: 90 },
+  { id: 'chicken-burger', photo: 'photo-1637710847214-f91d99669e18', cat: 'burger', role: 'main', art: { k: 'burger', layers: ['bun:classic', 'sauce', 'chicken', 'lettuce', 'tomato'] }, name: n('Krispi tovuq burger', 'Бургер с хрустящей курицей', 'Crispy chicken burger'), desc: n('Qarsildoq tovuq filesi va oq sous', 'Хрустящее куриное филе и белый соус', 'Crispy chicken fillet and white sauce'), price: 34000, kcal: 560, prep: 11, extras: FOOD_X, pop: 86 },
+  { id: 'egg-burger', cat: 'burger', role: 'main', art: { k: 'burger', layers: ['bun:brioche', 'ketchup', 'beef', 'egg', 'cheese', 'lettuce'] }, name: n('Nonushta burger', 'Бургер-завтрак', 'Breakfast burger'), desc: n('Kotlet, qovurilgan tuxum, cheddar — kun boshi uchun', 'Котлета, глазунья и чеддер — для начала дня', 'Patty, fried egg and cheddar — to start the day'), price: 38000, kcal: 650, prep: 10, tags: ['new'], extras: FOOD_X, pop: 80 },
+  // ---- chicken
+  { id: 'chicken-box', cat: 'chicken', role: 'main', art: { k: 'bucket' }, name: n('Frans tovuq boks', 'Frans куриный бокс', 'Frans chicken box'), desc: n('Bir kilogramm qarsildoq tovuq — butun kompaniyaga', 'Килограмм хрустящей курицы — на всю компанию', 'A kilo of crispy chicken — for the whole group'), price: 89000, kcal: 2400, prep: 12, tags: ['hit'], extras: ['sauce'], pop: 94 },
+  { id: 'frans-mix', cat: 'chicken', role: 'main', art: { k: 'combo', parts: [{ k: 'drumsticks' }, { k: 'fries' }] }, name: n('Frans miks', 'Frans микс', 'Frans mix'), desc: n('Qarsildoq tovuq boʻlaklari va fri', 'Хрустящие куриные кусочки и фри', 'Crispy chicken pieces and fries'), price: 36000, kcal: 900, prep: 10, extras: ['sauce'], pop: 87 },
+  { id: 'spicy-wings', cat: 'chicken', role: 'main', art: { k: 'drumsticks', variant: 'spicy' }, name: n('Achchiq qanotlar', 'Острые крылышки', 'Spicy wings'), desc: n('Achchiq va qarsildoq', 'Острые и хрустящие', 'Spicy and crunchy'), price: 26000, kcal: 520, prep: 9, tags: ['spicy'], extras: ['sauce'], pop: 84 },
   // ---- lavash & doner
-  { id: 'lavash-chicken', photo: 'photo-1762284513008-08f897ff5041', cat: 'lavash', role: 'main', art: { k: 'wrap', variant: 'chicken' }, name: n('Tovuqli lavash', 'Лаваш с курицей', 'Chicken lavash'), desc: n('Tovuq, fri, pomidor, bodring va sous', 'Курица, фри, томат, огурец и соус', 'Chicken, fries, tomato, cucumber and sauce'), price: 32000, kcal: 610, prep: 8, tags: ['hit'], extras: FOOD_X, pop: 99 },
-  { id: 'lavash-beef', photo: 'photo-1529006557810-274b9b2fc783', cat: 'lavash', role: 'main', art: { k: 'wrap', variant: 'beef' }, name: n('Goʻshtli lavash', 'Лаваш с говядиной', 'Beef lavash'), desc: n('Mol goʻshti, fri va sarimsoqli sous', 'Говядина, фри и чесночный соус', 'Beef, fries and garlic sauce'), price: 36000, kcal: 660, prep: 9, extras: FOOD_X, pop: 91 },
-  { id: 'shaurma-pita', photo: 'photo-1676300187347-6f60002fd83e', cat: 'lavash', role: 'main', art: { k: 'pita' }, name: n('Donar', 'Донер', 'Doner'), desc: n('Yangi non, goʻsht va sabzavotlar', 'Свежий хлеб, мясо и овощи', 'Fresh bread, meat and vegetables'), price: 33000, kcal: 580, prep: 8, extras: FOOD_X, pop: 80 },
+  { id: 'lavash-chicken', photo: 'photo-1762284513008-08f897ff5041', cat: 'lavash', role: 'main', art: { k: 'wrap', variant: 'chicken' }, name: n('Tovuqli lavash', 'Лаваш с курицей', 'Chicken lavash'), desc: n('Tovuq, fri, pomidor, bodring va sous', 'Курица, фри, томат, огурец и соус', 'Chicken, fries, tomato, cucumber and sauce'), price: 30000, kcal: 610, prep: 8, tags: ['hit'], extras: FOOD_X, pop: 96 },
+  { id: 'lavash-beef', photo: 'photo-1529006557810-274b9b2fc783', cat: 'lavash', role: 'main', art: { k: 'wrap', variant: 'beef' }, name: n('Goʻshtli lavash', 'Лаваш с говядиной', 'Beef lavash'), desc: n('Mol goʻshti, fri va sarimsoqli sous', 'Говядина, фри и чесночный соус', 'Beef, fries and garlic sauce'), price: 34000, kcal: 660, prep: 9, extras: FOOD_X, pop: 91 },
+  { id: 'shaurma-pita', photo: 'photo-1676300187347-6f60002fd83e', cat: 'lavash', role: 'main', art: { k: 'pita' }, name: n('Donar', 'Донер', 'Doner'), desc: n('Yangi non, goʻsht va sabzavotlar', 'Свежий хлеб, мясо и овощи', 'Fresh bread, meat and vegetables'), price: 32000, kcal: 580, prep: 8, extras: FOOD_X, pop: 80 },
   // ---- hot dogs
+  { id: 'french-hotdog', photo: 'photo-1619538189873-3f511db5fec6', cat: 'hotdog', role: 'main', art: { k: 'hotdog', variant: 'french' }, name: n('Fransuzcha hot-dog', 'Французский хот-дог', 'French hot dog'), desc: n('Ichi kovak bagetda, sous bilan — nomimizga munosib', 'В багете с соусом внутри — как и положено у Frans', 'Inside a baguette with sauce — as a Frans should be'), price: 20000, kcal: 400, prep: 5, tags: ['signature'], pop: 85 },
   { id: 'hotdog', photo: 'photo-1638368593249-7cadb261e8b3', cat: 'hotdog', role: 'main', art: { k: 'hotdog' }, name: n('Klassik hot-dog', 'Классический хот-дог', 'Classic hot dog'), desc: n('Mol goʻshti sosiskasi, ketchup va xantal', 'Говяжья сосиска, кетчуп и горчица', 'Beef sausage, ketchup and mustard'), price: 18000, kcal: 380, prep: 5, extras: FOOD_X, pop: 82 },
-  { id: 'french-hotdog', photo: 'photo-1619538189873-3f511db5fec6', cat: 'hotdog', role: 'main', art: { k: 'hotdog', variant: 'french' }, name: n('Fransuzcha hot-dog', 'Французский хот-дог', 'French hot dog'), desc: n('Ichi kovak bagetda, sous bilan', 'В багете с соусом внутри', 'Inside a baguette with sauce'), price: 20000, kcal: 400, prep: 5, pop: 78 },
   // ---- sides
-  { id: 'fries', photo: 'photo-1630384060421-cb20d0e0649d', cat: 'sides', role: 'side', art: { k: 'fries' }, name: n('Kartoshka fri', 'Картофель фри', 'French fries'), desc: n('Qarsildoq, tuzli', 'Хрустящий, подсоленный', 'Crispy and salted'), price: 15000, kcal: 340, prep: 5, tags: ['hit'], sized: true, extras: ['sauce', 'cheese'], pop: 95 },
-  // ---- combos (the shop's own names and prices; contents to be confirmed)
-  { id: 'crunch-duo', cat: 'combo', role: 'main', art: { k: 'combo', parts: [{ k: 'bucket' }, { k: 'burger', layers: ['bun:classic', 'beef', 'cheese', 'lettuce'] }, { k: 'soda' }] }, name: n('Crunch duo kombo', 'Комбо Crunch duo', 'Crunch duo combo'), desc: n('Ikki kishilik: qarsildoq tovuq, chizburger, fri va gazli ichimlik', 'На двоих: хрустящая курица, чизбургер, фри и газировка', 'For two: crispy chicken, a cheeseburger, fries and a soda'), price: 99000, kcal: 2200, prep: 12, pop: 94 },
-  { id: 'madina-combo', cat: 'combo', role: 'main', art: { k: 'combo', parts: [{ k: 'wrap', variant: 'chicken' }, { k: 'fries' }, { k: 'soda' }] }, name: n('Madina kombo', 'Комбо «Мадина»', 'Madina combo'), desc: n('Tovuqli lavash, fri va gazli ichimlik', 'Лаваш с курицей, фри и газировка', 'Chicken lavash, fries and a soda'), price: 48000, kcal: 1100, prep: 10, pop: 87 },
-  { id: 'solo-combo', cat: 'combo', role: 'main', art: { k: 'combo', parts: [{ k: 'burger', layers: ['bun:classic', 'beef', 'cheese', 'lettuce'] }, { k: 'fries' }, { k: 'soda' }] }, name: n('Yolgʻizlik kombo', 'Комбо «Одиночество»', 'Solo combo'), desc: n('Bir kishilik: chizburger, fri va gazli ichimlik', 'На одного: чизбургер, фри и газировка', 'For one: a cheeseburger, fries and a soda'), price: 43000, kcal: 1050, prep: 10, pop: 89 },
+  { id: 'fries', photo: 'photo-1630384060421-cb20d0e0649d', cat: 'sides', role: 'side', art: { k: 'fries' }, name: n('Kartoshka fri', 'Картофель фри', 'French fries'), desc: n('Qarsildoq, tuzli — fransuzcha, albatta', 'Хрустящий и подсоленный — французский, конечно', 'Crispy and salted — French, of course'), price: 14000, kcal: 340, prep: 5, tags: ['hit'], sized: true, extras: ['sauce', 'cheese'], pop: 95 },
+  // ---- combos (sample contents and prices)
+  { id: 'frans-combo', cat: 'combo', role: 'main', art: { k: 'combo', parts: [{ k: 'burger', layers: ['bun:brioche', 'sauce', 'beef', 'cheese', 'bacon', 'lettuce'] }, { k: 'fries' }, { k: 'soda' }] }, name: n('Frans kombo', 'Комбо Frans', 'Frans combo'), desc: n('Frans burger, fri va gazli ichimlik', 'Frans burger, фри и газировка', 'Frans burger, fries and a soda'), price: 58000, kcal: 1310, prep: 10, tags: ['signature'], pop: 93 },
+  { id: 'duo-combo', cat: 'combo', role: 'main', art: { k: 'combo', parts: [{ k: 'burger', layers: ['bun:classic', 'beef', 'cheese', 'lettuce'] }, { k: 'fries' }, { k: 'burger', layers: ['bun:classic', 'beef', 'cheese', 'lettuce'] }] }, name: n('Duet kombo', 'Комбо «Дуэт»', 'Duo combo'), desc: n('Ikki kishilik: ikki chizburger, ikki fri va ikki gazli ichimlik', 'На двоих: два чизбургера, две фри и две газировки', 'For two: two cheeseburgers, two fries and two sodas'), price: 105000, kcal: 2260, prep: 12, pop: 90 },
+  { id: 'lavash-combo', cat: 'combo', role: 'main', art: { k: 'combo', parts: [{ k: 'wrap', variant: 'chicken' }, { k: 'fries' }, { k: 'soda' }] }, name: n('Lavash kombo', 'Комбо с лавашом', 'Lavash combo'), desc: n('Tovuqli lavash, fri va gazli ichimlik', 'Лаваш с курицей, фри и газировка', 'Chicken lavash, fries and a soda'), price: 46000, kcal: 1100, prep: 10, pop: 87 },
   // ---- tea
   { id: 'glass-tea', cat: 'tea', role: 'drink', art: D({ v: 'glass', liquid: '#A8481C', layers: ['#A8481C'] }), name: n('Bardak choy', 'Чай в стакане', 'Tea in a glass'), desc: n('Qora yoki koʻk', 'Чёрный или зелёный', 'Black or green'), price: 5000, kcal: 2, prep: 2, pop: 70 },
   { id: 'turkish-tea', cat: 'tea', role: 'drink', art: D({ v: 'glass', liquid: '#8E2F12', layers: ['#8E2F12'] }), name: n('Turkcha choy', 'Турецкий чай', 'Turkish tea'), desc: n('Kuchli, tiniq, qand bilan', 'Крепкий и прозрачный, с сахаром', 'Strong and clear, with sugar'), price: 7000, kcal: 2, prep: 3, pop: 68 },
@@ -114,7 +118,7 @@ export const FILLINGS = [
   { id: 'tomato', name: n('Pomidor', 'Томат', 'Tomato'), price: 2000, kcal: 10, prep: 0 },
   { id: 'onion', name: n('Qizil piyoz', 'Красный лук', 'Red onion'), price: 2000, kcal: 15, prep: 0 },
   { id: 'pickles', name: n('Tuzlangan bodring', 'Огурчики', 'Pickles'), price: 2000, kcal: 5, prep: 0 },
-  { id: 'sauce', name: n('Soul sousi', 'Соус Soul', 'Soul sauce'), price: 2000, kcal: 60, prep: 0 },
+  { id: 'sauce', name: n('Frans sousi', 'Соус Frans', 'Frans sauce'), price: 2000, kcal: 60, prep: 0 },
   { id: 'ketchup', name: n('Ketchup', 'Кетчуп', 'Ketchup'), price: 1000, kcal: 20, prep: 0 },
 ];
 export const MAX_FILLINGS = 9;
@@ -191,13 +195,14 @@ export const ZONES = [
 export const STAMPS_FOR_GIFT = 6;
 /** Delivery orders start from this subtotal. */
 export const MIN_DELIVERY = 50000;
-/** Fridays: every 4 dishes ordered get 1 more on the house. */
+/** Fridays: every 4 dishes ordered get 1 more on the house. Off until the Frans Burger owner agrees to run it. */
 export const FRIDAY_EVERY = 4;
+export const FRIDAY_DEAL = false;
 
 /* ---------- hero pair (a random drink + burger set with a discount, new on every visit) ---------- */
 export const SET_DISCOUNTS = [10, 12, 15];
 export const SET_DRINKS = ['latte', 'cappuccino', 'americano'];
-export const SET_BURGERS = ['classic-burger', 'cheeseburger', 'chicken-burger'];
+export const SET_BURGERS = ['frans-burger', 'classic-burger', 'cheeseburger', 'chicken-burger'];
 export function setFull(d: string, b: string) { const di = ITEM(d)!, bi = ITEM(b)!; return di.price + (di.sized ? SIZES[1].add : 0) + bi.price; }
 export function setPrice(d: string, b: string, pct: number) { return Math.round((setFull(d, b) * (100 - pct)) / 100 / 500) * 500; }
 
@@ -206,9 +211,9 @@ export type Allergen = 'nuts' | 'gluten' | 'lactose';
 const VEG_EXTRA = ['fries', 'cheese-fries'];
 const NUTS = ['almond-croissant'];
 const GLUTEN_CATS: CatId[] = ['sweet', 'chicken', 'burger', 'lavash', 'hotdog'];
-const GLUTEN = ['pizza-slice', 'nuggets', 'crunch-duo', 'madina-combo', 'solo-combo'];
+const GLUTEN = ['duo-combo', 'lavash-combo', 'frans-combo'];
 const LACTOSE = ['violette-latte', 'cappuccino', 'latte', 'flat-white', 'raf', 'mocha', 'iced-violette', 'iced-latte', 'frappe', 'matcha', 'cocoa',
-  'croissant', 'almond-croissant', 'cheesecake', 'tiramisu', 'medovik', 'violette-burger', 'cheeseburger', 'double-beef', 'lavash-cheese', 'club', 'pizza-slice', 'cheese-fries', 'cheese-storm', 'ffs-boss-burger', 'crunch-duo', 'solo-combo'];
+  'croissant', 'almond-croissant', 'cheesecake', 'tiramisu', 'medovik', 'violette-burger', 'cheeseburger', 'double-beef', 'lavash-cheese', 'club', 'pizza-slice', 'cheese-fries', 'triple-cheese', 'frans-burger', 'double-frans', 'egg-burger', 'duo-combo', 'frans-combo'];
 export const isVeg = (i: Item) => ['coffee', 'cold', 'tea', 'sweet'].includes(i.cat) || VEG_EXTRA.includes(i.id);
 export const isSpicy = (i: Item) => (i.tags ?? []).includes('spicy');
 export function allergens(i: Item): Allergen[] {

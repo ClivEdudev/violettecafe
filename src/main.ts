@@ -1,4 +1,4 @@
-import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, BUNS, FILLINGS, WRAP_BASES, WRAP_MEATS, WRAP_ADDS, WRAP_SAUCES, HD_SAUSAGES, HD_TOPS, HD_SAUCES, ZONES, STAMPS_FOR_GIFT, MIN_DELIVERY, FRIDAY_EVERY, SET_DRINKS, SET_BURGERS, SET_DISCOUNTS, setFull, setPrice, isVeg, isSpicy, allergens, type World, type CatId, type Item, type ExtraId, type Lang } from './data.js';
+import { CAFE, CATS, ITEMS, ITEM, SIZES, EXTRAS, BUNS, FILLINGS, WRAP_BASES, WRAP_MEATS, WRAP_ADDS, WRAP_SAUCES, HD_SAUSAGES, HD_TOPS, HD_SAUCES, ZONES, STAMPS_FOR_GIFT, MIN_DELIVERY, FRIDAY_DEAL, FRIDAY_EVERY, SET_DRINKS, SET_BURGERS, SET_DISCOUNTS, setFull, setPrice, isVeg, isSpicy, allergens, type World, type CatId, type Item, type ExtraId, type Lang } from './data.js';
 import { svg, steam, LAYERS, bunTop, bunBottom, latteArt, plateSVG, REAL_DEFS } from './art.js';
 import { initScroll } from './scroll.js';
 import { initPerf } from './perf.js';
@@ -6,7 +6,7 @@ document.body.insertAdjacentHTML('afterbegin', REAL_DEFS);
 import {
   $, $$, clamp, ease, reduced, finePointer, esc, store, state, t, tf, money, plural, on, emit, cart, saveCart, setCart, addLine,
   unitPrice, lineName, lineSub, lineArt, linePrep, isCoffeeLine, subtotal, count, toast, openOverlay, closeOverlay, tashkentNow, hhmm, ddmmyyyy, pad,
-  isLang, itemPic, lineVisual, addSavedLines, unlockSound, slowNet, markSlow, onNetChange, type Line, type Size,
+  isLang, itemPic, lineVisual, addSavedLines, unlockSound, slowNet, markSlow, onNetChange, useFortune, type Line, type Size,
 } from './shared.js';
 
 /* =============== parts that load on demand (smaller first download on slow connections) =============== */
@@ -22,7 +22,7 @@ const trackMod = () => trackP ??= import('./track.js').then(m => {
   m.onStatus(x => { const el = document.querySelector<HTMLElement>('#coDone .co-live'); if (!el) return; el.dataset.st = x.st; $('span', el).textContent = m.statusTitle(x); });
   return m;
 });
-import { initBudget } from './budget.js';
+import { initFortune } from './fortune.js';
 import { buildHero, updateHero as drawHero, renderHeroTexts, addDeal } from './hero.js';
 
 const root = document.documentElement;
@@ -34,7 +34,7 @@ const currentTheme = (): Theme => (root.dataset.theme === 'dark' ? 'dark' : 'lig
 function paintTheme(th: Theme) {
   root.dataset.theme = th;
   $('#themeBtn').setAttribute('aria-pressed', String(th === 'dark'));
-  $('meta[name="theme-color"]').setAttribute('content', th === 'dark' ? '#141010' : '#FAF7F6');
+  $('meta[name="theme-color"]').setAttribute('content', th === 'dark' ? '#0F1220' : '#FBF8F3');
 }
 function setTheme(next: Theme, origin?: HTMLElement) {
   store.set('vc-theme', next);
@@ -60,7 +60,7 @@ function applyLang() {
   $$('[data-i18n-aria]').forEach(el => el.setAttribute('aria-label', t(el.dataset.i18nAria!)));
   $$<HTMLInputElement>('[data-i18n-ph]').forEach(el => (el.placeholder = t(el.dataset.i18nPh!)));
   $$('.lang button').forEach(b => b.setAttribute('aria-pressed', String(b.dataset.lang === state.lang)));
-  document.title = { uz: 'FFS — Fresh Fried Soul, Andijon', ru: 'FFS — Fresh Fried Soul, Андижан', en: 'FFS — Fresh Fried Soul, Andijan' }[state.lang];
+  document.title = { uz: 'Frans Burger — Andijon', ru: 'Frans Burger — Андижан', en: 'Frans Burger — Andijan' }[state.lang];
   emit('lang');
 }
 $$('.lang button').forEach(b => b.addEventListener('click', () => {
@@ -309,7 +309,7 @@ $('#imAdd').addEventListener('click', () => {
 });
 
 /* =============== cart drawer =============== */
-const PCOL = ['#E11D24', '#E11D24', '#F4B731', '#3E8E6A', '#3E6FB8', '#C2185B', '#8A5A3B', '#5C4B4C'];
+const PCOL = ['#1F3FBF', '#E63329', '#F4B731', '#3E8E6A', '#3E6FB8', '#C2185B', '#8A5A3B', '#5C4B4C'];
 const split = { on: false, n: 2 };
 /** What the kitchen set from Telegram: online orders paused, extra minutes when it's busy. Cached by the CDN. */
 const shop = { paused: false, extra: 0, at: 0 };
@@ -372,10 +372,12 @@ function renderSplit() {
   $('#splitRes').innerHTML = splitShares().map((s, i) => `<div style="--pc:${PCOL[i]}"><i>${i + 1}</i><b>${money(Math.ceil(s / 500) * 500)}</b></div>`).join('');
 }
 /** Friday deal: dishes in the cart (drinks, sides and desserts don't count) and how many extra the order earns. */
-const isFriday = () => tashkentNow().getDay() === 5;
+const isFriday = () => FRIDAY_DEAL && tashkentNow().getDay() === 5;
 const dishCount = () => cart.reduce((a, l) => a + (l.kind !== 'item' || ITEM(l.item!)!.role === 'main' ? l.qty : 0), 0);
 const fridayGifts = () => (isFriday() ? Math.floor(dishCount() / FRIDAY_EVERY) : 0);
 function renderStamps() {
+  $('#stamps').hidden = !FRIDAY_DEAL;
+  if (!FRIDAY_DEAL) return;
   const n = dishCount(), have = n % FRIDAY_EVERY, gifts = fridayGifts();
   $('#stamps').innerHTML = `<div class="st-head"><b>${t('fri.title')}</b><small>${!isFriday() ? tf('fri.other', { n: FRIDAY_EVERY }) : gifts && !have ? tf('fri.got', { g: gifts }) : tf('fri.more', { k: FRIDAY_EVERY - have, g: gifts })}</small></div>
     <div class="st-cups fri">${Array.from({ length: FRIDAY_EVERY + 1 }, (_, i) => `<span class="${isFriday() && (i < have || (gifts && !have)) ? 'got' : ''}${i === FRIDAY_EVERY ? ' gift' : ''}"><svg viewBox="0 0 100 100" aria-hidden="true"><path d="M30 70 q-14 -2 -14 -20 q0 -22 22 -26 q22 -2 34 12 q8 10 2 22 q-6 12 -22 14z" fill="currentColor"/><path d="M62 66 l14 10 q6 2 6 -4 q4 -2 0 -6 l-12 -8" fill="none" stroke="currentColor" stroke-width="7" stroke-linecap="round"/></svg></span>`).join('')}</div>`;
@@ -435,7 +437,6 @@ function kitchenLines() {
       } else {
         if (l.size) d.push(`Hajmi: ${l.size}`);
         (l.extras ?? []).forEach(e => d.push('+ ' + EXTRAS[e].name.uz));
-        if (l.item === 'kfc-1kg') d.push(t('promo.kfcGift'));
       }
       const custom = ['burger', 'coffee', 'wrap', 'hotdog'].includes(l.kind ?? '');
       return { q: l.qty, n: lineName(l), c: custom, d, p: unitPrice(l) * l.qty, w: split.on && l.who >= 0 && l.who < split.n ? l.who + 1 : 0 };
@@ -681,6 +682,7 @@ async function sendOrder() {
     if (!res.ok && res.why !== 'network' && res.why !== 'timeout' && res.why !== 'offline') throw new Error('send');
     store.set('vc-last', { at: Date.now(), n: count(), total: subtotal(), lines: cart.map(({ sig: _s, who: _w, ...l }) => l) });
     pending = null;
+    useFortune(cart);
     setCart([]);
     if (res.ok) showDone(data.order_id, data.track_key, res, ctx);
     else {
@@ -705,7 +707,7 @@ function showDone(id: string, key: string, res: SendResult, c: DoneCtx) {
   $('#coForm').hidden = true; $('#coSteps').hidden = true;
   const done = $('#coDone');
   done.hidden = false;
-  done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('kfc-1kg')!.art)}</div><h4>${t('done.sent')}</h4>
+  done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('frans-burger')!.art)}</div><h4>${t('done.sent')}</h4>
     <p>${tf('done.no', { id })}</p>
     ${live ? `<p class="co-live" data-st="new" aria-live="polite"><i aria-hidden="true"></i><span>${t('tk.t.new')}</span></p><p class="hint">${t('done.live')}</p><div class="co-nt" data-nt-slot></div>` : `<p>${tf('done.call', { phone: '+998 ' + fmtPhone(c.phone) })}</p>`}<p class="eta-big">${tf((c.method === 'delivery' ? 'done.etaDelivery' : 'done.eta') + (c.tomorrow ? 'Tm' : ''), { t: c.due })}</p>
     ${c.gifts ? `<p class="stamp-plus">${tf('fri.got', { g: c.gifts })}</p>` : ''}
@@ -724,7 +726,7 @@ function showQueued(id: string, c: DoneCtx) {
   done.hidden = false;
   const tg = /^[A-Za-z0-9_]{5,}$/.test(CAFE.telegram) ? `https://t.me/${CAFE.telegram}` : '';
   const phoneOk = /\d{3}/.test(CAFE.phone) && !/X/.test(CAFE.phone);
-  done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('kfc-1kg')!.art)}</div><h4>${t('ob.title')}</h4>
+  done.innerHTML = `<div class="done-cup" aria-hidden="true">${svg(ITEM('frans-burger')!.art)}</div><h4>${t('ob.title')}</h4>
     <p>${tf('done.no', { id })}</p>
     <p class="co-live" data-st="queued" aria-live="polite"><i aria-hidden="true"></i><span>${t('ob.waiting')}</span></p>
     <p class="hint">${t('ob.keep')}</p>
@@ -741,7 +743,7 @@ function showQueued(id: string, c: DoneCtx) {
 }
 /** The order as plain text, for pasting into Telegram or reading out on the phone. */
 function orderPlainText(items: string, d: Record<string, string>) {
-  return [`FFS — ${t('done.no').replace('{id}', d.order_id)}`, items, `${t('ob.total')}: ${money(+d.total)}`, `${d.name}, ${d.phone}`, d.address, d.table ? `#${d.table}` : '', d.comment].filter(Boolean).join('\n');
+  return [`Frans Burger — ${t('done.no').replace('{id}', d.order_id)}`, items, `${t('ob.total')}: ${money(+d.total)}`, `${d.name}, ${d.phone}`, d.address, d.table ? `#${d.table}` : '', d.comment].filter(Boolean).join('\n');
 }
 
 /* =============== the outbox: orders waiting for the internet =============== */
@@ -905,7 +907,7 @@ on('lang', () => { renderStatus(); renderReceipt(); renderChips(); renderGrid();
 initPerf();
 buildScene(); renderReceipt(); fitScene(); renderTape(); renderVisit(); setWorldUI();
 applyLang();
-initBudget();
+initFortune();
 initReveal(); initScroll();
 // builders: load when the customer gets near them (or once the page is idle)
 let labP: Promise<unknown> | null = null;

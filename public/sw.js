@@ -1,4 +1,4 @@
-// FFS service worker. Two jobs:
+// Frans Burger service worker. Two jobs:
 // 1. Keep the site on the phone: the first screen opens instantly on repeat visits and works with no internet.
 //    Pages: try the network for 3 seconds, then use the saved copy (and refresh it in the background).
 //    /assets/* files never change (their names carry a hash), so the saved copy is always right.

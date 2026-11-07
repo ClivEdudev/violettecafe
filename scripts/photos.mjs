@@ -1,5 +1,5 @@
 // Turns the owner's photos into small, fast images. Put originals (jpg/png/heic from a phone is fine once converted
-// to jpg) in /photos, named after the dish id, e.g. photos/ffs-boss-burger.jpg, then run:  npm run photos
+// to jpg) in /photos, named after the dish id, e.g. photos/frans-burger.jpg, then run:  npm run photos
 // For each photo it writes public/img/<name>-480.webp and -960.webp (about 25–70 KB each), and a tiny blurred
 // preview, all listed in src/photos.gen.ts, which the site uses through photoHTML() in shared.ts.
 import fs from 'node:fs'; import path from 'node:path'; import { createRequire } from 'node:module'; import { execSync } from 'node:child_process';

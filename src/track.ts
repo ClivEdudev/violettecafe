@@ -1,4 +1,4 @@
-// Order tracking. The status comes only from the FFS kitchen: staff press buttons under the order in Telegram
+// Order tracking. The status comes only from the Frans Burger kitchen: staff press buttons under the order in Telegram
 // (accept → ready → on the way → delivered, or cancel), the bot saves it, and this page asks for it every few seconds.
 // Nothing here moves forward on its own. Works for delivery, pickup and table orders; delivery also gets the map,
 // where the courier only starts moving once the kitchen presses "on the way" (his position is an estimate, no GPS).
@@ -91,8 +91,8 @@ async function systemNote(x: Track) {
   const opts: NotificationOptions & { renotify?: boolean; vibrate?: number[] } = { body: tf('tr.order', { id: x.id }), icon: '/icon-192.png', badge: '/icon-192.png', tag: 'ffs-' + x.id, renotify: true, vibrate: [200, 100, 200] };
   // the service worker may be blocked (private windows, some browsers): don't wait for it forever
   const ready = Promise.race([navigator.serviceWorker.ready, new Promise<never>((_, no) => setTimeout(() => no(new Error('no sw')), 3000))]);
-  try { const reg = await ready; await reg.showNotification('FFS · ' + title(x), opts); }
-  catch { try { new Notification('FFS · ' + title(x), opts); } catch { /* not allowed here */ } }
+  try { const reg = await ready; await reg.showNotification('Frans Burger · ' + title(x), opts); }
+  catch { try { new Notification('Frans Burger · ' + title(x), opts); } catch { /* not allowed here */ } }
 }
 /** The big moments: ready to pick up / at the table, courier left, delivered, cancelled. */
 function alertUser(x: Track) {
@@ -175,7 +175,7 @@ function mapSVG(zone: string) {
     <path d="M-10 236 C80 222 140 250 230 236 S380 214 450 230" class="tk-canal"/>
     <path d="M0 210 H440 M0 104 H440 M0 144 H440 M166 0 V260 M316 0 V260 M126 0 V260 M252 0 V260 M0 54 H440" class="tk-street"/>
     <path id="tkRoute" d="${d}" class="tk-route"/><path id="tkDone" d="${d}" class="tk-route-done"/>
-    <g transform="translate(70 210)" class="tk-cafe"><circle r="17"/><text y="4" text-anchor="middle" style="font-size:10px">FFS</text><g id="tkSteam"></g></g>
+    <g transform="translate(70 210)" class="tk-cafe"><circle r="17"/><text y="4" text-anchor="middle" style="font-size:10px">FB</text><g id="tkSteam"></g></g>
     <g transform="translate(372 58)" class="tk-home"><circle r="22" class="tk-pulse"/><path d="M-11 2 L0 -9 L11 2 V12 H-11z"/><rect x="-3" y="4" width="6" height="8" rx="1"/></g>
     <g id="tkBike"><circle r="15" class="tk-bike-bg"/><g transform="scale(.9)"><circle cx="-7" cy="5" r="4" class="tk-wheel"/><circle cx="8" cy="5" r="4" class="tk-wheel"/><path d="M-7 5 L-1 -3 H6 L8 5 M-1 -3 L-4 -7 M4 -3 V-8 H9" class="tk-frame"/><rect x="-11" y="-11" width="9" height="8" rx="2" class="tk-box"/></g></g>
   </svg>`;
@@ -308,7 +308,7 @@ export function initTrack() {
     for (let i = 1; i < order.length; i++) { if (order.indexOf(st) < i && st !== 'cy') break; h[order[i]] = now - (9 - i * 2) * MIN; if (order[i] === st) break; }
     if (st === 'cy') { h.cy = now - 4 * MIN; delete h.rdy; delete h.out; delete h.done; }
     tr = { id: 'DEMO1', key: 'demo', kind, placed: now - 9 * MIN, zone: 'near', address: 'Bobur shoh koʻchasi, 12', total: 96000, cookMin: 14, st, h, demo: true,
-      lines: [{ sig: 'd1', kind: 'item', item: 'ffs-boss-burger', extras: [], qty: 1, who: -1 }, { sig: 'd2', kind: 'item', item: 'fries', extras: [], qty: 1, who: -1 }, { sig: 'd3', kind: 'item', item: 'turkish-tea', extras: [], qty: 1, who: -1 }] };
+      lines: [{ sig: 'd1', kind: 'item', item: 'frans-burger', extras: [], qty: 1, who: -1 }, { sig: 'd2', kind: 'item', item: 'fries', extras: [], qty: 1, who: -1 }, { sig: 'd3', kind: 'item', item: 'turkish-tea', extras: [], qty: 1, who: -1 }] };
   }
   document.addEventListener('visibilitychange', () => { if (!document.hidden) { if (baseTitle) { document.title = baseTitle; baseTitle = ''; } tick(); } });
   navigator.serviceWorker?.addEventListener('message', e => { if ((e.data as { type?: string })?.type === 'open-track') openTrack(); });

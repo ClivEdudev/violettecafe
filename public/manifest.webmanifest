@@ -1,14 +1,26 @@
 {
-  "name": "FFS — Fresh Fried Soul",
-  "short_name": "FFS",
-  "description": "Fresh Fried Soul, Andijon — menyu, buyurtma va stol band qilish.",
+  "name": "Frans Burger — Andijon",
+  "short_name": "Frans Burger",
+  "description": "Frans Burger, Andijon — menyu, buyurtma, burger fol va stol band qilish.",
   "start_url": "/",
   "display": "browser",
-  "background_color": "#FAF7F6",
-  "theme_color": "#E11D24",
+  "background_color": "#FBF8F3",
+  "theme_color": "#1F3FBF",
   "icons": [
-    { "src": "icon-192.png", "sizes": "192x192", "type": "image/png" },
-    { "src": "icon-512.png", "sizes": "512x512", "type": "image/png" },
-    { "src": "favicon.svg", "sizes": "any", "type": "image/svg+xml" }
+    {
+      "src": "icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png"
+    },
+    {
+      "src": "icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png"
+    },
+    {
+      "src": "favicon.svg",
+      "sizes": "any",
+      "type": "image/svg+xml"
+    }
   ]
 }

@@ -1,13 +1,13 @@
-// FFS service worker. Two jobs:
+// Frans Burger service worker. Two jobs:
 // 1. Keep the site on the phone: the first screen opens instantly on repeat visits and works with no internet.
 //    Pages: try the network for 3 seconds, then use the saved copy (and refresh it in the background).
 //    /assets/* files never change (their names carry a hash), so the saved copy is always right.
 //    /api/* (orders, status) is never cached.
 // 2. Open the order tracker when the customer taps an "order ready" notification.
 // The build fills in VERSION and the file lists.
-const VERSION = "1c8dde40edbf";
-const SHELL = ["/","/assets/theme-HWQUNZGB.js","/assets/styles-7EUYB2Z2.css","/assets/main-GOH7SLZV.js","/assets/chunk-5M4EJQRC.js","/assets/manrope-DCDZIYR5.woff2","/assets/dela-gothic-one-TJ3MGAAI.woff2","/favicon.svg","/icon-192.png","/manifest.webmanifest"];
-const LATER = ["/assets/afk-MB4C6NF3.js","/assets/track-DUUA7L65.js","/assets/lab-XJ6XSQJ5.js"];
+const VERSION = "ca578fa635c6";
+const SHELL = ["/","/assets/theme-W3QILMEU.js","/assets/styles-QJ7MXQRK.css","/assets/main-YWTRYQWS.js","/assets/chunk-DOTFLPXG.js","/assets/manrope-DCDZIYR5.woff2","/assets/dela-gothic-one-TJ3MGAAI.woff2","/favicon.svg","/icon-192.png","/manifest.webmanifest"];
+const LATER = ["/assets/afk-RZLD22LE.js","/assets/track-FXSZI75C.js","/assets/lab-F6CY2T2Y.js"];
 const CACHE = 'ffs-' + VERSION;
 
 self.addEventListener('install', e => {

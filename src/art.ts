@@ -44,8 +44,8 @@ function cup(d: DrinkSpec, small: boolean): string {
   s += `<ellipse cx="${cx}" cy="256" rx="${118 * k + 18}" ry="${20 * k + 4}" fill="#FFFDFC" stroke="${INK}" stroke-width="3"/>`;
   s += `<ellipse cx="${cx}" cy="252" rx="${70 * k}" ry="${11 * k}" fill="#ECE1E2"/>`;
   s += `<path d="M${R - 6} ${top + 26 * k} c ${44 * k} -6, ${48 * k} ${54 * k}, ${2 * k} ${58 * k}" fill="none" stroke="${INK}" stroke-width="${16 * k}" stroke-linecap="round"/>`;
-  s += `<path d="M${R - 6} ${top + 26 * k} c ${44 * k} -6, ${48 * k} ${54 * k}, ${2 * k} ${58 * k}" fill="none" stroke="#E11D24" stroke-width="${9 * k}" stroke-linecap="round"/>`;
-  s += `<path d="M${L} ${top} h${w} c 0 ${h * .7}, ${-24 * k} ${h}, ${-w * .26} ${h} h${-w * .48} c ${-w * .26 + 24 * k} 0, ${-w * .26} ${-h * .3}, ${-w * .26} ${-h}z" fill="#E11D24" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
+  s += `<path d="M${R - 6} ${top + 26 * k} c ${44 * k} -6, ${48 * k} ${54 * k}, ${2 * k} ${58 * k}" fill="none" stroke="#1F3FBF" stroke-width="${9 * k}" stroke-linecap="round"/>`;
+  s += `<path d="M${L} ${top} h${w} c 0 ${h * .7}, ${-24 * k} ${h}, ${-w * .26} ${h} h${-w * .48} c ${-w * .26 + 24 * k} 0, ${-w * .26} ${-h * .3}, ${-w * .26} ${-h}z" fill="#1F3FBF" stroke="${INK}" stroke-width="3" stroke-linejoin="round"/>`;
   s += `<path d="M${L + 14 * k} ${top + 18 * k} c 0 ${h * .5}, ${10 * k} ${h * .7}, ${26 * k} ${h * .8}" fill="none" stroke="#fff" stroke-opacity=".35" stroke-width="${7 * k}" stroke-linecap="round"/>`;
   s += `<path d="M${cx - 18 * k} ${top + h * .55} q${18 * k} ${-16 * k} ${36 * k} 0 q${-18 * k} ${16 * k} ${-36 * k} 0" fill="#F6C2C3"/>`;
   s += `<ellipse cx="${cx}" cy="${top}" rx="${w / 2}" ry="${18 * k}" fill="#FFFDFC" stroke="${INK}" stroke-width="3"/>`;
@@ -196,7 +196,7 @@ export const REAL_DEFS = `<svg class="real-defs" width="0" height="0" aria-hidde
   <radialGradient id="g-lav-pita" cx=".42" cy=".36" r=".8"><stop offset="0" stop-color="#FFF1D2"/><stop offset=".6" stop-color="#F4DDAE"/><stop offset=".9" stop-color="#DDB474"/><stop offset="1" stop-color="#B9894A"/></radialGradient>
   <linearGradient id="g-roll" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FFF0CF"/><stop offset=".35" stop-color="#F1D39A"/><stop offset=".8" stop-color="#C9954F"/><stop offset="1" stop-color="#9E6E34"/></linearGradient>
   <linearGradient id="g-roll-red" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#FAD2B4"/><stop offset=".35" stop-color="#E9A27A"/><stop offset=".8" stop-color="#B9673E"/><stop offset="1" stop-color="#8E4A26"/></linearGradient>
-  <linearGradient id="g-paper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D86B70"/><stop offset=".5" stop-color="#E11D24"/><stop offset="1" stop-color="#7A2D31"/></linearGradient>
+  <linearGradient id="g-paper" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#5C77D9"/><stop offset=".5" stop-color="#1F3FBF"/><stop offset="1" stop-color="#142A85"/></linearGradient>
   <radialGradient id="g-cream" cx=".4" cy=".3" r=".8"><stop offset="0" stop-color="#FFFFFF"/><stop offset=".7" stop-color="#FBF3E8"/><stop offset="1" stop-color="#E7D6BF"/></radialGradient>
 </defs></svg>`;
 
@@ -275,7 +275,7 @@ function wrap(v = 'chicken'): string {
     ${v === 'spicy' ? '<circle cx="306" cy="132" r="5" fill="#3F9142"/><circle cx="296" cy="204" r="5" fill="#3F9142"/>' : ''}
     ${v === 'cheese' ? '<path d="M282 150 q10 30 0 60" stroke="#F4B731" stroke-width="6" fill="none"/>' : ''}
   </g>`;
-  s += `<rect x="58" y="196" width="120" height="60" rx="10" fill="#E11D24" stroke="${INK}" stroke-width="3.5" transform="rotate(-14 118 226)"/><text x="118" y="234" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="15" fill="#FFFDFC" transform="rotate(-14 118 226)">FFS</text>`;
+  s += `<rect x="58" y="196" width="120" height="60" rx="10" fill="#1F3FBF" stroke="${INK}" stroke-width="3.5" transform="rotate(-14 118 226)"/><text x="118" y="234" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="15" fill="#FFFDFC" transform="rotate(-14 118 226)">FRANS</text>`;
   return s;
 }
 function pita(): string {
@@ -306,9 +306,9 @@ function fries(v = 'classic'): string {
   const fry = (x: number, y: number, r: number, h = 120) => `<rect x="${x}" y="${y}" width="20" height="${h}" rx="4" fill="#F4C542" stroke="${INK}" stroke-width="3" transform="rotate(${r} ${x + 10} ${y + h})"/>`;
   s += [[132, 52, -14], [156, 36, -6], [180, 44, 2], [204, 30, 6], [228, 46, 12], [252, 58, 18], [146, 66, -20], [196, 58, -2], [240, 70, 8]].map(([x, y, r]) => fry(x, y, r)).join('');
   if (v === 'cheese') s += `<path d="M128 112 q20 20 40 4 q20 20 40 2 q20 20 40 4 q14 14 30 0 v20 h-150z" fill="#F4B731" stroke="${INK}" stroke-width="3"/>`;
-  s += `<path d="M118 116 h164 l-18 150 h-128z" fill="#E11D24" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>`;
+  s += `<path d="M118 116 h164 l-18 150 h-128z" fill="#1F3FBF" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>`;
   s += `<path d="M118 116 q41 26 82 0 q41 26 82 0" fill="#EC5A5F" stroke="${INK}" stroke-width="3.5"/>`;
-  s += `<text x="200" y="210" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="34" fill="#FFFDFC">FFS</text>`;
+  s += `<text x="200" y="210" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="25" fill="#FFFDFC">FRANS</text>`;
   return s;
 }
 function nuggets(): string {
@@ -316,7 +316,7 @@ function nuggets(): string {
   s += `<path d="M80 150 h240 l-20 108 h-200z" fill="#F4B731" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>`;
   const n = (x: number, y: number, r: number) => `<path d="M${x} ${y} q8 -22 30 -18 q26 -2 26 22 q4 22 -22 24 q-30 6 -34 -28z" fill="#D9933A" stroke="${INK}" stroke-width="3" transform="rotate(${r} ${x + 28} ${y + 4})"/><circle cx="${x + 20}" cy="${y - 2}" r="2.5" fill="#F2C178"/><circle cx="${x + 36}" cy="${y + 8}" r="2.5" fill="#F2C178"/>`;
   s += n(96, 130, -10) + n(150, 118, 12) + n(206, 128, -4) + n(250, 136, 16) + n(124, 150, 20) + n(186, 150, -14);
-  s += `<path d="M80 150 h240" stroke="${INK}" stroke-width="3.5"/><rect x="96" y="180" width="208" height="40" rx="20" fill="#E11D24"/><text x="200" y="208" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="22" fill="#FFFDFC">6×</text>`;
+  s += `<path d="M80 150 h240" stroke="${INK}" stroke-width="3.5"/><rect x="96" y="180" width="208" height="40" rx="20" fill="#1F3FBF"/><text x="200" y="208" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="22" fill="#FFFDFC">6×</text>`;
   s += `<ellipse cx="330" cy="236" rx="34" ry="14" fill="#FFFDFC" stroke="${INK}" stroke-width="3"/><ellipse cx="330" cy="232" rx="26" ry="8" fill="#C62828"/>`;
   return s;
 }
@@ -336,10 +336,10 @@ function club(): string {
     <path d="M124 236 L200 92 L276 236z" fill="#FFF6DD"/>
     <rect x="112" y="244" width="176" height="12" fill="#7CB342" stroke="${INK}" stroke-width="2.5"/>
     <rect x="114" y="222" width="172" height="12" fill="#E7B279" stroke="${INK}" stroke-width="2.5"/>
-    <rect x="118" y="206" width="164" height="10" fill="#E11D24" stroke="${INK}" stroke-width="2.5"/>
+    <rect x="118" y="206" width="164" height="10" fill="#1F3FBF" stroke="${INK}" stroke-width="2.5"/>
     <rect x="122" y="190" width="156" height="10" fill="#F4B731" stroke="${INK}" stroke-width="2.5"/></g>`;
   s += tri(-60, -8) + tri(60, 8);
-  s += `<path d="M140 70 v40 M260 70 v40" stroke="${INK}" stroke-width="4"/><path d="M140 70 l-10 -14 h20z M260 70 l-10 -14 h20z" fill="#E11D24" stroke="${INK}" stroke-width="2.5"/>`;
+  s += `<path d="M140 70 v40 M260 70 v40" stroke="${INK}" stroke-width="4"/><path d="M140 70 l-10 -14 h20z M260 70 l-10 -14 h20z" fill="#1F3FBF" stroke="${INK}" stroke-width="2.5"/>`;
   return s;
 }
 function croissant(v = 'butter'): string {
@@ -416,7 +416,7 @@ export function wrapTopSVG(w: WrapSpec, cx = 200, cy = 290): string {
   return s;
 }
 
-/** The rolled shawarma from the side, half in FFS paper, the open end showing what's inside. */
+/** The rolled shawarma from the side, half in Frans Burger paper, the open end showing what's inside. */
 export function wrapRolledSVG(w: WrapSpec, cx = 200, cy = 170, len = 280): string {
   if (w.base === 'pita') return pitaPocketSVG(w, cx, cy + 40, len * .82);
   const r = 44, x0 = cx - len / 2, x1 = cx + len / 2, g = w.base === 'red' ? 'url(#g-roll-red)' : 'url(#g-roll)';
@@ -434,7 +434,7 @@ export function wrapRolledSVG(w: WrapSpec, cx = 200, cy = 170, len = 280): strin
   s += `<path d="M${x1 - 6} ${cy - r} a22 ${r} 0 0 1 0 ${r * 2}" fill="none" stroke="${w.base === 'red' ? '#C9744A' : '#D9AE6A'}" stroke-width="5"/>`;
   // paper sleeve
   s += `<g filter="url(#fx-soft)"><path d="M${x0 - 4} ${cy - r - 4} H${cx - 10} l-14 ${r * 2 + 8} H${x0 - 4} q-12 0 -12 -${r} q0 -${r + 4} 12 -${r + 4}z" fill="url(#g-paper)"/></g>`;
-  s += `<path d="M${x0 + 6} ${cy - r + 6} H${cx - 26}" stroke="#fff" stroke-width="4" opacity=".25" stroke-linecap="round"/><text x="${x0 + (cx - x0) / 2 - 8}" y="${cy + 12}" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="25" fill="#FFFDFC" opacity=".9">FFS</text>`;
+  s += `<path d="M${x0 + 6} ${cy - r + 6} H${cx - 26}" stroke="#fff" stroke-width="4" opacity=".25" stroke-linecap="round"/><text x="${x0 + (cx - x0) / 2 - 8}" y="${cy + 12}" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="20" fill="#FFFDFC" opacity=".9">FRANS</text>`;
   if (w.double) s += `<g transform="translate(${x0 + 30} ${cy - r - 18})"><rect x="-18" y="-12" width="36" height="22" rx="11" fill="#1A1414"/><text x="0" y="4" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="12" fill="#fff">×2</text></g>`;
   return s;
 }
@@ -449,7 +449,7 @@ function pitaPocketSVG(w: WrapSpec, cx: number, base: number, wd: number): strin
   s += `<g filter="url(#fx-soft)">${fill}</g>`;
   w.sauces.forEach((sc, i) => { s += sauceLine(sc, zig(cx - wd * .3, cx + wd * .3, base - h * .98 + i * 10, 6, 8), 4); });
   s += `<g filter="url(#fx-bread)"><path d="M${cx - wd / 2 + 4} ${base} q0 -${h * .8} ${wd / 2 - 4} -${h * .82} q${wd / 2 - 4} 0 ${wd / 2 - 4} ${h * .82}z" fill="url(#g-lav-pita)"/></g>`;
-  s += `<path d="M${cx - wd / 2 + 6} ${base - 4} h${wd - 12} v-${h * .42} h-${wd - 12}z" fill="url(#g-paper)" opacity=".95"/><text x="${cx}" y="${base - h * .12}" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="21" fill="#FFFDFC" opacity=".9">FFS</text>`;
+  s += `<path d="M${cx - wd / 2 + 6} ${base - 4} h${wd - 12} v-${h * .42} h-${wd - 12}z" fill="url(#g-paper)" opacity=".95"/><text x="${cx}" y="${base - h * .12}" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="17" fill="#FFFDFC" opacity=".9">FRANS</text>`;
   return s;
 }
 
@@ -498,18 +498,18 @@ function bucket(): string {
   let s = SH(200, 120);
   // chicken piled above the rim
   s += drumstick(150, 92, -28, .95) + drumstick(250, 88, 208, .95) + drumstick(200, 70, -84, .9) + drumstick(170, 112, 12, .85) + drumstick(236, 114, 168, .85);
-  // the bucket: red and white stripes, FFS band
+  // the bucket: blue and white stripes, Frans band
   s += `<clipPath id="bkClip"><path d="M100 120 h200 l-22 140 q-2 8 -10 8 h-136 q-8 0 -10 -8z"/></clipPath>`;
   s += `<path d="M100 120 h200 l-22 140 q-2 8 -10 8 h-136 q-8 0 -10 -8z" fill="#FFFDFC"/>`;
-  s += `<g clip-path="url(#bkClip)">${[0, 1, 2, 3, 4, 5].map(i => `<rect x="${92 + i * 40}" y="110" width="20" height="170" fill="#E11D24"/>`).join('')}</g>`;
+  s += `<g clip-path="url(#bkClip)">${[0, 1, 2, 3, 4, 5].map(i => `<rect x="${92 + i * 40}" y="110" width="20" height="170" fill="#1F3FBF"/>`).join('')}</g>`;
   s += `<path d="M100 120 h200 l-22 140 q-2 8 -10 8 h-136 q-8 0 -10 -8z" fill="none" stroke="${INK}" stroke-width="3.5" stroke-linejoin="round"/>`;
   s += `<rect x="92" y="110" width="216" height="20" rx="6" fill="#FFFDFC" stroke="${INK}" stroke-width="3.5"/>`;
-  s += `<rect x="132" y="168" width="136" height="48" rx="10" fill="#FFFDFC" stroke="${INK}" stroke-width="3"/><text x="200" y="203" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="28" fill="${INK}">FFS</text>`;
+  s += `<rect x="132" y="168" width="136" height="48" rx="10" fill="#FFFDFC" stroke="${INK}" stroke-width="3"/><text x="200" y="203" text-anchor="middle" font-family="Dela Gothic One, sans-serif" font-size="22" fill="${INK}">FRANS</text>`;
   return s;
 }
 function drumsticks(v?: string): string {
   let s = SH(200, 150);
-  s += `<ellipse cx="200" cy="238" rx="150" ry="26" fill="#FFFDFC" stroke="${INK}" stroke-width="3.5"/><path d="M70 236 q130 22 260 0" stroke="#E11D24" stroke-width="5" fill="none" stroke-dasharray="14 10"/>`;
+  s += `<ellipse cx="200" cy="238" rx="150" ry="26" fill="#FFFDFC" stroke="${INK}" stroke-width="3.5"/><path d="M70 236 q130 22 260 0" stroke="#1F3FBF" stroke-width="5" fill="none" stroke-dasharray="14 10"/>`;
   s += drumstick(150, 196, -12, 1.05, v === 'spicy') + drumstick(250, 190, 192, 1.05, v === 'spicy') + drumstick(200, 160, -60, 1, v === 'spicy');
   if (v === 'spicy') s += [[120, 150], [282, 146], [210, 118]].map(([x, y]) => `<path d="M${x} ${y} q10 -16 22 -6 q-6 14 -22 6z" fill="#C62828" stroke="${INK}" stroke-width="2.5"/><path d="M${x + 18} ${y - 10} l6 -6" stroke="#3F7D3A" stroke-width="3" stroke-linecap="round"/>`).join('');
   return s;

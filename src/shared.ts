@@ -57,6 +57,20 @@ const sigOf = (l: Omit<Line, 'sig' | 'qty' | 'who'>) => {
   if (l.kind === 'hotdog') { const h = l.hotdog!; return `h:${h.bun}:${h.sausage}:${h.xl ? 'xl' : ''}:${h.tops.slice().sort().join(',')}:${h.sauces.slice().sort().join(',')}`; }
   const c = l.coffee!; return `c:${[c.temp, c.size, c.shots, c.milk, c.milkAmt, c.foam, c.syrup, c.topping].join(',')}`;
 };
+export const lineSig = sigOf;
+
+/* ---------- burger fortune gift: the predicted burger gets a free sauce, shown on the cart line and in the kitchen's order ---------- */
+export interface Fortune { code: string; sig: string; at: number; used?: boolean }
+export const FORTUNE_DAYS = 7;
+export function activeFortune(): Fortune | null {
+  const f = store.get('vc-fortune') as Fortune | null;
+  if (!f || typeof f.code !== 'string' || typeof f.sig !== 'string' || f.used || !(Date.now() - Number(f.at) < FORTUNE_DAYS * 864e5)) return null;
+  return f;
+}
+export const fortuneNote = (l: Pick<Line, 'sig'>) => { const f = activeFortune(); return f && l.sig === f.sig ? tf('fo.cartGift', { c: f.code }) : ''; };
+/** Called when an order goes through: the gift is used once. */
+export function useFortune(lines: Line[]) { const f = activeFortune(); if (f && lines.some(l => l.sig === f.sig)) store.set('vc-fortune', { ...f, used: true }); }
+
 function sanitize(raw: unknown): Line[] {
   if (!Array.isArray(raw)) return [];
   const out: Line[] = [];
@@ -104,12 +118,11 @@ export function lineName(l: Line): string {
 }
 export function lineSub(l: Line): string {
   if (l.kind === 'set') return `${ITEM(l.set!.drink)!.sized ? 'M · ' : ''}${tf('set.off', { p: l.set!.pct })}`;
-  if (l.kind === 'burger') return `${t('lab.custom')} · ${l.burger!.fill.length} ${t('lab.layersShort')}`;
+  if (l.kind === 'burger') return [`${t('lab.custom')} · ${l.burger!.fill.length} ${t('lab.layersShort')}`, fortuneNote(l)].filter(Boolean).join(' · ');
   if (l.kind === 'coffee') return `${t('lab.custom')} · ${l.coffee!.size} · ${t('lab.temp.' + l.coffee!.temp)}`;
   if (l.kind === 'wrap') { const w = l.wrap!; return [t('lab.custom'), ...w.add.map(a => WRAP_ADDS.find(p => p.id === a)!.name[state.lang]), ...w.sauces.map(a => WRAP_SAUCES.find(p => p.id === a)!.name[state.lang])].join(' · '); }
   if (l.kind === 'hotdog') { const h = l.hotdog!; return [t('lab.custom'), BUNS.find(b => b.id === h.bun)?.name[state.lang] ?? '', ...h.tops.map(a => HD_TOPS.find(p => p.id === a)!.name[state.lang]), ...h.sauces.map(a => HD_SAUCES.find(p => p.id === a)!.name[state.lang])].join(' · '); }
   const parts: string[] = [];
-  if (l.item === 'kfc-1kg') parts.push(t('promo.kfcGift'));
   if (l.size) parts.push(l.size);
   (l.extras ?? []).forEach(e => parts.push('+ ' + EXTRAS[e].name[state.lang]));
   return parts.join(' · ');

@@ -1,5 +1,5 @@
 // Hero: every visit picks one of the shop's real combos (or a set of real menu items at menu prices), and as you scroll
-// it is made piece by piece on an FFS tray — chicken dropped into the bucket, burgers stacked layer by layer, the hot
+// it is made piece by piece on a Frans Burger tray — chicken dropped into the bucket, burgers stacked layer by layer, the hot
 // dog assembled, fries filled, the drink poured — then the receipt prints exactly what was made, at its real price.
 import { ITEM, SIZES } from './data.js';
 import { LAYERS, bunTop, bunBottom, hotdogSVG, wrapRolledSVG, steam } from './art.js';
@@ -13,17 +13,16 @@ type Piece =
   | { k: 'burger'; item: string; gift?: boolean } | { k: 'fries' }
   | { k: 'hotdog'; item: string } | { k: 'wrap'; item: string };
 interface Deal { id: string; combo?: string; pieces: Piece[]; badge: [string, string]; lines: { item: string; size?: 'M' }[]; contents?: string[]; gift?: boolean }
-// combos: the shop's names and prices; what's inside follows the menu descriptions (to be confirmed by the owner)
+// sample deals built from the sample menu (to be confirmed with the Frans Burger owner)
 const DEALS: Deal[] = [
-  { id: 'kfc', combo: 'kfc-1kg', gift: true, badge: ['+2', 'hero.bGift'], pieces: [{ k: 'bucket' }, { k: 'burger', item: 'cheeseburger', gift: true }, { k: 'burger', item: 'classic-burger', gift: true }], lines: [{ item: 'kfc-1kg' }] },
-  { id: 'crunch', combo: 'crunch-duo', badge: ['2×', 'hero.bCombo'], pieces: [{ k: 'soda' }, { k: 'bucket' }, { k: 'burger', item: 'cheeseburger' }, { k: 'fries' }], lines: [{ item: 'crunch-duo' }], contents: ['kfc', 'cheeseburger', 'fries', 'soda'] },
-  { id: 'solo', combo: 'solo-combo', badge: ['1×', 'hero.bCombo'], pieces: [{ k: 'soda' }, { k: 'burger', item: 'cheeseburger' }, { k: 'fries' }], lines: [{ item: 'solo-combo' }], contents: ['cheeseburger', 'fries', 'soda'] },
-  { id: 'madina', combo: 'madina-combo', badge: ['★', 'hero.bCombo'], pieces: [{ k: 'soda' }, { k: 'wrap', item: 'lavash-chicken' }, { k: 'fries' }], lines: [{ item: 'madina-combo' }], contents: ['lavash-chicken', 'fries', 'soda'] },
-  { id: 'mega', combo: 'ffs-mega-mix', badge: ['★', 'hero.bSig'], pieces: [{ k: 'drumsticks' }, { k: 'fries' }], lines: [{ item: 'ffs-mega-mix' }], contents: ['chicken', 'fries'] },
-  { id: 'hotdog', badge: ['★', 'hero.bSet'], pieces: [{ k: 'tea', item: 'turkish-tea' }, { k: 'hotdog', item: 'hotdog' }, { k: 'fries' }], lines: [{ item: 'hotdog' }, { item: 'fries', size: 'M' }, { item: 'turkish-tea' }] },
-  { id: 'boss', badge: ['★', 'hero.bSet'], pieces: [{ k: 'tea', item: 'glass-tea' }, { k: 'burger', item: 'ffs-boss-burger' }, { k: 'fries' }], lines: [{ item: 'ffs-boss-burger' }, { item: 'fries', size: 'M' }, { item: 'glass-tea' }] },
+  { id: 'frans', combo: 'frans-combo', badge: ['★', 'hero.bSig'], pieces: [{ k: 'soda' }, { k: 'burger', item: 'frans-burger' }, { k: 'fries' }], lines: [{ item: 'frans-combo' }], contents: ['frans-burger', 'fries', 'soda'] },
+  { id: 'duo', combo: 'duo-combo', badge: ['2×', 'hero.bCombo'], pieces: [{ k: 'soda' }, { k: 'burger', item: 'cheeseburger' }, { k: 'burger', item: 'cheeseburger' }, { k: 'fries' }], lines: [{ item: 'duo-combo' }], contents: ['cheeseburger', 'fries', 'soda'] },
+  { id: 'lavash', combo: 'lavash-combo', badge: ['★', 'hero.bCombo'], pieces: [{ k: 'soda' }, { k: 'wrap', item: 'lavash-chicken' }, { k: 'fries' }], lines: [{ item: 'lavash-combo' }], contents: ['lavash-chicken', 'fries', 'soda'] },
+  { id: 'box', badge: ['★', 'hero.bSet'], pieces: [{ k: 'soda' }, { k: 'bucket' }], lines: [{ item: 'chicken-box' }, { item: 'soda-1l' }] },
+  { id: 'double', badge: ['★', 'hero.bSet'], pieces: [{ k: 'tea', item: 'glass-tea' }, { k: 'burger', item: 'double-frans' }, { k: 'fries' }], lines: [{ item: 'double-frans' }, { item: 'fries', size: 'M' }, { item: 'glass-tea' }] },
+  { id: 'hotdog', badge: ['★', 'hero.bSet'], pieces: [{ k: 'tea', item: 'turkish-tea' }, { k: 'hotdog', item: 'french-hotdog' }, { k: 'fries' }], lines: [{ item: 'french-hotdog' }, { item: 'fries', size: 'M' }, { item: 'turkish-tea' }] },
   { id: 'doner', badge: ['★', 'hero.bSet'], pieces: [{ k: 'soda' }, { k: 'wrap', item: 'shaurma-pita' }], lines: [{ item: 'shaurma-pita' }, { item: 'soda' }] },
-  { id: 'spicy', badge: ['★', 'hero.bSet'], pieces: [{ k: 'tea', item: 'turkish-tea' }, { k: 'drumsticks', spicy: true }], lines: [{ item: 'spicy-bite' }, { item: 'turkish-tea' }] },
+  { id: 'spicy', badge: ['★', 'hero.bSet'], pieces: [{ k: 'tea', item: 'turkish-tea' }, { k: 'drumsticks', spicy: true }], lines: [{ item: 'spicy-wings' }, { item: 'turkish-tea' }] },
 ];
 const q = new URLSearchParams(location.search).get('deal');
 export const DEAL: Deal = DEALS.find(d => d.id === q) ?? DEALS[Math.floor(Math.random() * DEALS.length)];
@@ -57,12 +56,12 @@ const PIECES: Record<Piece['k'], (p: Piece, i: number) => string> = {
     <path d="M-66 -262 h132 l-12 250 q0 12 -12 12 h-84 q-12 0 -12 -12z" fill="none" stroke="rgba(255,255,255,.9)" stroke-width="3.5" stroke-linejoin="round"/>
     <path d="M-50 -236 l8 200" stroke="#fff" stroke-width="10" stroke-linecap="round" opacity=".35"/>
     <ellipse cx="0" cy="-262" rx="66" ry="9" fill="none" stroke="rgba(255,255,255,.95)" stroke-width="3"/>
-    <text x="0" y="-120" text-anchor="middle" class="glass-print">FFS</text>
+    <text x="0" y="-120" text-anchor="middle" class="glass-print">FRANS</text>
     <g id="hs${i}" opacity="0"><path d="M22 -30 L64 -330" stroke="#E11D24" stroke-width="14" stroke-linecap="round"/><path d="M22 -30 L64 -330" stroke="#fff" stroke-width="14" stroke-linecap="round" stroke-dasharray="14 16"/></g>
     <rect id="hst${i}" x="-6" y="-700" width="12" height="0" rx="6" fill="#3A160C"/>`,
   tea: (_p, i) => `<clipPath id="hc${i}"><path id="tulip${i}" d="M-44 -170 C-44 -120 -26 -110 -26 -88 C-26 -60 -46 -50 -40 -16 C-36 -4 -24 0 0 0 C24 0 36 -4 40 -16 C46 -50 26 -60 26 -88 C26 -110 44 -120 44 -170z"/></clipPath>
     <ellipse cx="0" cy="4" rx="78" ry="16" fill="#FFFDFC" stroke="#E5D8D6" stroke-width="2"/><ellipse cx="0" cy="2" rx="52" ry="9" fill="#F3ECEA"/>
-    <path d="M-62 4 q62 18 124 0" stroke="#E11D24" stroke-width="3" fill="none"/>
+    <path d="M-62 4 q62 18 124 0" stroke="#1F3FBF" stroke-width="3" fill="none"/>
     <g clip-path="url(#hc${i})"><rect x="-60" y="-200" width="120" height="210" fill="rgba(255,255,255,.18)"/><rect id="hl${i}" x="-60" y="0" width="120" height="0" fill="#B0421A"/><rect id="hlh${i}" x="-60" y="0" width="120" height="0" fill="url(#g-tea)" opacity=".6"/></g>
     <path d="M-44 -170 C-44 -120 -26 -110 -26 -88 C-26 -60 -46 -50 -40 -16 C-36 -4 -24 0 0 0 C24 0 36 -4 40 -16 C46 -50 26 -60 26 -88 C26 -110 44 -120 44 -170z" fill="url(#g-glass)" stroke="rgba(255,255,255,.95)" stroke-width="3"/>
     <path d="M-34 -150 C-32 -120 -20 -108 -20 -92" stroke="#fff" stroke-width="5" fill="none" stroke-linecap="round" opacity=".5"/>
@@ -75,12 +74,12 @@ const PIECES: Record<Piece['k'], (p: Piece, i: number) => string> = {
     <g id="hp${i}">${[[-52, -214, -30], [44, -220, 205], [-6, -238, -80], [-30, -190, 16], [34, -190, 170]].map(([x, y, r], j) => `<g class="hd${i}" data-j="${j}">${drumstickR(x, y, r, 1.05)}</g>`).join('')}</g>
     <clipPath id="hc${i}"><path d="M-112 -196 L-88 -8 q2 8 10 8 h156 q8 0 10 -8 L112 -196z"/></clipPath>
     <path d="M-112 -196 L-88 -8 q2 8 10 8 h156 q8 0 10 -8 L112 -196z" fill="#FFFDFC"/>
-    <g clip-path="url(#hc${i})">${[0, 1, 2, 3, 4, 5].map(j => `<path d="M${-130 + j * 48} -210 l20 0 l-8 220 l-20 0z" fill="#E11D24"/>`).join('')}<rect x="-120" y="-200" width="240" height="210" fill="url(#g-shade)"/></g>
+    <g clip-path="url(#hc${i})">${[0, 1, 2, 3, 4, 5].map(j => `<path d="M${-130 + j * 48} -210 l20 0 l-8 220 l-20 0z" fill="#1F3FBF"/>`).join('')}<rect x="-120" y="-200" width="240" height="210" fill="url(#g-shade)"/></g>
     <path d="M-116 -200 h232 v16 q-116 16 -232 0z" fill="#FFFDFC" stroke="rgba(0,0,0,.08)"/>
     <ellipse cx="0" cy="-200" rx="116" ry="8" fill="none" stroke="#fff" stroke-width="3"/>
-    <rect x="-56" y="-120" width="112" height="50" rx="12" fill="#FFFDFC" stroke="rgba(0,0,0,.1)"/><text x="0" y="-84" text-anchor="middle" class="tray-logo">FFS</text>`,
+    <rect x="-56" y="-120" width="112" height="50" rx="12" fill="#FFFDFC" stroke="rgba(0,0,0,.1)"/><text x="0" y="-84" text-anchor="middle" class="tray-logo" textLength="96" lengthAdjust="spacingAndGlyphs">FRANS</text>`,
   drumsticks: (p, i) => `<ellipse cx="0" cy="2" rx="140" ry="20" fill="url(#g-plate)"/><ellipse cx="0" cy="-2" rx="104" ry="12" fill="url(#g-plate-well)"/>
-    <path d="M-90 -6 q90 -16 180 0 l-10 8 q-80 -10 -160 0z" fill="#FFFDFC"/><path d="M-90 -6 q90 -16 180 0" stroke="#E11D24" stroke-width="3" fill="none" stroke-dasharray="10 8"/>
+    <path d="M-90 -6 q90 -16 180 0 l-10 8 q-80 -10 -160 0z" fill="#FFFDFC"/><path d="M-90 -6 q90 -16 180 0" stroke="#1F3FBF" stroke-width="3" fill="none" stroke-dasharray="10 8"/>
     <g id="hp${i}">${[[-46, -26, -10], [44, -30, 192], [0, -60, -70]].map(([x, y, r], j) => `<g class="hd${i}" data-j="${j}">${drumstickR(x, y, r, 1.1, !!(p as { spicy?: boolean }).spicy)}</g>`).join('')}</g>`,
   burger: (p, i) => {
     const art = ITEM((p as { item: string }).item)!.art as { k: 'burger'; layers: string[] };
@@ -92,7 +91,7 @@ const PIECES: Record<Piece['k'], (p: Piece, i: number) => string> = {
     ids.forEach((id, j) => { const L = lay(id); y -= L.h - 4; out += `<g class="hy${i}" data-y="${y + L.h}"><g>${L.svg(y, 0, 220)}</g></g>`; });
     return `<ellipse cx="0" cy="2" rx="128" ry="18" fill="url(#g-plate)"/><ellipse cx="0" cy="-2" rx="96" ry="11" fill="url(#g-plate-well)"/>
       <g transform="scale(${sc.toFixed(3)})" transform-origin="0 -12">${out}</g>
-      ${(p as { gift?: boolean }).gift ? `<g id="hg${i}" opacity="0" transform="translate(84 -${Math.round(total * sc) + 10})"><rect x="-34" y="-15" width="68" height="28" rx="14" fill="#E11D24"/><text x="0" y="5" text-anchor="middle" class="tray-gift"></text></g>` : ''}`;
+      ${(p as { gift?: boolean }).gift ? `<g id="hg${i}" opacity="0" transform="translate(84 -${Math.round(total * sc) + 10})"><rect x="-34" y="-15" width="68" height="28" rx="14" fill="#1F3FBF"/><text x="0" y="5" text-anchor="middle" class="tray-gift"></text></g>` : ''}`;
   },
   fries: (_p, i) => `<ellipse cx="0" cy="4" rx="72" ry="10" fill="#1C1213" opacity=".2" filter="url(#fx-steam)"/>
     <clipPath id="hc${i}"><rect x="-80" y="-330" width="160" height="232"/></clipPath>
@@ -101,7 +100,7 @@ const PIECES: Record<Piece['k'], (p: Piece, i: number) => string> = {
     <path d="M-70 -150 q35 22 70 0 q35 22 70 0" fill="none" stroke="#fff" stroke-width="3" opacity=".6"/>
     <rect x="-70" y="-150" width="140" height="150" fill="url(#g-shade)" opacity=".7" clip-path="url(#hcb${i})"/>
     <clipPath id="hcb${i}"><path d="M-70 -150 q35 22 70 0 q35 22 70 0 l-16 140 q-1 10 -11 10 h-86 q-10 0 -11 -10z"/></clipPath>
-    <text x="0" y="-60" text-anchor="middle" class="tray-logo light">FFS</text>`,
+    <text x="0" y="-60" text-anchor="middle" class="tray-logo light" textLength="110" lengthAdjust="spacingAndGlyphs">FRANS</text>`,
   hotdog: (p, i) => {
     const h: HotdogSpec = { bun: 'brioche', sausage: 'beef', xl: (p as { item: string }).item === 'french-hotdog', tops: ['onion'], sauces: ['ketchup', 'mustard'] };
     return `<ellipse cx="0" cy="2" rx="172" ry="20" fill="url(#g-plate)"/><ellipse cx="0" cy="-2" rx="132" ry="12" fill="url(#g-plate-well)"/><g id="hp${i}">${hotdogSVG(h, 0, -6, 290)}</g>`;
@@ -137,7 +136,7 @@ export function buildHero(scene: SVGSVGElement) {
       <linearGradient id="g-cola" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#000" stop-opacity=".4"/><stop offset=".3" stop-color="#8A3A1A" stop-opacity=".8"/><stop offset=".55" stop-color="#C2602A" stop-opacity=".5"/><stop offset="1" stop-color="#000" stop-opacity=".45"/></linearGradient>
       <linearGradient id="g-tea" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5A1A08" stop-opacity=".6"/><stop offset=".4" stop-color="#E0702E" stop-opacity=".7"/><stop offset="1" stop-color="#5A1A08" stop-opacity=".6"/></linearGradient>
       <linearGradient id="g-fry" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#E9A93A"/><stop offset=".5" stop-color="#F8CF5C"/><stop offset="1" stop-color="#D99330"/></linearGradient>
-      <linearGradient id="g-box" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0353B"/><stop offset="1" stop-color="#B5121A"/></linearGradient>
+      <linearGradient id="g-box" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#3A5AD6"/><stop offset="1" stop-color="#142A85"/></linearGradient>
       <linearGradient id="g-tray" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F0353B"/><stop offset="1" stop-color="#9E1016"/></linearGradient>
       <linearGradient id="g-chick-spicy" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#F08A4A"/><stop offset=".45" stop-color="#C2461C"/><stop offset="1" stop-color="#7A2208"/></linearGradient>
       <pattern id="p-liner" width="28" height="28" patternUnits="userSpaceOnUse"><rect width="28" height="28" fill="#FFFDFC"/><rect width="14" height="14" fill="#F6D2D3"/><rect x="14" y="14" width="14" height="14" fill="#F6D2D3"/></pattern>
@@ -145,7 +144,7 @@ export function buildHero(scene: SVGSVGElement) {
     <g class="sky">${stars}</g>
     <circle id="disc" cx="520" cy="440" r="330" fill="url(#discG)"/>
     <g id="discRing" fill="none" stroke="var(--ring)" stroke-width="2" stroke-dasharray="3 12"><circle cx="520" cy="440" r="372"/></g>
-    <text class="neon" x="520" y="128" text-anchor="middle" textLength="380" lengthAdjust="spacingAndGlyphs">FFS</text>
+    <text class="neon" x="520" y="128" text-anchor="middle" textLength="380" lengthAdjust="spacingAndGlyphs">FRANS</text>
     ${food.length ? `<g id="tray" filter="url(#fx-soft)"><path d="M${fx0} ${BASE - 4} h${fx1 - fx0} l-14 30 h${-(fx1 - fx0) + 28}z" fill="url(#g-tray)"/><path d="M${fx0 + 12} ${BASE - 8} h${fx1 - fx0 - 24} l-6 12 h${-(fx1 - fx0) + 36}z" fill="url(#p-liner)" opacity=".95"/></g>` : ''}
     ${DEAL.pieces.map((p, i) => `<g id="hpc${i}" transform="translate(${slots[i].x.toFixed(1)} ${BASE}) scale(${slots[i].s.toFixed(3)})">${PIECES[p.k](p, i)}</g>`).join('')}
     <g class="sparkle" id="sparkles" opacity="0">${[[900, 360], [240, 380], [940, 520], [600, 250]].map(([sx, sy], i) => `<path style="--d:${i * .3}s" d="M${sx} ${sy - 14} l4 10 l10 4 l-10 4 l-4 10 l-4 -10 l-10 -4 l10 -4z" fill="#F4B731"/>`).join('')}</g>

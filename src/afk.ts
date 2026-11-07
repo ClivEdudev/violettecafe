@@ -137,7 +137,7 @@ const DEFS = `<defs>
   <linearGradient id="aTop" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#E9DCCB"/><stop offset="1" stop-color="#BBA48B"/></linearGradient>
   <linearGradient id="aBoard" x1="0" y1="0" x2="0" y2="1"><stop offset="0" stop-color="#D9A876"/><stop offset=".3" stop-color="#C08A57"/><stop offset="1" stop-color="#8E5E36"/></linearGradient>
   <linearGradient id="aChrome" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#5D5B66"/><stop offset=".18" stop-color="#EDE9E9"/><stop offset=".4" stop-color="#9C99A6"/><stop offset=".7" stop-color="#F7F4F4"/><stop offset="1" stop-color="#6B6875"/></linearGradient>
-  <linearGradient id="aBody" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#572326"/><stop offset=".35" stop-color="#A03F44"/><stop offset=".65" stop-color="#B5121A"/><stop offset="1" stop-color="#372829"/></linearGradient>
+  <linearGradient id="aBody" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#1B2552"/><stop offset=".35" stop-color="#3A54B0"/><stop offset=".65" stop-color="#142A85"/><stop offset="1" stop-color="#372829"/></linearGradient>
   <linearGradient id="aShirt" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#CDBFAE"/><stop offset=".45" stop-color="#F2EADF"/><stop offset="1" stop-color="#C2B4A1"/></linearGradient>
   <linearGradient id="aApron" x1="0" y1="0" x2="1" y2="0"><stop offset="0" stop-color="#312526"/><stop offset=".5" stop-color="#662C2F"/><stop offset="1" stop-color="#271E1F"/></linearGradient>
   <radialGradient id="aSkin" cx=".4" cy=".35" r=".75"><stop offset="0" stop-color="#F0C9A6"/><stop offset=".7" stop-color="#D9A27C"/><stop offset="1" stop-color="#B98060"/></radialGradient>
@@ -164,7 +164,7 @@ function sceneSVG() {
   <rect width="1200" height="700" fill="url(#aWall)"/>
   <g opacity=".5">${Array.from({ length: 12 }, (_, i) => `<rect x="${i * 100}" y="0" width="2" height="500" fill="rgba(255,255,255,.025)"/>`).join('')}</g>
   <rect x="60" y="150" width="420" height="10" rx="3" fill="#4A2E22"/>${jars}
-  <g transform="translate(860 70)"><rect width="260" height="160" rx="10" fill="#151313" stroke="#3C3233" stroke-width="6"/><text x="130" y="58" text-anchor="middle" class="ak-chalk-t">FFS</text>
+  <g transform="translate(860 70)"><rect width="260" height="160" rx="10" fill="#151313" stroke="#3C3233" stroke-width="6"/><text x="130" y="58" text-anchor="middle" class="ak-chalk-t">FRANS</text>
     <text x="24" y="98" class="ak-chalk" id="akBoardN1"></text><text x="236" y="98" text-anchor="end" class="ak-chalk" id="akBoardP1"></text><text x="24" y="128" class="ak-chalk" id="akBoardN2"></text><text x="236" y="128" text-anchor="end" class="ak-chalk" id="akBoardP2"></text></g>
   ${bokeh}
   <g id="stCoffee">
@@ -177,7 +177,7 @@ function sceneSVG() {
       <rect x="352" y="420" width="56" height="26" rx="6" fill="url(#aChrome)"/><circle id="akLight" cx="380" cy="414" r="5" fill="#5A3A1C"/>
       <rect x="262" y="486" width="240" height="18" rx="5" fill="url(#aChrome)"/>
       <path d="M520 360 q30 4 26 40 l-2 56" fill="none" stroke="url(#aChrome)" stroke-width="7" stroke-linecap="round"/>
-      <text x="382" y="342" text-anchor="middle" class="ak-badge" style="font-size:16px">FFS</text>
+      <text x="382" y="342" text-anchor="middle" class="ak-badge" style="font-size:13px">FRANS</text>
     </g>
     <g id="akGrinder">
       <path d="M818 300 h64 l-10 58 h-44z" fill="rgba(255,255,255,.18)" stroke="rgba(255,255,255,.35)"/>
@@ -203,7 +203,7 @@ function sceneSVG() {
     <path d="M652 354 Q700 345 748 354 L756 640 H644z" fill="url(#aApron)"/>
     <path d="M662 356 L678 314 M738 356 L722 314" stroke="#312526" stroke-width="6" stroke-linecap="round"/>
     <rect x="681" y="442" width="40" height="30" rx="4" fill="none" stroke="rgba(255,255,255,.14)" stroke-width="2"/><line x1="712" y1="432" x2="714" y2="450" stroke="#F6C2C3" stroke-width="3" stroke-linecap="round"/>
-    <text x="700" y="414" text-anchor="middle" class="ak-badge" style="font-size:16px">FFS</text>
+    <text x="700" y="414" text-anchor="middle" class="ak-badge" style="font-size:13px">FRANS</text>
     <rect x="716" y="368" width="34" height="13" rx="3" fill="#F4ECE1"/><text x="733" y="377.8" text-anchor="middle" class="ak-tag">Sardor</text>
     <g id="akSplat"></g>
     <g id="akHead">
@@ -251,7 +251,7 @@ const servedSteam = (x: number, y: number, tm: number) => Array.from({ length: 3
 const BX = 520, BY = 488;
 const spatula = (hx: number, hy: number) => `<g><line x1="${f1(hx + 2)}" y1="${f1(hy)}" x2="${f1(hx + 24)}" y2="${f1(hy - 24)}" stroke="#2A1A14" stroke-width="7" stroke-linecap="round"/><path d="M${f1(hx - 2)} ${f1(hy - 2)} L${f1(hx - 12)} ${f1(hy + 10)}" stroke="url(#aSteel)" stroke-width="4"/><rect x="${f1(hx - 58)}" y="${f1(hy + 8)}" width="50" height="5" rx="2" fill="url(#aSteel)"/></g>`;
 const bottle = (hx: number, hy: number) => `<g transform="translate(${f1(hx)} ${f1(hy)}) rotate(172)"><rect x="-13" y="-8" width="26" height="54" rx="9" fill="#C62828"/><rect x="-13" y="-8" width="9" height="54" rx="4" fill="rgba(255,255,255,.22)"/><rect x="-9" y="-20" width="18" height="14" rx="3" fill="#F4ECE1"/><path d="M-3 -20 l3 -10 l3 10z" fill="#F4ECE1"/><rect x="-10" y="10" width="20" height="16" rx="2" fill="#F4B731"/></g>`;
-const flag = (x: number, y: number) => `<g><line x1="${f1(x)}" y1="${f1(y + 26)}" x2="${f1(x)}" y2="${f1(y - 30)}" stroke="#E7D3B0" stroke-width="2.5"/><path d="M${f1(x)} ${f1(y - 30)} h22 l-5 7 l5 7 h-22z" fill="#E11D24"/><text x="${f1(x + 9)}" y="${f1(y - 19)}" class="ak-flag" text-anchor="middle" style="font-size:6.5px">FFS</text></g>`;
+const flag = (x: number, y: number) => `<g><line x1="${f1(x)}" y1="${f1(y + 26)}" x2="${f1(x)}" y2="${f1(y - 30)}" stroke="#E7D3B0" stroke-width="2.5"/><path d="M${f1(x)} ${f1(y - 30)} h22 l-5 7 l5 7 h-22z" fill="#1F3FBF"/><text x="${f1(x + 9)}" y="${f1(y - 19)}" class="ak-flag" text-anchor="middle" style="font-size:5px">FB</text></g>`;
 
 /* ===================== act 3: lavash ===================== */
 const LX = 560;
@@ -274,7 +274,7 @@ const rollEnd = (x: number, y: number, r: number, ang: number) => `<g transform=
 const rollSide = (x: number, y: number, rot: number, paper: number) => `<g transform="translate(${f1(x)} ${f1(y)}) rotate(${f1(rot)})" filter="url(#aSoft)">
   <rect x="-66" y="-17" width="132" height="34" rx="17" fill="url(#aLav)"/><path d="M-40 -14 l10 28 M-14 -14 l10 28 M12 -14 l10 28" stroke="#C99A5A" stroke-width="3" opacity=".6"/>
   <ellipse cx="-62" cy="0" rx="9" ry="16" fill="#E8C487"/><ellipse cx="-62" cy="0" rx="5" ry="9" fill="#A0552E"/><circle cx="-60" cy="-4" r="2.6" fill="#E11D24"/><circle cx="-63" cy="5" r="2" fill="#7CB342"/>
-  ${paper > 0 ? `<rect x="${f1(66 - 80 * paper)}" y="-19" width="${f1(80 * paper)}" height="38" rx="6" fill="#E11D24"/><rect x="${f1(66 - 80 * paper)}" y="-19" width="${f1(80 * paper)}" height="8" rx="4" fill="rgba(255,255,255,.18)"/>${paper > .6 ? `<text x="30" y="7" text-anchor="middle" class="ak-flag" style="font-size:13px">FFS</text>` : ''}` : ''}</g>`;
+  ${paper > 0 ? `<rect x="${f1(66 - 80 * paper)}" y="-19" width="${f1(80 * paper)}" height="38" rx="6" fill="#1F3FBF"/><rect x="${f1(66 - 80 * paper)}" y="-19" width="${f1(80 * paper)}" height="8" rx="4" fill="rgba(255,255,255,.18)"/>${paper > .6 ? `<text x="30" y="7" text-anchor="middle" class="ak-flag" style="font-size:10px">FRANS</text>` : ''}` : ''}</g>`;
 
 
 /** The lavash timeline, drawn from the current recipe (WP): meat, sauce, fries or greens, cheese, jalapeño. */
@@ -381,7 +381,7 @@ function drawCup(kind: 'hot' | 'small' | 'iced', x: number, by: number, layers: 
   const tops = o.tops ?? [];
   const cream = tops.find(t => t.k === 'cream'), mallow = tops.find(t => t.k === 'mallow');
   return `<g transform="translate(${f1(x)} ${f1(by)}) rotate(${o.rot ?? 0}) scale(${sc.toFixed(3)})" filter="url(#aSoft)"><path d="M18 -26 q18 2 14 14 q-3 9 -16 8" fill="none" stroke="#E7E2E2" stroke-width="6"/>
-    <path d="M-22 -40 h44 l-5 36 q-1 4 -6 4 h-22 q-5 0 -6 -4z" fill="url(#aCup)"/><rect x="-21" y="-30" width="42" height="5" fill="#E11D24" opacity=".9"/>
+    <path d="M-22 -40 h44 l-5 36 q-1 4 -6 4 h-22 q-5 0 -6 -4z" fill="url(#aCup)"/><rect x="-21" y="-30" width="42" height="5" fill="#1F3FBF" opacity=".9"/>
     ${tot > .005 ? `<clipPath id="${o.clipId}"><path d="M-19 -38 h38 l-5 34 h-28z"/></clipPath><g clip-path="url(#${o.clipId})">${liquid}</g><ellipse cx="0" cy="${f1(-4 - lvl)}" rx="${f1(15 + Math.min(1, tot) * 4)}" ry="3" fill="${topC}"/>` : ''}
     ${cream && cream.v > 0 ? `<g transform="translate(0 ${f1(-4 - lvl)}) scale(${f1(cream.v)})"><path d="M-20 2 q-5 -14 10 -18 q2 -14 14 -11 q14 -4 15 10 q12 6 0 19z" fill="url(#g-cream)"/></g>` : ''}
     ${mallow ? [[-8, 0], [5, -3], [12, 1]].slice(0, Math.ceil(mallow.v * 3)).map(([mx, my]) => `<rect x="${mx - 5}" y="${f1(-8 - lvl + my)}" width="10" height="8" rx="2.5" fill="#FFF4F8" stroke="#E9D6D7"/>`).join('') : ''}
@@ -615,7 +615,7 @@ function wrapAct(p: WrapP, qty = 1, order?: Act['order']): Act {
 
 /* ---------- fryer: fries, cheese fries, nuggets ---------- */
 function fryerAct(id: string, qty = 1, order?: Act['order']): Act {
-  const it = ITEM(id)!, cheese = id === 'cheese-fries', nug = ['nuggets', 'kfc-1kg', 'spicy-bite', 'ffs-mega-mix'].includes(id);
+  const it = ITEM(id)!, cheese = id === 'cheese-fries', nug = ['nuggets', 'chicken-box', 'spicy-wings', 'frans-mix'].includes(id);
   const plain = cheese ? ITEM('fries')!.art : it.art;
   const R: P[] = [[0, 775, 505], [.6, 905, 418], [1.2, 905, 440], [4.2, 905, 440], [4.8, 905, 396], [4.9, 920, 396], [5.0, 890, 396], [5.1, 920, 396], [5.2, 890, 396], [5.3, 920, 396], [5.4, 890, 396], [5.6, 905, 396], [6.4, 640, 396], [7.4, 640, 396], [7.8, 775, 505]];
   if (cheese) R.push([8.2, 720, 545], [8.6, 600, 392], [9.6, 600, 392], [10.0, 775, 505]);
@@ -795,15 +795,15 @@ function wrapFromItem(id: string, extras: ExtraId[] = [], qty = 1): Act {
 }
 function actsForItem(id: string, size?: 'S' | 'M' | 'L', extras: ExtraId[] = [], qty = 1): Act[] {
   const it = ITEM(id); if (!it) return [];
-  if (it.id === 'crunch-duo') return [fryerAct('kfc-1kg', qty), burgerFromItem('cheeseburger', [], qty)];
-  if (it.id === 'madina-combo') return [wrapFromItem('lavash-chicken', [], qty), fryerAct('fries', qty), coldAct('soda', qty)];
-  if (it.id === 'solo-combo') return [burgerAct({ name: () => ITEM('cheeseburger')!.name[state.lang], bun: 'classic', layers: ['beef', 'cheese', 'lettuce'] }, qty), fryerAct('fries', qty), coldAct('soda', qty)];
+  if (it.id === 'duo-combo') return [burgerFromItem('cheeseburger', [], qty * 2), fryerAct('fries', qty * 2), coldAct('soda', qty * 2)];
+  if (it.id === 'lavash-combo') return [wrapFromItem('lavash-chicken', [], qty), fryerAct('fries', qty), coldAct('soda', qty)];
+  if (it.id === 'frans-combo') return [burgerFromItem('frans-burger', [], qty), fryerAct('fries', qty), coldAct('soda', qty)];
   if (['coffee'].includes(it.cat) || ['iced-violette', 'iced-latte', 'frappe', 'matcha', 'cocoa'].includes(id)) return [coffeeFromItem(id, size, extras, qty)];
   if (['lemonade', 'berry-lemonade', 'soda'].includes(id)) return [coldAct(id, qty, { item: id, size })];
   if (['green-tea', 'black-tea', 'glass-tea', 'turkish-tea'].includes(id)) return [teaAct(id, qty, { item: id })];
   if (it.cat === 'burger') return [burgerFromItem(id, extras, qty)];
   if (it.cat === 'lavash') return [wrapFromItem(id, extras, qty)];
-  if (['fries', 'cheese-fries', 'nuggets', 'kfc-1kg', 'spicy-bite', 'ffs-mega-mix'].includes(id)) return [fryerAct(id, qty, { item: id })];
+  if (['fries', 'cheese-fries', 'nuggets', 'chicken-box', 'spicy-wings', 'frans-mix'].includes(id)) return [fryerAct(id, qty, { item: id })];
   return [plateAct(id, qty, { item: id })];
 }
 export function actsForLines(lines: Line[]): Act[] {
@@ -842,7 +842,7 @@ function priceOf(a: Act) { const it = ITEM(a.order!.item)!; return it.price + (i
 function build() {
   el = document.createElement('div');
   el.className = 'afk'; el.setAttribute('role', 'dialog'); el.setAttribute('aria-modal', 'true'); el.setAttribute('aria-labelledby', 'akTitle');
-  el.innerHTML = `<div class="ak-top"><span class="ak-logo">FFS</span><p id="akTitle"></p><span class="ak-clock" id="akClock"></span><button type="button" class="ak-close" id="akClose"><span aria-hidden="true">×</span></button></div>
+  el.innerHTML = `<div class="ak-top"><span class="ak-logo">Frans Burger</span><p id="akTitle"></p><span class="ak-clock" id="akClock"></span><button type="button" class="ak-close" id="akClose"><span aria-hidden="true">×</span></button></div>
     <svg class="ak-scene" viewBox="0 0 1200 700" preserveAspectRatio="xMidYMid slice" aria-hidden="true">${sceneSVG()}</svg>
     <div class="ak-bottom"><div class="ak-steps" id="akSteps"></div><p class="ak-caption" id="akCaption" aria-live="polite"></p>
       <button type="button" class="btn btn-acc ak-order" id="akOrder"><span id="akOrderT"></span><kbd>Enter</kbd></button><p class="ak-hint" id="akHint"></p></div>`;

@@ -1,4 +1,4 @@
-/* Custom cursor & pointer assist (same system as the Robiya site, in the FFS style).
+/* Custom cursor & pointer assist (same system as the Robiya site, in the Frans Burger style).
    The pointer is a small coffee bean that replaces the system arrow and stays exactly under the mouse.
    Around it, a soft outline settles on whatever you're about to use:
    - whole things are targets: anywhere on a menu card opens it;
@@ -10,9 +10,9 @@ type Kind = 'none' | 'snap' | 'zone' | 'text' | 'disabled';
 interface Hit { kind: Kind; el: Element | null; box: Element | null; label: string }
 const NONE: Hit = { kind: 'none', el: null, box: null, label: '' };
 const INTERACTIVE = 'a[href], button:not(:disabled), [role="button"], [role="option"], [role="tab"], [role="radio"], label.check, label.switch, input:not([type="hidden"]), textarea, summary';
-const TEXTY = 'input:not([type]), input[type="text"], input[type="tel"], input[type="search"], input[type="email"], textarea, #bgAmount';
+const TEXTY = 'input:not([type]), input[type="text"], input[type="tel"], input[type="search"], input[type="email"], textarea';
 /** Buttons that spend money, remove things or send something must be hit on purpose. */
-const NO_MAGNET = '[data-add], [data-repeat], #repeatLast, [data-bq], #imAdd, #bAdd, #cAdd, #bgAdd, #bgSurprise, #bgClear, #heroCombo, #coNext, #toCheckout, #bkSend, [data-rm], #bClear, input[type="range"]';
+const NO_MAGNET = '[data-add], [data-repeat], #repeatLast, [data-bq], #imAdd, #bAdd, #cAdd, #foAdd, #foUp, #foStory, #foAgain, #heroCombo, #coNext, #toCheckout, #bkSend, [data-rm], #bClear, input[type="range"]';
 const SURFACE = '.sheet, .drawer-panel, .menu.open, .top, main, footer';
 const MAGNET = 18;
 
